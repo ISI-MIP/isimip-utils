@@ -102,6 +102,3 @@ def fetch_json(bases, path=None):
 
             if location.exists():
                 return json.loads(open(location).read())
-            else:
-                logger.error('No valid %s path found in --protocol-location (%s). Make sure the '
-                             'protocol was properly built.', path.parts[0], location)

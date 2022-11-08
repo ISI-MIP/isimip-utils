@@ -6,3 +6,21 @@ def parse_filelist(filelist_file):
         filelist = None
 
     return filelist
+
+
+def exclude_path(exclude, path):
+    if exclude:
+        for exclude_string in exclude:
+            if str(path).startswith(exclude_string):
+                return True
+    return False
+
+
+def include_path(include, path):
+    if include:
+        for include_string in include:
+            if str(path).startswith(include_string):
+                return True
+        return False
+    else:
+        return True

@@ -1,0 +1,2 @@
+class DidNotMatch(RuntimeError):
+    pass
