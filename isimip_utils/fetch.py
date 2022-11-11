@@ -94,7 +94,7 @@ def fetch_json(bases, path=None):
                 return response.json()
 
         else:
-            location = Path(base).expanduser()
+            location = Path(base).expanduser() / 'output'
             if path is not None:
                 location /= path
 
