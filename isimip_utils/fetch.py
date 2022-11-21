@@ -19,7 +19,19 @@ def fetch_definitions(bases, path):
         if definitions_json:
             logger.info('definitions_path = %s', definitions_path)
             logger.debug('definitions_json = %s', definitions_json)
-            return definitions_json
+
+            definitions = {}
+            for definition_name, definition in definitions_json.items():
+                # convert the definitions to dicts if they are lists
+                if isinstance(definition, list):
+                    definitions[definition_name] = {
+                        row['specifier']: row for row in definition
+                    }
+                else:
+                    definitions[definition_name] = definition
+
+            logger.debug('definitions = %s', definitions)
+            return definitions
 
 
 def fetch_pattern(bases, path):
