@@ -21,7 +21,9 @@ It comprises of:
 Setup
 =====
 
-The package can be installed via pip:
+Working on the package requires a running Python3 on your system. Installing those prerequisites is covered [here](https://github.com/ISI-MIP/isimip-utils/blob/master/docs/releases.md).
+
+The package itself can be installed via pip:
 
 ```
 pip install isimip-utils
