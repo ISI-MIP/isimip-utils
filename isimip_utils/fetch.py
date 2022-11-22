@@ -14,7 +14,7 @@ def fetch_definitions(bases, path):
     path_components = path.strip(os.sep).split(os.sep)
     for i in range(len(path_components), 0, -1):
         definitions_path = Path('definitions').joinpath(os.sep.join(path_components[:i+1])).with_suffix('.json')
-        definitions_json = fetch_json(bases, definitions_path)
+        definitions_json = fetch_json(bases, definitions_path, extend_base='output')
 
         if definitions_json:
             logger.info('definitions_path = %s', definitions_path)
@@ -38,7 +38,7 @@ def fetch_pattern(bases, path):
     path_components = path.strip(os.sep).split(os.sep)
     for i in range(len(path_components), 0, -1):
         pattern_path = Path('pattern').joinpath(os.sep.join(path_components[:i+1]) + '.json')
-        pattern_json = fetch_json(bases, pattern_path)
+        pattern_json = fetch_json(bases, pattern_path, extend_base='output')
 
         if pattern_json:
             logger.info('pattern_path = %s', pattern_path)
@@ -67,7 +67,7 @@ def fetch_schema(bases, path):
     path_components = path.strip(os.sep).split(os.sep)
     for i in range(len(path_components), 0, -1):
         schema_path = Path('schema').joinpath(os.sep.join(path_components[:i+1])).with_suffix('.json')
-        schema_json = fetch_json(bases, schema_path)
+        schema_json = fetch_json(bases, schema_path, extend_base='output')
 
         if schema_json:
             logger.info('schema_path = %s', schema_path)
@@ -79,7 +79,7 @@ def fetch_tree(bases, path):
     path_components = path.strip(os.sep).split(os.sep)
     for i in range(len(path_components), 0, -1):
         tree_path = Path('tree').joinpath(os.sep.join(path_components[:i+1])).with_suffix('.json')
-        tree_json = fetch_json(bases, tree_path)
+        tree_json = fetch_json(bases, tree_path, extend_base='output')
 
         if tree_json:
             logger.info('tree_path = %s', tree_path)
@@ -91,26 +91,28 @@ def fetch_resource(location):
     return fetch_json([location])
 
 
-def fetch_json(bases, path=None):
+def fetch_json(bases, path=None, extend_base=None):
     for base in bases:
         if urlparse(base).scheme:
             if path is not None:
-                location = base.rstrip('/') + '/' + path.as_posix()
+                json_url = base.rstrip('/') + '/' + path.as_posix()
             else:
-                location = base.rstrip('/')
+                json_url = base.rstrip('/')
 
-            logger.debug('json_url = %s', location)
-            response = requests.get(location)
+            logger.debug('json_url = %s', json_url)
+            response = requests.get(json_url)
 
             if response.status_code == 200:
                 return response.json()
 
         else:
-            location = Path(base).expanduser() / 'output'
+            json_path = Path(base).expanduser()
+            if extend_base is not None:
+                json_path /= extend_base
             if path is not None:
-                location /= path
+                json_path /= path
 
-            logger.debug('json_path = %s', location)
+            logger.debug('json_path = %s', json_path)
 
-            if location.exists():
-                return json.loads(open(location).read())
+            if json_path.exists():
+                return json.loads(open(json_path).read())
