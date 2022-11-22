@@ -1,6 +1,10 @@
 ISIMIP utils
 ============
 
+[![Latest release](https://shields.io/github/v/release/ISI-MIP/isimip-utils)](https://github.com/ISI-MIP/isimip-utils/releases)
+[![Python Version: 3.6|3.7|3.8|3.9|3.10](https://img.shields.io/badge/python-3.6|3.7|3.8|3.9|3.10-blue)](https://www.python.org/)
+[![License: MIT](http://img.shields.io/badge/license-MIT-yellow.svg)](https://github.com/ISI-MIP/isimip-utils/blob/master/LICENSE)
+
 This package contains common functionality for different ISIMIP tools, namely:
 
 * https://github.com/ISI-MIP/isimip-publisher
