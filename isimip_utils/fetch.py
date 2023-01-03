@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_definitions(bases, path):
-    path_components = path.strip(os.sep).split(os.sep)
+    path_components = Path(path).parts
     for i in range(len(path_components), 0, -1):
         definitions_path = Path('definitions').joinpath(os.sep.join(path_components[:i+1])).with_suffix('.json')
         definitions_json = fetch_json(bases, definitions_path, extend_base='output')
@@ -35,7 +35,7 @@ def fetch_definitions(bases, path):
 
 
 def fetch_pattern(bases, path):
-    path_components = path.strip(os.sep).split(os.sep)
+    path_components = Path(path).parts
     for i in range(len(path_components), 0, -1):
         pattern_path = Path('pattern').joinpath(os.sep.join(path_components[:i+1]) + '.json')
         pattern_json = fetch_json(bases, pattern_path, extend_base='output')
@@ -54,8 +54,8 @@ def fetch_pattern(bases, path):
                 'file': re.compile(pattern_json['file']),
                 'dataset': re.compile(pattern_json['dataset']),
                 'suffix': pattern_json['suffix'],
-                'specifiers': pattern_json['specifiers'],
-                'specifiers_map': pattern_json['specifiers_map']
+                'specifiers': pattern_json.get('specifiers', []),
+                'specifiers_map': pattern_json.get('specifiers_map', {})
             }
 
             logger.debug('pattern = %s', pattern)
@@ -64,7 +64,7 @@ def fetch_pattern(bases, path):
 
 
 def fetch_schema(bases, path):
-    path_components = path.strip(os.sep).split(os.sep)
+    path_components = Path(path).parts
     for i in range(len(path_components), 0, -1):
         schema_path = Path('schema').joinpath(os.sep.join(path_components[:i+1])).with_suffix('.json')
         schema_json = fetch_json(bases, schema_path, extend_base='output')
@@ -76,7 +76,7 @@ def fetch_schema(bases, path):
 
 
 def fetch_tree(bases, path):
-    path_components = path.strip(os.sep).split(os.sep)
+    path_components = Path(path).parts
     for i in range(len(path_components), 0, -1):
         tree_path = Path('tree').joinpath(os.sep.join(path_components[:i+1])).with_suffix('.json')
         tree_json = fetch_json(bases, tree_path, extend_base='output')
