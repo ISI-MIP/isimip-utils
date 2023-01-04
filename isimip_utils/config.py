@@ -3,6 +3,7 @@ import logging
 import os
 from pathlib import Path
 
+from colorlog import ColoredFormatter, StreamHandler
 from dotenv import load_dotenv
 
 
@@ -43,8 +44,11 @@ class ISIMIPSettings(object):
                 logging.basicConfig(level=self.LOG_LEVEL, filename=self.LOG_FILE,
                                     format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
             else:
-                logging.basicConfig(level=self.LOG_LEVEL,
-                                    format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+                formatter = ColoredFormatter('%(log_color)s[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+                handler = StreamHandler()
+                handler.setFormatter(formatter)
+                logging.basicConfig(level=self.LOG_LEVEL, handlers=[handler])
+
         except AttributeError:
             pass
 
