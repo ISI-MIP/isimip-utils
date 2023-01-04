@@ -17,7 +17,7 @@ def fetch_definitions(bases, path):
         definitions_json = fetch_json(bases, definitions_path, extend_base='output')
 
         if definitions_json:
-            logger.info('definitions_path = %s', definitions_path)
+            logger.debug('definitions_path = %s', definitions_path)
             logger.debug('definitions_json = %s', definitions_json)
 
             definitions = {}
@@ -41,7 +41,7 @@ def fetch_pattern(bases, path):
         pattern_json = fetch_json(bases, pattern_path, extend_base='output')
 
         if pattern_json:
-            logger.info('pattern_path = %s', pattern_path)
+            logger.debug('pattern_path = %s', pattern_path)
             logger.debug('pattern_json = %s', pattern_json)
 
             assert isinstance(pattern_json['path'], str)
@@ -70,7 +70,7 @@ def fetch_schema(bases, path):
         schema_json = fetch_json(bases, schema_path, extend_base='output')
 
         if schema_json:
-            logger.info('schema_path = %s', schema_path)
+            logger.debug('schema_path = %s', schema_path)
             logger.debug('schema_json = %s', schema_json)
             return schema_json
 
@@ -82,7 +82,7 @@ def fetch_tree(bases, path):
         tree_json = fetch_json(bases, tree_path, extend_base='output')
 
         if tree_json:
-            logger.info('tree_path = %s', tree_path)
+            logger.debug('tree_path = %s', tree_path)
             logger.debug('tree_json = %s', tree_json)
             return tree_json
 
