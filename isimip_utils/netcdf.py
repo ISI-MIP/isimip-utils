@@ -4,6 +4,7 @@ import numpy as np
 
 from netCDF4 import Dataset
 
+LIST_TYPES = [np.ndarray]
 FLOAT_TYPES = [np.float32, np.float64]
 INT_TYPES = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64]
 
@@ -35,11 +36,7 @@ def get_variables(dataset, convert=False):
         if convert:
             variables[variable_name] = {}
             for key, value in variable.__dict__.items():
-                if type(value) in FLOAT_TYPES:
-                    value = float(value)
-                elif type(value) in INT_TYPES:
-                    value = int(value)
-                variables[variable_name][key] = value
+                variables[variable_name][key] = convert_attribute(value)
         else:
             variables[variable_name] = variable.__dict__
 
@@ -52,15 +49,20 @@ def get_global_attributes(dataset, convert=False):
     if convert:
         global_attributes = {}
         for key, value in dataset.__dict__.items():
-            if type(value) in FLOAT_TYPES:
-                value = float(value)
-            elif type(value) in INT_TYPES:
-                value = int(value)
-            global_attributes[key] = value
+            global_attributes[key] = convert_attribute(value)
     else:
         global_attributes = dataset.__dict__
 
     return global_attributes
+
+
+def convert_attribute(value):
+    if type(value) in LIST_TYPES:
+        value = [convert_attribute(v) for v in value]
+    elif type(value) in FLOAT_TYPES:
+        value = float(value)
+    elif type(value) in INT_TYPES:
+        value = int(value)
 
 
 def update_global_attributes(dataset, set_attributes={}, delete_attributes=[]):
