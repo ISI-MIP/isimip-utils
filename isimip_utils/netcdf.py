@@ -63,6 +63,7 @@ def convert_attribute(value):
         value = float(value)
     elif type(value) in INT_TYPES:
         value = int(value)
+    return value
 
 
 def update_global_attributes(dataset, set_attributes={}, delete_attributes=[]):
