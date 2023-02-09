@@ -33,6 +33,8 @@ def fetch_definitions(bases, path):
             logger.debug('definitions = %s', definitions)
             return definitions
 
+    raise AssertionError(f'no definitions found for {path}')
+
 
 def fetch_pattern(bases, path):
     path_components = Path(path).parts
@@ -62,6 +64,8 @@ def fetch_pattern(bases, path):
 
             return pattern
 
+    raise AssertionError(f'no pattern found for {path}')
+
 
 def fetch_schema(bases, path):
     path_components = Path(path).parts
@@ -74,6 +78,8 @@ def fetch_schema(bases, path):
             logger.debug('schema_json = %s', schema_json)
             return schema_json
 
+    raise AssertionError(f'no schema found for {path}')
+
 
 def fetch_tree(bases, path):
     path_components = Path(path).parts
@@ -85,6 +91,8 @@ def fetch_tree(bases, path):
             logger.debug('tree_path = %s', tree_path)
             logger.debug('tree_json = %s', tree_json)
             return tree_json
+
+    raise AssertionError(f'no tree found for {path}')
 
 
 def fetch_resource(location):
