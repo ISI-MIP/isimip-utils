@@ -26,6 +26,9 @@ class ISIMIPSettings(object):
     def setup(self, parser):
         args = parser.parse_args()
 
+        # store the parser for later use
+        self.parser = parser
+
         # setup env from .env file
         load_dotenv(Path().cwd() / '.env')
 
