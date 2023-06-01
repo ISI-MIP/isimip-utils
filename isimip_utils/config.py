@@ -59,8 +59,10 @@ class ISIMIPSettings(object):
         config_files = [args.config_file] + self.CONFIG_FILES
         for config_file in config_files:
             if config_file:
+                config_path = Path(config_file).expanduser()
+
                 config = configparser.ConfigParser()
-                config.read(config_file)
+                config.read(config_path)
                 if parser.prog in config:
                     return config[parser.prog]
 
