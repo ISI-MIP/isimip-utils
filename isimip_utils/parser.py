@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 
 class ArgumentParser(argparse.ArgumentParser):
 
-    CONFIG_FILES = [
+    config_file = None
+    default_config_files = [
         'isimip.conf',
         '~/.isimip.conf',
         '/etc/isimip.conf'
@@ -29,9 +30,9 @@ class ArgumentParser(argparse.ArgumentParser):
         return defaults
 
     def read_config(self):
-        for config_file in self.CONFIG_FILES:
+        config_files = [self.config_file] if self.config_file else self.default_config_files
+        for config_file in config_files:
             config_path = Path(config_file).expanduser()
-
             config = configparser.ConfigParser()
             config.read(config_path)
             if self.prog in config:
