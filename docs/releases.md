@@ -4,10 +4,10 @@ Releases
 Requirements
 ------------
 
-Install `twine`
+Install `build` and `twine`
 
 ```
-pip install twine
+pip install build twine
 ```
 
 Create `~/.pypirc`
@@ -33,7 +33,7 @@ Prepare repo
 3) Build `sdist` and `bdist_wheel`:
 
     ```
-    python setup.py sdist bdist_wheel
+    python -m build
     ```
 
 4) Check:
