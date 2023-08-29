@@ -124,3 +124,30 @@ def fetch_json(bases, path=None, extend_base=None):
 
             if json_path.exists():
                 return json.loads(open(json_path).read())
+
+
+def fetch_file(bases, path=None, extend_base=None):
+    for base in bases:
+        if urlparse(base).scheme:
+            if path is not None:
+                file_url = base.rstrip('/') + '/' + path.as_posix()
+            else:
+                file_url = base.rstrip('/')
+
+            logger.info('file_url = %s', file_url)
+            response = requests.get(file_url)
+
+            if response.status_code == 200:
+                return response.content
+
+        else:
+            file_path = Path(base).expanduser()
+            if extend_base is not None:
+                file_path /= extend_base
+            if path is not None:
+                file_path /= path
+
+            logger.debug('file_path = %s', file_path)
+
+            if file_path.exists():
+                return file_path.read()
