@@ -1,6 +1,5 @@
 import logging
 import re
-
 from pathlib import Path
 
 from .exceptions import DidNotMatch
@@ -36,7 +35,7 @@ def match_path(pattern, path, dirname_pattern_key='path', filename_pattern_key='
             f, d = filename_specifiers[key], dirname_specifiers[key]
 
             if not d.lower().startswith(f.lower()):
-                raise DidNotMatch('dirname_specifier "{}" does not match filename_specifier "{}" in {}'.format(d, f, path))
+                raise DidNotMatch(f'dirname_specifier "{d}" does not match filename_specifier "{f}" in {path}')
 
     # merge filename_specifiers and dirname_specifiers
     specifiers = {**dirname_specifiers, **filename_specifiers}
@@ -78,4 +77,4 @@ def match_string(pattern, string):
 
         return Path(match.group(0)), specifiers
     else:
-        raise DidNotMatch('No match for {} ("{}")'.format(string, pattern.pattern))
+        raise DidNotMatch(f'No match for {string} ("{pattern.pattern}")')

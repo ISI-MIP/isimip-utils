@@ -1,11 +1,10 @@
 import logging
-
 from pathlib import Path
 
 from colorlog import ColoredFormatter, StreamHandler
 
 
-class Settings(object):
+class Settings:
 
     _shared_state = {}
 
@@ -41,5 +40,5 @@ class Settings(object):
         # settings.FOO -> settings.args['FOO']
         try:
             return self.args[name]
-        except KeyError:
-            raise AttributeError
+        except KeyError as e:
+            raise AttributeError from e
