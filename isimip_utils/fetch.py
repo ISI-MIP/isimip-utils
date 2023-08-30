@@ -108,7 +108,11 @@ def fetch_json(bases, path=None, extend_base=None):
                 json_url = base.rstrip('/')
 
             logger.debug('json_url = %s', json_url)
-            response = requests.get(json_url)
+
+            try:
+                response = requests.get(json_url)
+            except requests.exceptions.ConnectionError:
+                return None
 
             if response.status_code == 200:
                 return response.json()
@@ -135,7 +139,11 @@ def fetch_file(bases, path=None, extend_base=None):
                 file_url = base.rstrip('/')
 
             logger.info('file_url = %s', file_url)
-            response = requests.get(file_url)
+
+            try:
+                response = requests.get(file_url)
+            except requests.exceptions.ConnectionError:
+                return None
 
             if response.status_code == 200:
                 return response.content
