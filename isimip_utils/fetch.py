@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 
 import requests
 
+from isimip_utils.exceptions import NotFound
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +35,7 @@ def fetch_definitions(bases, path):
             logger.debug('definitions = %s', definitions)
             return definitions
 
-    raise AssertionError(f'no definitions found for {path}')
+    raise NotFound(f'no definitions found for {path}')
 
 
 def fetch_pattern(bases, path):
@@ -46,10 +48,13 @@ def fetch_pattern(bases, path):
             logger.debug('pattern_path = %s', pattern_path)
             logger.debug('pattern_json = %s', pattern_json)
 
-            assert isinstance(pattern_json['path'], str)
-            assert isinstance(pattern_json['file'], str)
-            assert isinstance(pattern_json['dataset'], str)
-            assert isinstance(pattern_json['suffix'], list)
+            if not all([
+                isinstance(pattern_json['path'], str),
+                isinstance(pattern_json['file'], str),
+                isinstance(pattern_json['dataset'], str),
+                isinstance(pattern_json['suffix'], list)
+            ]):
+                break
 
             pattern = {
                 'path': re.compile(pattern_json['path']),
@@ -64,7 +69,7 @@ def fetch_pattern(bases, path):
 
             return pattern
 
-    raise AssertionError(f'no pattern found for {path}')
+    raise NotFound(f'no pattern found for {path}')
 
 
 def fetch_schema(bases, path):
@@ -78,7 +83,7 @@ def fetch_schema(bases, path):
             logger.debug('schema_json = %s', schema_json)
             return schema_json
 
-    raise AssertionError(f'no schema found for {path}')
+    raise NotFound(f'no schema found for {path}')
 
 
 def fetch_tree(bases, path):
@@ -92,7 +97,7 @@ def fetch_tree(bases, path):
             logger.debug('tree_json = %s', tree_json)
             return tree_json
 
-    raise AssertionError(f'no tree found for {path}')
+    raise NotFound(f'no tree found for {path}')
 
 
 def fetch_resource(location):
@@ -138,7 +143,7 @@ def fetch_file(bases, path=None, extend_base=None):
             else:
                 file_url = base.rstrip('/')
 
-            logger.info('file_url = %s', file_url)
+            logger.debug('file_url = %s', file_url)
 
             try:
                 response = requests.get(file_url)
