@@ -55,7 +55,7 @@ class ArgumentParser(argparse.ArgumentParser):
                 if os.getenv(key_upper):
                     # if the attribute is in the environment, take the value
                     setattr(default_args, key, os.getenv(key_upper))
-                elif config and config.get(key):
+                elif config and key in config:
                     # if the attribute is in the config file, take it from there
                     setattr(default_args, key, config.get(key))
 
