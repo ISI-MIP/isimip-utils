@@ -15,6 +15,9 @@ class Settings:
         return str(self.args)
 
     def setup(self, args):
+        # reset the shared state
+        self.__dict__ = self._shared_state = {}
+
         # assign args to settings object
         self.args = {key.upper(): value for key, value in args.items()}
 
