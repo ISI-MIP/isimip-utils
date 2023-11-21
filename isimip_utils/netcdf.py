@@ -3,6 +3,7 @@ from datetime import datetime
 import numpy as np
 from netCDF4 import Dataset
 
+FILL_VALUE = 1e+20
 LIST_TYPES = [np.ndarray]
 FLOAT_TYPES = [np.float32, np.float64]
 INT_TYPES = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64]
@@ -14,6 +15,60 @@ def open_dataset_read(file_path):
 
 def open_dataset_write(file_path):
     return Dataset(file_path, 'r+')
+
+
+def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
+                 time_unit='days since 1601-1-1 00:00:00',
+                 time_calendar='proleptic_gregorian', **variables):
+    ds = Dataset(file_path, 'w', format='NETCDF4_CLASSIC', diskless=diskless)
+
+    if time is not None and time is not False:
+        ds.createDimension('time', None)
+
+    ds.createDimension('lon', lon)
+    ds.createDimension('lat', lat)
+
+    if time is not None:
+        time_variable = ds.createVariable('time', 'f8', ('time',))
+        time_variable.standard_name = 'time'
+        time_variable.long_name = 'Time'
+        time_variable.units = time_unit
+        time_variable.calendar = time_calendar
+
+        if isinstance(time, np.ndarray):
+            time_variable[:] = time
+
+    lon_variable = ds.createVariable('lon', 'f8', ('lon',))
+    lon_variable.standard_name = 'longitude'
+    lon_variable.long_name = 'Longitude'
+    lon_variable.units = 'degrees_east'
+    lon_variable.axis = 'X'
+    lon_variable[:] = np.arange(-179.75, 180.25, 0.5)
+
+    lat_variable = ds.createVariable('lat', 'f8', ('lat',))
+    lat_variable.standard_name = 'latitude'
+    lat_variable.long_name = 'Latitude'
+    lat_variable.units = 'degrees_north'
+    lat_variable.axis = 'Y'
+    lat_variable[:] = np.arange(89.75, -90.25, -0.5)
+
+    for variable_name, variable_dict in variables.items():
+        long_name = variable_dict.get('long_name')
+        dtype = variable_dict.get('dtype', 'f8')
+        dimensions = variable_dict.get('dimensions', ('time', 'lat', 'lon'))
+        units = variable_dict.get('units')
+
+        if variable_name:
+            variable = ds.createVariable(variable_name, dtype, dimensions,
+                                         fill_value=FILL_VALUE, compression='zlib')
+            variable.missing_value = FILL_VALUE
+            variable.standard_name = variable_name
+            if long_name:
+                variable.long_name = long_name
+            if units:
+                variable.units = units
+
+    return ds
 
 
 def get_data_model(dataset):
