@@ -25,11 +25,15 @@ def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
     if time is not None and time is not False:
         ds.createDimension('time', None)
 
+    d_lon = 360.0 / lon
+    d_lat = 180.0 / lat
+
     ds.createDimension('lon', lon)
     ds.createDimension('lat', lat)
 
     if time is not None:
-        time_variable = ds.createVariable('time', 'f8', ('time',))
+        time_variable = ds.createVariable('time', 'f8', ('time',), fill_value=FILL_VALUE)
+        time_variable.missing_value = FILL_VALUE
         time_variable.standard_name = 'time'
         time_variable.long_name = 'Time'
         time_variable.units = time_unit
@@ -38,19 +42,21 @@ def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
         if isinstance(time, np.ndarray):
             time_variable[:] = time
 
-    lon_variable = ds.createVariable('lon', 'f8', ('lon',))
+    lon_variable = ds.createVariable('lon', 'f8', ('lon',), fill_value=FILL_VALUE)
+    lon_variable.missing_value = FILL_VALUE
     lon_variable.standard_name = 'longitude'
     lon_variable.long_name = 'Longitude'
     lon_variable.units = 'degrees_east'
     lon_variable.axis = 'X'
-    lon_variable[:] = np.arange(-179.75, 180.25, 0.5)
+    lon_variable[:] = np.arange(-180 + 0.5 * d_lon, 180, d_lon)
 
-    lat_variable = ds.createVariable('lat', 'f8', ('lat',))
+    lat_variable = ds.createVariable('lat', 'f8', ('lat',), fill_value=FILL_VALUE)
+    lat_variable.missing_value = FILL_VALUE
     lat_variable.standard_name = 'latitude'
     lat_variable.long_name = 'Latitude'
     lat_variable.units = 'degrees_north'
     lat_variable.axis = 'Y'
-    lat_variable[:] = np.arange(89.75, -90.25, -0.5)
+    lat_variable[:] = np.arange(90 - 0.5 * d_lat, -90, -d_lat)
 
     for variable_name, variable_dict in variables.items():
         long_name = variable_dict.get('long_name')
