@@ -54,9 +54,39 @@ def get_var_name(ds):
     return next(iter(ds.data_vars))
 
 
+def get_var_units(ds):
+    var_name = get_var_name(ds)
+    return ds[var_name].units
+
+
+def get_attrs(ds):
+    attrs = {}
+    for coord in ds.coords:
+        attrs[coord] = ds[coord].attrs
+    for data_var in ds.data_vars:
+        attrs[data_var] = ds[data_var].attrs
+    return attrs
+
+
+def set_attrs(ds, attrs):
+    for coord in ds.coords:
+        if coord in attrs:
+            ds[coord].attrs = attrs[coord]
+    for data_var in ds.data_vars:
+        if data_var in attrs:
+            ds[data_var].attrs = attrs[data_var]
+
+
 def convert_to_dataframe(ds):
     ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
     return ds.to_dataframe().reset_index()
+
+
+def apply_fill_value(ds):
+    for var in ds.data_vars:
+        fill_value = ds[var].attrs.get('_FillValue', 1e+20)
+        ds[var] = ds[var].where(ds[var] != fill_value)
+    return ds
 
 
 def create_mask(ds, df, layer):

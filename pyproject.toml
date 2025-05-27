@@ -20,8 +20,6 @@ classifiers = [
     'Programming Language :: Python :: 3.13',
 ]
 dependencies = [
-    "shapely",
-    "geopandas",
     "netCDF4",
     "python-dotenv",
     "requests",
@@ -35,6 +33,19 @@ dynamic = ["version"]
 Repository = "https://github.com/ISI-MIP/isimip-utils"
 
 [project.optional-dependencies]
+all = [
+    "isimip-utils[plot,shapes]"
+]
+plot = [
+    "altair[all]",
+]
+shapes = [
+    "netCDF4",
+    "python-dotenv",
+    "requests",
+    "rich",
+    "xarray",
+]
 dev = [
     "build",
     "pre-commit",

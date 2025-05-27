@@ -11,7 +11,12 @@ logger = logging.getLogger(__name__)
 
 def select_time(ds, timestamp):
     logger.info(f'select time time={timestamp}')
-    return ds.sel(time=compute_time(ds, timestamp), method='nearest')
+    time = compute_time(ds, timestamp)
+    if time < 0 or time > ds['time'].max():
+        logger.warn(f'Selected time={time} is outside the dataset.')
+        return None
+    else:
+        return ds.sel(time=time, method='nearest')
 
 
 def select_period(ds, start, end):
@@ -84,28 +89,23 @@ def mask_bbox(ds, west, east, south, north):
 
 
 def mask_mask(ds, mask_ds, mask_var='mask'):
-    logger.info('select mask')
+    logger.info('mask mask')
     return ds.where(mask_ds[mask_var] == 1)
 
 
 def compute_mean(ds, weights=None):
     logger.info('compute mean')
+
     if weights is None:
         logger.warn('no weights provided, using latitude-dependent weights')
         weights = np.sin(np.deg2rad(ds.lat + 0.25)) - np.sin(np.deg2rad(ds.lat - 0.25))
+
     return ds.weighted(weights).mean(dim=('lat', 'lon'), skipna=True).astype(np.float32)
 
 
 def count_values(ds):
     logger.info('count values')
     return ds.count(dim=('lat', 'lon')).astype(np.float32)
-
-
-def copy_attrs(ds1, ds2):
-    ds2['time'].attrs = ds1['time'].attrs
-    for var in ds1.data_vars:
-        ds2[var].attrs = ds1[var].attrs
-    return ds2
 
 
 def concat_extraction(ds1, ds2):
