@@ -54,11 +54,6 @@ def get_var_name(ds):
     return next(iter(ds.data_vars))
 
 
-def get_var_units(ds):
-    var_name = get_var_name(ds)
-    return ds[var_name].units
-
-
 def get_attrs(ds):
     attrs = {}
     for coord in ds.coords:
@@ -77,9 +72,18 @@ def set_attrs(ds, attrs):
             ds[data_var].attrs = attrs[data_var]
 
 
-def convert_to_dataframe(ds):
+def to_dataframe(ds):
     ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
-    return ds.to_dataframe().reset_index()
+
+    df = ds.to_dataframe().reset_index()
+    df.attrs['coords'] = {
+        coord: ds[coord].attrs for coord in ds.coords
+    }
+    df.attrs['data_vars'] = {
+        data_var: ds[data_var].attrs for data_var in ds.data_vars
+    }
+
+    return df
 
 
 def apply_fill_value(ds):
