@@ -19,18 +19,19 @@ def open_dataset_write(file_path):
 
 def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
                  time_unit='days since 1601-1-1 00:00:00',
-                 time_calendar='proleptic_gregorian', **variables):
+                 time_calendar='proleptic_gregorian', attrs={}, **variables):
+    # create NetCDF dataset
     ds = Dataset(file_path, 'w', format='NETCDF4_CLASSIC', diskless=diskless)
 
+    # create time dimension if time is set
     if time is not None and time is not False:
         ds.createDimension('time', None)
 
-    d_lon = 360.0 / lon
-    d_lat = 180.0 / lat
-
+    # create lon and lat dimensions
     ds.createDimension('lon', lon)
     ds.createDimension('lat', lat)
 
+    # create time variable if time is set
     if time is not None:
         time_variable = ds.createVariable('time', 'f8', ('time',), fill_value=FILL_VALUE)
         time_variable.missing_value = FILL_VALUE
@@ -42,37 +43,42 @@ def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
         if isinstance(time, np.ndarray):
             time_variable[:] = time
 
+    # create lon variable
+    lon_delta = 360.0 / lon
     lon_variable = ds.createVariable('lon', 'f8', ('lon',), fill_value=FILL_VALUE)
     lon_variable.missing_value = FILL_VALUE
     lon_variable.standard_name = 'longitude'
     lon_variable.long_name = 'Longitude'
     lon_variable.units = 'degrees_east'
     lon_variable.axis = 'X'
-    lon_variable[:] = np.arange(-180 + 0.5 * d_lon, 180, d_lon)
+    lon_variable[:] = np.arange(-180 + 0.5 * lon_delta, 180, lon_delta)
 
+    # create lat variable
+    lat_delta = 180.0 / lat
     lat_variable = ds.createVariable('lat', 'f8', ('lat',), fill_value=FILL_VALUE)
     lat_variable.missing_value = FILL_VALUE
     lat_variable.standard_name = 'latitude'
     lat_variable.long_name = 'Latitude'
     lat_variable.units = 'degrees_north'
     lat_variable.axis = 'Y'
-    lat_variable[:] = np.arange(90 - 0.5 * d_lat, -90, -d_lat)
+    lat_variable[:] = np.arange(90 - 0.5 * lat_delta, -90, -lat_delta)
 
-    for variable_name, variable_dict in variables.items():
-        long_name = variable_dict.get('long_name')
-        dtype = variable_dict.get('dtype', 'f8')
-        dimensions = variable_dict.get('dimensions', ('time', 'lat', 'lon'))
-        units = variable_dict.get('units')
+    # create a data variable for each provided variable
+    for variable_name, variable in variables.items():
 
-        if variable_name:
-            variable = ds.createVariable(variable_name, dtype, dimensions,
-                                         fill_value=FILL_VALUE, compression='zlib')
-            variable.missing_value = FILL_VALUE
-            variable.standard_name = variable_name
-            if long_name:
-                variable.long_name = long_name
-            if units:
-                variable.units = units
+        dimensions = ('time', 'lat', 'lon') if time is not None else ('lat', 'lon')
+        var = ds.createVariable(variable_name, variable.dtype, dimensions,
+                                fill_value=FILL_VALUE, compression='zlib')
+
+        # set variable attributes
+        for key, value in attrs.get(variable_name, {}).items():
+            setattr(var, key, value)
+
+        var.missing_value = np.float32(FILL_VALUE)
+
+    # set global attributes
+    for key, value in attrs.get('global', {}).items():
+        setattr(ds, key, value)
 
     return ds
 

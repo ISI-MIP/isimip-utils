@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import cftime
 import numpy as np
@@ -7,7 +8,75 @@ import xarray as xr
 logger = logging.getLogger(__name__)
 
 
+def init_dataset(lon=720, lat=360, time=None,
+                 time_unit='days since 1601-1-1 00:00:00',
+                 time_calendar='proleptic_gregorian', attrs={}, **variables):
+
+    # create coordinates
+    coords = {}
+    if time is not None:
+        coords['time'] = time
+
+    lon_delta = 360.0 / lon
+    lat_delta = 180.0 / lat
+
+    coords['lon'] = np.arange(-180 + 0.5 * lon_delta, 180, lon_delta)
+    coords['lat'] = np.arange(90 - 0.5 * lat_delta, -90, -lat_delta)
+
+    # create data variables
+    data_vars = {
+        var_name: (['time', 'lon', 'lat'], var)
+        for var_name, var in variables.items()
+    }
+
+    # create dataset
+    ds = xr.Dataset(coords=coords, data_vars=data_vars)
+
+    # set time attributes if time is set
+    if time is not None:
+        ds.coords['time'].attrs = {
+            'standard_name': 'time',
+            'long_name': 'Time',
+            'units': time_unit,
+            'calendar': time_calendar,
+            'axis': 'T',
+            '_FillValue': 1.e+20
+        }
+
+    # set lon attributes
+    ds.coords['lon'].attrs = {
+        'standard_name': 'longitude',
+        'long_name': 'Longitude',
+        'units': 'degrees_east',
+        'axis': 'X',
+        '_FillValue': 1.e+20
+    }
+
+    # set lon attributes
+    ds.coords['lat'].attrs = {
+        'standard_name': 'latitude',
+        'long_name': 'Latitude',
+        'units': 'degrees_north',
+        'axis': 'Y',
+        '_FillValue': 1.e+20
+    }
+
+    # set variable attributes
+    for data_var in ds.data_vars:
+        if data_var in attrs:
+            ds.data_vars[data_var].attrs.update(attrs[data_var])
+
+        ds.data_vars[data_var].attrs["_FillValue"] = 1.e+20
+
+    # set global attributes
+    ds.attrs = attrs.get('global', {})
+
+    return ds
+
+
 def open_dataset(path, decode_cf=False, load=False):
+    path = Path(path)
+
     if not load:
         logger.info(f'open {path.absolute()}')
     else:
@@ -35,19 +104,31 @@ def load_dataset(path, decode_cf=False):
 
 
 def write_dataset(ds, path):
-    logger.info(f'write {path.absolute()}')
+    path = Path(path)
     path.parent.mkdir(exist_ok=True, parents=True)
 
+    logger.info(f'write {path.absolute()}')
+
+    add_fill_value(ds)
+    ds = order_variables(ds)
+
+    ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=['time'])
+
+
+def order_variables(ds):
+    return ds[[*ds.coords, *ds.data_vars]]
+
+
+def add_fill_value(ds):
     for coord in ds.coords:
-        ds.coords[coord].attrs["_FillValue"] = 1.e+20
+        if '_FillValue' not in ds.coords[coord].attrs:
+            ds.coords[coord].attrs['_FillValue'] = 1.e+20
 
-    for var in ds.data_vars:
-        ds.data_vars[var].attrs["_FillValue"] = 1.e+20
-
-    # reorder the variables
-    ds = ds[[*ds.coords, *ds.data_vars]]
-
-    ds.to_netcdf(path, format='NETCDF4_CLASSIC')
+    for data_var in ds.data_vars:
+        if '_FillValue' not in ds.data_vars[data_var].attrs:
+            ds.data_vars[data_var].attrs['_FillValue'] = 1.e+20
+        if 'missing_value' not in ds.data_vars[data_var].attrs:
+            ds.data_vars[data_var].attrs['missing_value'] = 1.e+20
 
 
 def get_var_name(ds):
