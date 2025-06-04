@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -26,3 +27,12 @@ def setup_logs(log_level='WARN', log_file=None):
         file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s'))
 
         root_logger.addHandler(file_handler)
+
+
+def parse_parameters(args):
+    parameters = defaultdict(list)
+    if args:
+        for arg_string in args:
+            key, values_string = arg_string.split('=')
+            parameters[key] += values_string.split(',')
+    return parameters
