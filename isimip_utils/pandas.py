@@ -2,18 +2,18 @@ def get_var(df):
     return next(iter(df.attrs['data_vars']))
 
 
-def compute_area(df):
+def compute_mean(df, area=True):
     var = get_var(df)
     attrs = df.attrs
 
     df['year'] = df['time'].dt.year
 
-    df = df.groupby('year').agg(
-        mean=(var, 'mean'),
-        lower=(var, lambda y: y.mean() - y.std()),
-        upper=(var, lambda y: y.mean() + y.std())
-    ).reset_index()
+    kwargs = {'mean': (var, 'mean')}
+    if area:
+        kwargs['lower'] = (var, lambda y: y.mean() - y.std())
+        kwargs['upper'] = (var, lambda y: y.mean() + y.std())
 
+    df = df.groupby('year').agg(**kwargs).reset_index()
     df.attrs = attrs
 
     return df
