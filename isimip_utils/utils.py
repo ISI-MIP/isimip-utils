@@ -1,3 +1,6 @@
+from itertools import product
+
+
 def parse_filelist(filelist_file):
     if filelist_file:
         with open(filelist_file) as f:
@@ -24,3 +27,11 @@ def include_path(include, path):
         return False
     else:
         return True
+
+
+def get_permutations(parameters):
+    return list(product(*parameters.values()))
+
+
+def get_placeholders(parameters, permutation):
+    return dict(zip(parameters.keys(), permutation))
