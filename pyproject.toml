@@ -24,8 +24,7 @@ dependencies = [
     "python-dotenv",
     "requests",
     "rich",
-    "rioxarray",
-    "xarray",
+    "xarray"
 ]
 dynamic = ["version"]
 
@@ -38,13 +37,10 @@ all = [
 ]
 plot = [
     "altair[all]",
+    "palettable",
 ]
 shapes = [
-    "netCDF4",
-    "python-dotenv",
-    "requests",
-    "rich",
-    "xarray",
+    "rioxarray",
 ]
 dev = [
     "build",
