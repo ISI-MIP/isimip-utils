@@ -34,4 +34,4 @@ def get_permutations(parameters):
 
 
 def get_placeholders(parameters, permutation):
-    return dict(zip(parameters.keys(), permutation))
+    return dict(zip(parameters.keys(), permutation, strict=True))
