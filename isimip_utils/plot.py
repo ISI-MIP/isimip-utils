@@ -11,6 +11,9 @@ from isimip_utils.utils import get_permutations
 logger = logging.getLogger(__name__)
 
 
+default_color = alt.Color('steelblue')
+
+
 def enable_vegafusion():
     alt.data_transformers.enable('vegafusion')
 
@@ -43,7 +46,7 @@ def plot_time(df, interpolate=False, x=None, y=None, color=None):
             f'{get_var(df)}:Q',
             title=get_title(df)
         ),
-        color=color or alt.Color()
+        color=color or default_color
     )
 
 
@@ -53,7 +56,7 @@ def plot_mean(df, x=None, color=None):
             'year:T',
             title='Year'
         ),
-        color=color or alt.Color()
+        color=color or default_color
     )
 
     chart = base.mark_line(interpolate='step-after').encode(
