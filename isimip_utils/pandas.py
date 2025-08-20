@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def get_var(df):
     return next(iter(df.attrs['data_vars']))
 
@@ -14,6 +17,7 @@ def compute_mean(df, area=True):
         kwargs['upper'] = (var, lambda y: y.mean() + y.std())
 
     df = df.groupby('year').agg(**kwargs).reset_index()
+    df['mean'] = df['mean'].astype(np.float64)
     df.attrs = attrs
 
     return df
