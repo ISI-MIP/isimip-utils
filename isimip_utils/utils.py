@@ -35,3 +35,10 @@ def get_permutations(parameters):
 
 def get_placeholders(parameters, permutation):
     return dict(zip(parameters.keys(), permutation, strict=True))
+
+
+def join_parameters(parameters, max_count=5, max_label='various'):
+    return {
+        key: (max_label if len(values) > max_count else '+'.join(values))
+        for key, values in parameters.items()
+    }
