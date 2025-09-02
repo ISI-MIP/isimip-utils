@@ -93,14 +93,19 @@ def mask_mask(ds, mask_ds, mask_var='mask'):
     return ds.where(mask_ds[mask_var] == 1)
 
 
-def compute_mean(ds, weights=None):
-    logger.info('compute mean')
+def compute_spatial_average(ds, weights=None):
+    logger.info('compute spatial average')
 
     if weights is None:
         logger.warn('no weights provided, using latitude-dependent weights')
         weights = np.sin(np.deg2rad(ds.lat + 0.25)) - np.sin(np.deg2rad(ds.lat - 0.25))
 
     return ds.weighted(weights).mean(dim=('lat', 'lon'), skipna=True).astype(np.float32)
+
+
+def compute_temporal_average(ds):
+    logger.info('compute temporal average')
+    return ds.mean(dim='time', skipna=True).astype(np.float32)
 
 
 def count_values(ds):
