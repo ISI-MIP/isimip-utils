@@ -109,30 +109,17 @@ def write_dataset(ds, path):
 
     logger.info(f'write {path.absolute()}')
 
-    add_fill_value(ds)
+    ds = add_fill_value_to_attrs(ds)
     ds = order_variables(ds)
 
-    ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=['time'])
+    # time should be an unlimited dimension
+    unlimited_dims = ['time'] if 'time' in ds.dims else []
+
+    ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=unlimited_dims)
 
 
 def order_variables(ds):
     return ds[[*ds.coords, *ds.data_vars]]
-
-
-def add_fill_value(ds):
-    for coord in ds.coords:
-        if '_FillValue' not in ds.coords[coord].attrs:
-            ds.coords[coord].attrs['_FillValue'] = 1.e+20
-
-    for data_var in ds.data_vars:
-        if '_FillValue' not in ds.data_vars[data_var].attrs:
-            ds.data_vars[data_var].attrs['_FillValue'] = 1.e+20
-        if 'missing_value' not in ds.data_vars[data_var].attrs:
-            ds.data_vars[data_var].attrs['missing_value'] = 1.e+20
-
-
-def get_var_name(ds):
-    return next(iter(ds.data_vars))
 
 
 def get_attrs(ds):
@@ -151,10 +138,30 @@ def set_attrs(ds, attrs):
     for data_var in ds.data_vars:
         if data_var in attrs:
             ds[data_var].attrs = attrs[data_var]
+    return ds
+
+
+def add_fill_value_to_attrs(ds):
+    for coord in ds.coords:
+        if '_FillValue' not in ds.coords[coord].attrs:
+            ds.coords[coord].attrs['_FillValue'] = 1.e+20
+
+    for data_var in ds.data_vars:
+        if '_FillValue' not in ds.data_vars[data_var].attrs:
+            ds.data_vars[data_var].attrs['_FillValue'] = 1.e+20
+        if 'missing_value' not in ds.data_vars[data_var].attrs:
+            ds.data_vars[data_var].attrs['missing_value'] = 1.e+20
+    return ds
 
 
 def to_dataframe(ds):
-    ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
+    if 'time' in ds.coords:
+        ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
+
+    ds = ds.assign({
+        data_var: ds[data_var].astype('float64')
+        for data_var in ds.data_vars
+    })
 
     df = ds.to_dataframe().reset_index()
     df.attrs['coords'] = {
@@ -167,7 +174,7 @@ def to_dataframe(ds):
     return df
 
 
-def apply_fill_value(ds):
+def set_fill_value_to_nan(ds):
     for var in ds.data_vars:
         fill_value = ds[var].attrs.get('_FillValue', 1e+20)
         ds[var] = ds[var].where(ds[var] != fill_value)
