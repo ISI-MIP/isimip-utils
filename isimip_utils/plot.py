@@ -5,17 +5,23 @@ import altair as alt
 import numpy as np
 import pandas as pd
 
-from isimip_utils.pandas import get_var
+from isimip_utils.pandas import get_coord, get_coord_axis, get_coord_label, get_data_var, get_data_var_label
 from isimip_utils.utils import get_permutations
 
 logger = logging.getLogger(__name__)
 
 
-default_color = alt.Color('steelblue')
+def default_color_theme():
+    return {
+        "config": {
+            "mark": {"color": "steelblue"}
+        }
+    }
 
 
-def enable_vegafusion():
-    alt.data_transformers.enable('vegafusion')
+alt.data_transformers.enable('vegafusion')
+alt.themes.register("default_color_theme", default_color_theme)
+alt.themes.enable("default_color_theme")
 
 
 def save_plot(chart, path, *args, **kwargs):
@@ -26,127 +32,121 @@ def save_plot(chart, path, *args, **kwargs):
     chart.save(path, *args, **kwargs)
 
 
-def get_title(df):
-    var = get_var(df)
-    var_name = df.attrs['data_vars'][var].get('long_name', var)
-    var_units = df.attrs['data_vars'][var]['units']
+def plot_line(df, x=None, y=None, color=None, empty=False, **mark_kwargs):
+    if not x:
+        x_field = get_coord(df)
+        x_label = get_coord_label(df)
+        x_type = 'T' if get_coord_axis(df) == 'T' else 'Q'
+        x = alt.X(f'{x_field}:{x_type}', title=x_label)
 
-    return f'{var_name} [{var_units}]'
+    if not y:
+        y_field = get_data_var(df)
+        y_label = get_data_var_label(df)
+        y = alt.Y(f'{y_field}:Q', title=y_label)
 
+    if not color:
+        color = alt.Color()
 
-def plot_time(df, interpolate=False, x=None, y=None, color=None):
-    mark_kwargs = {'interpolate': interpolate} if interpolate else {}
+    if empty:
+        df = pd.DataFrame({x.to_dict().get('field'): [], y.to_dict().get('field'): []})
 
-    return alt.Chart(df).mark_line(**mark_kwargs).encode(
-        x=x or alt.X(
-            'time:T',
-            title='Time'
-        ),
-        y=y or alt.Y(
-            f'{get_var(df)}:Q',
-            title=get_title(df)
-        ),
-        color=color or default_color
-    )
+    # the base chart contains only the x axis
+    base = alt.Chart(df).mark_line(**mark_kwargs).encode(x=x)
 
-
-def plot_mean(df, x=None, color=None):
-    base = alt.Chart(df).encode(
-        x=x or alt.X(
-            'year:T',
-            title='Year'
-        ),
-        color=color or default_color
-    )
-
-    chart = base.mark_line(interpolate='step-after').encode(
-        y=alt.Y(
-            'mean:Q',
-            title=get_title(df)
-        )
-    )
+    chart = base.mark_line(**mark_kwargs).encode(y=y, color=color)
 
     if 'lower' in df and 'upper' in df:
-        chart += base.mark_area(interpolate='step-after', opacity=0.5).encode(
+        chart += base.mark_area(**mark_kwargs, opacity=0.5).encode(
             y='lower:Q',
-            y2='upper:Q'
+            y2='upper:Q',
+            color=color
         )
 
     return chart
 
 
-def plot_map(df, color_scale=None):
-    lon = np.sort(df['lon'].unique())
-    lat = np.sort(df['lat'].unique())
+def plot_map(df, x=None, y=None, color=None, empty=False):
+    if not x:
+        lon = np.sort(df['lon'].unique())
+        lon_size = len(lon)
+        lon_bin = float(abs(lon[1] - lon[0]))
+        lon_domain = (lon.min() - 0.5 * lon_bin, lon.max() + 0.5 * lon_bin)
+        lon_ticks = np.linspace(lon_domain[0], lon_domain[1], num=7)
 
-    lon_size = len(lon)
-    lat_size = len(lat)
-
-    lon_bin = float(abs(lon[1] - lon[0]))
-    lat_bin = float(abs(lat[1] - lat[0]))
-
-    lon_domain = (lon.min() - 0.5 * lon_bin, lon.max() + 0.5 * lon_bin)
-    lat_domain = (lat.min() - 0.5 * lat_bin, lat.max() + 0.5 * lat_bin)
-
-    lon_ticks = np.linspace(lon_domain[0], lon_domain[1], num=7)
-    lat_ticks = np.linspace(lat_domain[0], lat_domain[1], num=5)
-
-    return alt.Chart(df).mark_rect().encode(
-        x=alt.X(
+        x = alt.X(
             'lon:Q',
             title='lon',
             bin=alt.Bin(step=lon_bin),
             axis=alt.Axis(values=lon_ticks),
             scale=alt.Scale(domain=lon_domain, padding=0, round=True)
-        ),
-        y=alt.Y(
+        )
+
+    if not y:
+        lat = np.sort(df['lat'].unique())
+        lat_size = len(lat)
+        lat_bin = float(abs(lat[1] - lat[0]))
+        lat_domain = (lat.min() - 0.5 * lat_bin, lat.max() + 0.5 * lat_bin)
+        lat_ticks = np.linspace(lat_domain[0], lat_domain[1], num=5)
+
+        y = alt.Y(
             'lat:Q',
             title='lat',
             bin=alt.Bin(step=lat_bin),
             axis=alt.Axis(values=lat_ticks),
             scale=alt.Scale(domain=lat_domain, padding=0, round=True)
-        ),
-        color=alt.Color(
-            f'{get_var(df)}:Q',
-            title=get_title(df),
-            scale=color_scale or alt.Scale()
         )
-    ).properties(
+
+    if not color:
+        color_field = get_data_var(df)
+        color_label = get_data_var_label(df)
+
+        color = alt.Color(
+            f'{color_field}:Q',
+            title=color_label,
+            scale=alt.Scale()
+        )
+
+    if empty:
+        df = pd.DataFrame({'lon': [], 'lat': [], color.to_dict().get('field'): []})
+
+    return alt.Chart(df).mark_rect().encode(x=x, y=y, color=color).properties(
         width=lon_size,
         height=lat_size
     )
 
 
-def plot_empty(x=None, y=None):
-    return alt.Chart(pd.DataFrame({'time': [], 'y': []})).mark_point().encode(
-        x=x or alt.X('time:T', title=None),
-        y=y or alt.Y('y:Q', title=None)
-    )
-
-
-def plot_grid(parameters, plots, empty=None):
-    keys = list(parameters.keys())
-
+def plot_grid(parameters, plots, empty_plot, layer=True):
     rows = []
     prev_permutation = None
     for permutation in get_permutations(parameters):
+
         # start a new row
         if prev_permutation is None or permutation[0] != prev_permutation[0]:
             row = []
-            rows.append((f'{keys[0]} = {permutation[0]}', row))
+            rows.append((permutation[0], row))
 
         # start a new column
         if prev_permutation is None or permutation[1] != prev_permutation[1]:
             column = []
-            row.append((f'{keys[1]} = {permutation[1]}', column))
+            row.append((permutation[1], column))
 
-        column.append(plots.get(permutation, empty or plot_empty()))
+        plot = plots.get(permutation, empty_plot)
+        if not layer:
+            plot = plot.properties(title=' '.join(permutation[2:]))
+
+        column.append(plot)
 
         prev_permutation = permutation
 
     chart = alt.vconcat(*[
         alt.hconcat(*[
             alt.layer(*column, title=column_title).resolve_scale(
+                x='shared',
+                y='shared',
+                color='shared'
+            )
+            if layer else
+            alt.vconcat(*column, title=column_title).resolve_scale(
                 x='shared',
                 y='shared',
                 color='shared'
