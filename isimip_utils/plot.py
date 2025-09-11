@@ -119,14 +119,13 @@ def plot_grid(parameters, plots, empty_plot, layer=True):
     rows = []
     prev_permutation = None
     for permutation in get_permutations(parameters):
-
-        # start a new row
         if prev_permutation is None or permutation[0] != prev_permutation[0]:
-            row = []
+            # start a new row
+            column = []
+            row = [(permutation[1], column)]
             rows.append((permutation[0], row))
-
-        # start a new column
-        if prev_permutation is None or permutation[1] != prev_permutation[1]:
+        elif prev_permutation is None or permutation[1] != prev_permutation[1]:
+            # start a new column
             column = []
             row.append((permutation[1], column))
 
