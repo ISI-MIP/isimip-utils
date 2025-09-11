@@ -7,6 +7,8 @@ import xarray as xr
 
 logger = logging.getLogger(__name__)
 
+_dataset_cache = {}
+
 
 def init_dataset(lon=720, lat=360, time=None,
                  time_unit='days since 1601-1-1 00:00:00',
@@ -74,8 +76,14 @@ def init_dataset(lon=720, lat=360, time=None,
     return ds
 
 
-def open_dataset(path, decode_cf=False, load=False):
+def open_dataset(path, decode_cf=False, load=False, cache=False):
     path = Path(path)
+
+    if load and cache:
+        key = (path, decode_cf)
+        if key in _dataset_cache:
+            logger.info(f'use cached {path.absolute()}')
+            return _dataset_cache[key]
 
     if not load:
         logger.info(f'open {path.absolute()}')
@@ -96,11 +104,18 @@ def open_dataset(path, decode_cf=False, load=False):
     if load:
         ds.load()
 
+    if load and cache:
+        _dataset_cache[key] = ds
+
     return ds
 
 
 def load_dataset(path, decode_cf=False):
     return open_dataset(path, decode_cf=False, load=True)
+
+
+def cache_dataset(path, decode_cf=False):
+    return open_dataset(path, decode_cf=False, load=True, cache=True)
 
 
 def write_dataset(ds, path):
@@ -116,6 +131,11 @@ def write_dataset(ds, path):
     unlimited_dims = ['time'] if 'time' in ds.dims else []
 
     ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=unlimited_dims)
+
+
+def clear_cache():
+    for key in _dataset_cache.keys():
+        del _dataset_cache[key]
 
 
 def order_variables(ds):
