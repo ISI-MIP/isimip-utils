@@ -42,3 +42,26 @@ def join_parameters(parameters, max_count=5, max_label='various'):
         key: (max_label if len(values) > max_count else '+'.join(values))
         for key, values in parameters.items()
     }
+
+
+def copy_placeholders(*placeholder_args, **kwargs):
+    placeholders = {
+        key: value
+        for placeholder_arg in placeholder_args
+        for key, value in placeholder_arg.items()
+    }
+    placeholders.update(**kwargs)
+    return placeholders
+
+
+def update_year(placeholders, key, year, operator):
+    if operator not in ('<', '>'):
+        raise RuntimeError(f'operator "{operator}" not supported')
+
+    current = placeholders.get(key)
+    if (
+        (current is None) or
+        (operator == '>' and int(current) < int(year)) or
+        (operator == '<' and int(current) > int(year))
+    ):
+        placeholders[key] = year
