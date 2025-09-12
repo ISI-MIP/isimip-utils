@@ -118,16 +118,20 @@ def plot_map(df, x=None, y=None, color=None, empty=False):
 def plot_grid(parameters, plots, empty_plot, layer=True):
     rows = []
     prev_permutation = None
+
     for permutation in get_permutations(parameters):
-        if prev_permutation is None or permutation[0] != prev_permutation[0]:
+        row_title = permutation[0] if len(permutation) > 0 else ''
+        column_title = permutation[1] if len(permutation) > 1 else ''
+
+        if prev_permutation is None or (len(permutation) > 0 and permutation[0] != prev_permutation[0]):
             # start a new row
             column = []
-            row = [(permutation[1], column)]
-            rows.append((permutation[0], row))
-        elif prev_permutation is None or permutation[1] != prev_permutation[1]:
+            row = [(row_title, column)]
+            rows.append((column_title, row))
+        elif prev_permutation is None or (len(permutation) > 1 and permutation[1] != prev_permutation[1]):
             # start a new column
             column = []
-            row.append((permutation[1], column))
+            row.append((column_title, column))
 
         plot = plots.get(permutation, empty_plot)
         if not layer:
