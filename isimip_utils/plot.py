@@ -126,8 +126,8 @@ def plot_grid(parameters, plots, empty_plot, layer=True):
         if prev_permutation is None or (len(permutation) > 0 and permutation[0] != prev_permutation[0]):
             # start a new row
             column = []
-            row = [(row_title, column)]
-            rows.append((column_title, row))
+            row = [(column_title, column)]
+            rows.append((row_title, row))
         elif prev_permutation is None or (len(permutation) > 1 and permutation[1] != prev_permutation[1]):
             # start a new column
             column = []
