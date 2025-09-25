@@ -32,6 +32,14 @@ def save_plot(chart, path, *args, **kwargs):
     chart.save(path, *args, **kwargs)
 
 
+def get_plot_title(permutation):
+    return {
+        "text": ' · '.join(permutation),
+        "fontSize": 16,
+        "dy": -10
+    }
+
+
 def plot_line(df, x=None, y=None, color=None, empty=False, **mark_kwargs):
     if not x:
         x_field = get_coord(df)
