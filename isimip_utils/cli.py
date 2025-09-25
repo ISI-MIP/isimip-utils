@@ -24,6 +24,8 @@ def setup_logs(log_level='WARN', log_file=None):
     root_logger.addHandler(RichHandler())
 
     if log_file is not None:
+        Path(log_file).parent.mkdir(exist_ok=True, parents=True)
+
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(log_level)
         file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s'))
