@@ -12,16 +12,17 @@ def setup_env():
     load_dotenv(Path().cwd() / '.env')
 
 
-def setup_logs(log_level='WARN', log_file=None):
+def setup_logs(log_level='WARN', log_file=None, log_console=True):
     log_level = log_level.upper()
 
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
 
-    rich_handler = RichHandler()
-    rich_handler.setLevel(log_level)
+    if log_console:
+        rich_handler = RichHandler()
+        rich_handler.setLevel(log_level)
 
-    root_logger.addHandler(RichHandler())
+        root_logger.addHandler(RichHandler())
 
     if log_file is not None:
         Path(log_file).parent.mkdir(exist_ok=True, parents=True)
