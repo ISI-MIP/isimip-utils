@@ -123,7 +123,7 @@ def plot_map(df, x=None, y=None, color=None, empty=False):
     )
 
 
-def plot_grid(parameters, plots, empty_plot, layer=True):
+def plot_grid(parameters, plots, empty_plot, layer=True, x='shared', y='shared', color='shared'):
     rows = []
     prev_permutation = None
 
@@ -151,26 +151,12 @@ def plot_grid(parameters, plots, empty_plot, layer=True):
 
     chart = alt.vconcat(*[
         alt.hconcat(*[
-            alt.layer(*column, title=column_title).resolve_scale(
-                x='shared',
-                y='shared',
-                color='shared'
-            )
+            alt.layer(*column, title=column_title)
             if layer else
-            alt.vconcat(*column, title=column_title).resolve_scale(
-                x='shared',
-                y='shared',
-                color='shared'
-            )
+            alt.vconcat(*column, title=column_title).resolve_scale(x=x, y=y, color=color)
             for column_title, column in row
-        ], title=row_title).resolve_scale(
-            x='shared',
-            y='shared'
-        )
+        ], title=row_title).resolve_scale(x=x, y=y)
         for row_title, row in rows
-    ]).resolve_scale(
-        x='shared',
-        y='shared'
-    )
+    ]).resolve_scale(x=x, y=y)
 
     return chart
