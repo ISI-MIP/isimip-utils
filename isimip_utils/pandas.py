@@ -66,7 +66,7 @@ def group_by_day(df):
     df = df.groupby('day')[data_var].mean().reset_index()
     df.attrs['coords'] = {'day': { 'long_name': 'Day of the year'}}
 
-    return normalize(df, data_var)
+    return df
 
 
 def group_by_month(df):
@@ -76,12 +76,19 @@ def group_by_month(df):
     df = df.groupby('month')[data_var].mean().reset_index()
     df.attrs['coords'] = {'month': {'long_name': 'Month of the year'}}
 
-    return normalize(df, data_var)
+    return df
 
 
-def normalize(df, var):
-    mean, std =  df[var].mean(), df[var].std()
-    df[var] = (df[var] - mean) / (std if std > 0 else 1.0)
+def normalize(df):
+    data_var = get_data_var(df)
+    data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
+
+    mean, std =  df[data_var].mean(), df[data_var].std()
+    df[data_var] = (df[data_var] - mean) / (std if std > 0 else 1.0)
+    if data_var_long_name:
+        df.attrs['data_vars'][data_var]['long_name'] = f'Normalized {data_var_long_name.lower()}'
+    del df.attrs['data_vars'][data_var]['units']
+
     return df
 
 
