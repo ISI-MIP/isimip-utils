@@ -40,23 +40,45 @@ def get_plot_title(permutation):
     }
 
 
-def plot_line(df, x=None, y=None, color=None, empty=False, **mark_kwargs):
-    if not x:
-        x_field = get_coord(df)
-        x_label = get_coord_label(df)
-        x_type = 'T' if get_coord_axis(df) == 'T' else 'Q'
-        x = alt.X(f'{x_field}:{x_type}', title=x_label)
+def plot_line(df, x_field=None, x_label=None, x_type=None,
+                  y_field=None, y_label=None, y_type=None, y_format=None,
+                  color_field=None, color_type=None, color_range=None,
+                  legend=True, empty=False, **mark_kwargs):
 
-    if not y:
-        y_field = get_data_var(df)
-        y_label = get_data_var_label(df)
-        y = alt.Y(f'{y_field}:Q', title=y_label)
+    x_field = x_field or get_coord(df)
+    x_label = x_label or get_coord_label(df)
+    x_type = x_type or ('T' if get_coord_axis(df) == 'T' else 'Q')
+    x = alt.X(
+        f'{x_field}:{x_type}',
+        title=x_label
+    )
 
-    if not color:
-        color = alt.Color()
+    y_field = y_field or get_data_var(df)
+    y_label = y_label or get_data_var_label(df)
+    y_type = y_type or 'Q'
+    y = alt.Y(
+        f'{y_field}:{y_type}',
+        title=y_label,
+        axis=alt.Axis(format=y_format) if y_format else alt.Axis(),
+        scale=alt.Scale(zero=False, nice=False)
+    )
 
     if empty:
-        df = pd.DataFrame({x.to_dict().get('field'): [], y.to_dict().get('field'): []})
+        color = alt.Color()
+    else:
+        color_field = color_field or 'label'
+        color_type = color_type or 'N'
+        color = alt.Color(
+            f'{color_field}:{color_type}',
+            scale=alt.Scale(range=color_range) if color_range else alt.Scale(),
+            legend=alt.Legend(title='Legend', padding=10) if legend else None
+        )
+
+    if empty:
+        df = pd.DataFrame({
+            x_field: df[x_field],
+            y_field: np.full_like(df[y_field], np.nan, dtype=float)
+        })
 
     # the base chart contains only the x axis
     base = alt.Chart(df).mark_line(**mark_kwargs).encode(x=x)
