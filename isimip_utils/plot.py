@@ -95,49 +95,59 @@ def plot_line(df, x_field=None, x_label=None, x_type=None,
     return chart
 
 
-def plot_map(df, x=None, y=None, color=None, empty=False):
-    if not x:
-        lon = np.sort(df['lon'].unique())
-        lon_size = len(lon)
-        lon_bin = float(abs(lon[1] - lon[0]))
-        lon_domain = (lon.min() - 0.5 * lon_bin, lon.max() + 0.5 * lon_bin)
-        lon_ticks = np.linspace(lon_domain[0], lon_domain[1], num=7)
+def plot_map(df, color_field=None, color_type=None, color_range=None, color_label=None, color_format=None,
+                 bin_size=1, legend=True, empty=False):
+    lon = np.sort(df['lon'].unique())
+    lon_size = len(lon)
+    lon_bin = float(abs(lon[1] - lon[0])) * bin_size
+    lon_domain = (lon.min() - 0.5 * lon_bin, lon.max() + 0.5 * lon_bin)
+    lon_ticks = np.linspace(lon_domain[0], lon_domain[1], num=7)
 
-        x = alt.X(
-            'lon:Q',
-            title='lon',
-            bin=alt.Bin(step=lon_bin),
-            axis=alt.Axis(values=lon_ticks),
-            scale=alt.Scale(domain=lon_domain, padding=0, round=True)
-        )
+    x = alt.X(
+        'lon:Q',
+        title='lon',
+        bin=alt.Bin(step=lon_bin),
+        axis=alt.Axis(values=lon_ticks),
+        scale=alt.Scale(domain=lon_domain, padding=0, round=True)
+    )
 
-    if not y:
-        lat = np.sort(df['lat'].unique())
-        lat_size = len(lat)
-        lat_bin = float(abs(lat[1] - lat[0]))
-        lat_domain = (lat.min() - 0.5 * lat_bin, lat.max() + 0.5 * lat_bin)
-        lat_ticks = np.linspace(lat_domain[0], lat_domain[1], num=5)
+    lat = np.sort(df['lat'].unique())
+    lat_size = len(lat)
+    lat_bin = float(abs(lat[1] - lat[0])) * bin_size
+    lat_domain = (lat.min() - 0.5 * lat_bin, lat.max() + 0.5 * lat_bin)
+    lat_ticks = np.linspace(lat_domain[0], lat_domain[1], num=5)
 
-        y = alt.Y(
-            'lat:Q',
-            title='lat',
-            bin=alt.Bin(step=lat_bin),
-            axis=alt.Axis(values=lat_ticks),
-            scale=alt.Scale(domain=lat_domain, padding=0, round=True)
-        )
+    y = alt.Y(
+        'lat:Q',
+        title='lat',
+        bin=alt.Bin(step=lat_bin),
+        axis=alt.Axis(values=lat_ticks),
+        scale=alt.Scale(domain=lat_domain, padding=0, round=True)
+    )
 
-    if not color:
-        color_field = get_data_var(df)
-        color_label = get_data_var_label(df)
+    if empty:
+        color = alt.Color()
+    else:
+        color_field = color_field or get_data_var(df)
+        color_type = color_type or 'Q'
+        color_label = color_label or get_data_var_label(df)
+
+        color_legend_args = {}
+        if color_format:
+            color_legend_args['format'] = color_format
 
         color = alt.Color(
-            f'{color_field}:Q',
+            f'{color_field}:{color_type}',
             title=color_label,
-            scale=alt.Scale()
+            scale=alt.Scale(range=color_range) if color_range else alt.Scale(),
+            legend=alt.Legend(padding=10, **color_legend_args) if legend else None
         )
 
     if empty:
-        df = pd.DataFrame({'lon': [], 'lat': [], color.to_dict().get('field'): []})
+        df = pd.DataFrame({
+            'lon': [],
+            'lat': []
+        })
 
     return alt.Chart(df).mark_rect().encode(x=x, y=y, color=color).properties(
         width=lon_size,
