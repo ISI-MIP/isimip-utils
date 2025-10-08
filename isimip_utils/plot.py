@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 
@@ -30,6 +31,66 @@ def save_plot(chart, path, *args, **kwargs):
     logger.info(f'save {path.absolute()}')
     path.parent.mkdir(exist_ok=True, parents=True)
     chart.save(path, *args, **kwargs)
+
+
+def save_index(index_path):
+    index_json = json.dumps([
+        str(p.name) for p in index_path.parent.iterdir() if p.suffix in ['.svg', '.png']
+    ], indent=2).replace('\n', '\n    ')
+
+    logger.info(f'save {index_path.absolute()}')
+    index_path.with_suffix('.html').write_text(r'''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { height: 100%; margin: 0; font-family: sans-serif; font-size: 12px; }
+    div.buttons { display: flex; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid silver; }
+    a { display: block; flex-grow: 1; line-height: 20px; text-decoration: none; color: #0681be }
+    a:hover { text-decoration: underline; }
+    button { background: none; border: none; height: 20px; padding: 0; margin: 0; cursor: pointer; }
+    button:not(:disabled):hover { color: #0681be }
+    div.img { display: flex; justify-content: center; margin-top: 10px; }
+    img { display: block; max-width: calc(100vw - 20px); max-height: calc(100vh - 80px); }
+  </style>
+</head>
+<body>
+  <div class="buttons">
+    <a id="file" target="_blank"></a>
+    <span id="count"></span>
+    <button id="prev">◀ Prev</button>
+    <button id="next">Next ▶</button>
+  </div>
+  <div class="img">
+    <img id="img" />
+  </div>
+  <script>
+    const e = ['img', 'file', 'count', 'prev', 'next'].reduce(
+      (obj, id) => ({...obj, [id]: document.getElementById(id)}), {}
+    )
+
+    const files = {{ index_json }}
+
+    let index = 0
+
+    const update = () => {
+      e.img.src = files[index]
+      e.file.href = files[index]
+      e.file.innerHTML = files[index]
+      e.count.innerHTML = `${index + 1} of ${files.length}`
+      e.prev.disabled = index === 0
+      e.next.disabled = index === files.length - 1
+    }
+
+    e.prev.onclick = () => { if (index > 0) index--; update(); }
+    e.next.onclick = () => { if (index < files.length - 1) index++; update(); }
+
+    update()
+  </script>
+</body>
+</html>'''.replace(r'{{ index_json }}', index_json).strip())
 
 
 def get_plot_title(permutation):
