@@ -12,24 +12,28 @@ def setup_env():
     load_dotenv(Path().cwd() / '.env')
 
 
-def setup_logs(log_level='WARN', log_file=None, log_console=True):
+def setup_logs(log_level='WARN', log_file=None, log_console=True, log_rich=True):
     log_level = log_level.upper()
 
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
 
     if log_console:
-        rich_handler = RichHandler()
-        rich_handler.setLevel(log_level)
+        if log_rich:
+            console_handler = RichHandler()
+        else:
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 
-        root_logger.addHandler(RichHandler())
+        console_handler.setLevel(log_level)
+        root_logger.addHandler(console_handler)
 
     if log_file is not None:
         Path(log_file).parent.mkdir(exist_ok=True, parents=True)
 
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(log_level)
-        file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s'))
+        file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 
         root_logger.addHandler(file_handler)
 
