@@ -125,6 +125,7 @@ def write_dataset(ds, path):
     logger.info(f'write {path.absolute()}')
 
     ds = add_fill_value_to_attrs(ds)
+    ds = set_nan_to_fill_value(ds)
     ds = order_variables(ds)
 
     # time should be an unlimited dimension
@@ -198,6 +199,13 @@ def set_fill_value_to_nan(ds):
     for var in ds.data_vars:
         fill_value = ds[var].attrs.get('_FillValue', 1e+20)
         ds[var] = ds[var].where(ds[var] != fill_value)
+    return ds
+
+
+def set_nan_to_fill_value(ds):
+    for var in ds.data_vars:
+        fill_value = ds[var].attrs.get('_FillValue', 1e+20)
+        ds[var] = ds[var].where(~np.isnan(ds[var]), fill_value)
     return ds
 
 
