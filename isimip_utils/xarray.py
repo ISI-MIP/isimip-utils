@@ -7,8 +7,6 @@ import xarray as xr
 
 logger = logging.getLogger(__name__)
 
-_dataset_cache = {}
-
 
 def init_dataset(lon=720, lat=360, time=None,
                  time_unit='days since 1601-1-1 00:00:00',
@@ -76,19 +74,10 @@ def init_dataset(lon=720, lat=360, time=None,
     return ds
 
 
-def open_dataset(path, decode_cf=False, load=False, cache=False):
+def open_dataset(path, decode_cf=False, load=False):
     path = Path(path)
 
-    if load and cache:
-        key = (path, decode_cf)
-        if key in _dataset_cache:
-            logger.info(f'use cached {path.absolute()}')
-            return _dataset_cache[key]
-
-    if not load:
-        logger.info(f'open {path.absolute()}')
-    else:
-        logger.info(f'load {path.absolute()}')
+    logger.info(f'load {path.absolute()}' if load else f'open {path.absolute()}')
 
     try:
         ds = xr.open_dataset(path, decode_cf=decode_cf)
@@ -104,18 +93,7 @@ def open_dataset(path, decode_cf=False, load=False, cache=False):
     if load:
         ds.load()
 
-    if load and cache:
-        _dataset_cache[key] = ds
-
     return ds
-
-
-def load_dataset(path, decode_cf=False):
-    return open_dataset(path, decode_cf=False, load=True)
-
-
-def cache_dataset(path, decode_cf=False):
-    return open_dataset(path, decode_cf=False, load=True, cache=True)
 
 
 def write_dataset(ds, path):
@@ -132,11 +110,6 @@ def write_dataset(ds, path):
     unlimited_dims = ['time'] if 'time' in ds.dims else []
 
     ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=unlimited_dims)
-
-
-def clear_cache():
-    for key in _dataset_cache.keys():
-        del _dataset_cache[key]
 
 
 def order_variables(ds):
@@ -175,26 +148,6 @@ def add_fill_value_to_attrs(ds):
     return ds
 
 
-def to_dataframe(ds):
-    if 'time' in ds.coords:
-        ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
-
-    ds = ds.assign({
-        data_var: ds[data_var].astype('float64')
-        for data_var in ds.data_vars
-    })
-
-    df = ds.to_dataframe().reset_index()
-    df.attrs['coords'] = {
-        coord: ds[coord].attrs for coord in ds.coords
-    }
-    df.attrs['data_vars'] = {
-        data_var: ds[data_var].attrs for data_var in ds.data_vars
-    }
-
-    return df
-
-
 def set_fill_value_to_nan(ds):
     for var in ds.data_vars:
         fill_value = ds[var].attrs.get('_FillValue', 1e+20)
@@ -228,3 +181,23 @@ def create_mask(ds, df, layer):
     mask_ds = mask_ds.rio.clip([geometry], drop=False)
     mask_ds = mask_ds.drop_vars('spatial_ref')
     return mask_ds
+
+
+def to_dataframe(ds):
+    if 'time' in ds.coords:
+        ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
+
+    ds = ds.assign({
+        data_var: ds[data_var].astype('float64')
+        for data_var in ds.data_vars
+    })
+
+    df = ds.to_dataframe().reset_index()
+    df.attrs['coords'] = {
+        coord: ds[coord].attrs for coord in ds.coords
+    }
+    df.attrs['data_vars'] = {
+        data_var: ds[data_var].attrs for data_var in ds.data_vars
+    }
+
+    return df
