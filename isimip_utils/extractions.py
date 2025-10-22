@@ -88,9 +88,9 @@ def mask_bbox(ds, west, east, south, north):
     return ds
 
 
-def mask_mask(ds, mask_ds, mask_var='mask'):
+def mask_mask(ds, mask_ds, mask_var='mask', inverse=False):
     logger.info(f'mask {mask_var}')
-    return ds.where(mask_ds[mask_var] == 1)
+    return ds.where(mask_ds[mask_var] == 0 if inverse else 1)
 
 
 def compute_spatial_average(ds, weights=None):
