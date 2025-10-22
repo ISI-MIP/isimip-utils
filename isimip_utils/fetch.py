@@ -81,7 +81,7 @@ def fetch_schema(path, protocol_locations=PROTOCOL_LOCATIONS):
         protocol_locations = [protocol_locations]
 
     for protocol_location in protocol_locations:
-        for schema_path, schema_json in find_json(protocol_location, 'pattern', path):
+        for schema_path, schema_json in find_json(protocol_location, 'schema', path):
             if schema_json:
                 logger.debug('schema_path = %s', schema_path)
                 logger.debug('schema_json = %s', schema_json)
@@ -95,7 +95,7 @@ def fetch_tree(path, protocol_locations=PROTOCOL_LOCATIONS):
         protocol_locations = [protocol_locations]
 
     for protocol_location in protocol_locations:
-        for tree_path, tree_json in find_json(protocol_location, 'pattern', path):
+        for tree_path, tree_json in find_json(protocol_location, 'tree', path):
             if tree_json:
                 logger.debug('tree_path = %s', tree_path)
                 logger.debug('tree_json = %s', tree_json)

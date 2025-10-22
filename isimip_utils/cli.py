@@ -2,10 +2,13 @@ import argparse
 import logging
 import os
 import tomllib
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
 from rich.logging import RichHandler
+
+from .exceptions import ConfigError
 
 
 def setup_env():
@@ -47,6 +50,17 @@ def parse_dict(string):
 
 def parse_list(string):
     return [value.strip() for value in string.split(',')]
+
+
+def parse_version(value):
+    try:
+        return datetime.strptime(value, '%Y%m%d')
+    except ValueError as e:
+        raise argparse.ArgumentTypeError('incorrect format, should be YYYYMMDD') from e
+
+
+def parse_path(value):
+    return Path(value).expanduser()
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -92,11 +106,34 @@ class ArgumentParser(argparse.ArgumentParser):
             if not action.required and action.dest != 'help':
                 key = action.dest
                 key_upper = key.upper()
+
+                value = None
+
                 if os.getenv(key_upper):
                     # if the attribute is in the environment, take the value
-                    setattr(default_args, key, os.getenv(key_upper))
+                    value = os.getenv(key_upper)
+                    # setattr(default_args, key, )
                 elif config and key in config:
                     # if the attribute is in the config file, take it from there
-                    setattr(default_args, key, config.get(key))
+                    value = config.get(key)
+
+                if value is not None:
+                    # apply action.type
+                    if action.type is not None:
+                        try:
+                            value = action.type(value)
+                        except argparse.ArgumentTypeError as e:
+                            raise ConfigError(f'argument "{key}": {e}') from e
+
+                    # check action.action
+                    if action.const and value not in [True, False]:
+                        raise ConfigError(f'argument "{key}": invalid choice "{value}" (choose true or false)')
+
+                    # check action.choices
+                    if action.choices and value not in action.choices:
+                        raise ConfigError(f'argument "{key}": invalid choice "{value}" (choose from {action.choices})')
+
+                    # add the key and value to the default_args
+                    setattr(default_args, key, value)
 
         return default_args
