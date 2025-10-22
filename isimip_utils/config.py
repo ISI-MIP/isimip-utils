@@ -1,16 +1,8 @@
 import logging
 
+from .utils import Singleton
+
 logger = logging.getLogger(__name__)
-
-
-class Singleton:
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.data = {}
-        return cls._instance
 
 
 class Settings(Singleton):

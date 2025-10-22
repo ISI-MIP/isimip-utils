@@ -1,6 +1,16 @@
 from itertools import product
 
 
+class Singleton:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.data = {}
+        return cls._instance
+
+
 def parse_filelist(filelist_file):
     if filelist_file:
         with open(filelist_file) as f:
