@@ -15,12 +15,19 @@ This package contains common functionality for different ISIMIP tools, namely:
 It comprises of:
 
 * `isimip_utils.checksum`: Functions to compute the SHA-512 checksum of a file.
+* `isimip_utils.cli`: Command-line interface utilities for argument parsing and configuration.
 * `isimip_utils.config`: A settings class to combine input from `argparse`, the environment (via `python-dotenv`) and config files.
+* `isimip_utils.decorators`: Decorators including a cached property implementation.
 * `isimip_utils.exceptions`: Custom exceptions for ISIMIP tools.
+* `isimip_utils.extractions`: Data extraction and manipulation utilities for xarray datasets.
 * `isimip_utils.fetch`: Functions to fetch files from the machine-actionable ISIMIP protocols.
-* `isimip_utils.netcdf`: Functions to open and read NetCDF files.
-* `isimip_utils.patterns`: Functions to match the file names and extract the ISIMIP specifiers.
+* `isimip_utils.files`: File search utilities with regex pattern matching.
+* `isimip_utils.netcdf`: Functions to open and read NetCDF files using netCDF4.
+* `isimip_utils.pandas`: DataFrame utilities for ISIMIP data processing.
+* `isimip_utils.patterns`: Functions to match file names and extract ISIMIP specifiers.
+* `isimip_utils.plot`: Plotting utilities using Altair for data visualization.
 * `isimip_utils.utils`: Additional utility functions.
+* `isimip_utils.xarray`: Functions for working with xarray datasets.
 
 
 Setup
