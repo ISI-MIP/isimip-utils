@@ -1,10 +1,9 @@
 Releases
 ========
 
-Requirements
-------------
+[PyPI](https://pypi.org/) releases of this repository, are done using the following steps:
 
-Install `build` and `twine`
+### Install `build` and `twine`
 
 ```
 pip install build twine
@@ -23,8 +22,8 @@ username: ...
 password: ...
 ```
 
-Prepare repo
-------------
+
+### Prepare repo
 
 1) Ensure tests are passing.
 
@@ -43,8 +42,7 @@ Prepare repo
     ```
 
 
-Release on Test PyPI
---------------------
+### Release on Test PyPI
 
 1) Upload with `twine` to Test PyPI:
 
@@ -52,11 +50,10 @@ Release on Test PyPI
     twine upload -r testpypi dist/*
     ```
 
-2) Check at https://test.pypi.org/project/isimip-utils/.
+2) Check at <https://test.pypi.org/project/isimip-utils/>.
 
 
-Release on PyPI
----------------
+### Release on PyPI
 
 1) Upload with `twine` to PyPI:
 
@@ -64,14 +61,13 @@ Release on PyPI
     twine upload dist/*
     ```
 
-2) Check at https://pypi.org/project/isimip-utils/.
+2) Check at <https://pypi.org/project/isimip-utils/>.
 
 
-Create release on GitHub
-------------------------
+### Create release on GitHub
 
 1) Commit local changes.
 
 2) Push changes.
 
-3) Create release on https://github.com/ISI-MIP/isimip-utils/releases).
+3) Create release on <https://github.com/ISI-MIP/isimip-utils/releases>.

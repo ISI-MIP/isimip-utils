@@ -49,6 +49,11 @@ dev = [
     "ruff",
     "twine",
 ]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings-python",
+]
 
 [tool.setuptools]
 packages = ["isimip_utils"]
