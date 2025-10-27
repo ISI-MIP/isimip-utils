@@ -1,16 +1,33 @@
+"""Functions for working with xarray datasets for ISIMIP data."""
 import logging
 from pathlib import Path
 
 import cftime
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 logger = logging.getLogger(__name__)
 
 
-def init_dataset(lon=720, lat=360, time=None,
-                 time_unit='days since 1601-1-1 00:00:00',
-                 time_calendar='proleptic_gregorian', attrs={}, **variables):
+def init_dataset(lon: int = 720, lat: int = 360, time: np.array | None = None,
+                 time_unit: str = 'days since 1601-1-1 00:00:00',
+                 time_calendar: str = 'proleptic_gregorian',
+                 attrs: dict = {}, **variables: list[np.array]) -> xr.Dataset:
+    """Initialize a new xarray dataset with standard ISIMIP dimensions.
+
+    Args:
+        lon (int): Number of longitude points (default: 720).
+        lat (int): Number of latitude points (default: 360).
+        time (np.array | None): Time coordinate array, or None to omit time dimension (default: None).
+        time_unit (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
+        time_calendar (str): Calendar type for time coordinate (default: 'proleptic_gregorian').
+        attrs (dict): Dictionary of attributes for variables and global attributes.
+        **variables (list[np.array]): Data variables to include in the dataset.
+
+    Returns:
+        Initialized xarray Dataset with coordinates and data variables.
+    """
 
     # create coordinates
     coords = {}
@@ -74,7 +91,21 @@ def init_dataset(lon=720, lat=360, time=None,
     return ds
 
 
-def open_dataset(path, decode_cf=False, load=False):
+def open_dataset(path: str | Path, decode_cf: bool = False, load: bool = False) -> xr.Dataset:
+    """Open a NetCDF dataset using xarray.
+
+    Args:
+        path (str | Path): Path to the NetCDF file.
+        decode_cf (bool): Whether to decode CF conventions (default: False).
+        load (bool): Whether to load data into memory immediately (default: False).
+
+    Returns:
+        Xarray Dataset object.
+
+    Note:
+        Handles non-standard time units like 'growing seasons' by converting
+        them to 'common_years' with a 365_day calendar.
+    """
     path = Path(path)
 
     logger.info(f'load {path.absolute()}' if load else f'open {path.absolute()}')
@@ -96,7 +127,17 @@ def open_dataset(path, decode_cf=False, load=False):
     return ds
 
 
-def write_dataset(ds, path):
+def write_dataset(ds: xr.Dataset, path: str | Path):
+    """Write an xarray dataset to a NetCDF file.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to write.
+        path (str | Path): Path where the NetCDF file will be written.
+
+    Note:
+        Automatically adds fill values, converts NaN to fill values,
+        orders variables, and sets time as unlimited dimension.
+    """
     path = Path(path)
     path.parent.mkdir(exist_ok=True, parents=True)
 
@@ -112,11 +153,27 @@ def write_dataset(ds, path):
     ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=unlimited_dims)
 
 
-def order_variables(ds):
+def order_variables(ds: xr.Dataset) -> xr.Dataset:
+    """Reorder dataset variables with coordinates first, then data variables.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to reorder.
+
+    Returns:
+        Dataset with reordered variables.
+    """
     return ds[[*ds.coords, *ds.data_vars]]
 
 
-def get_attrs(ds):
+def get_attrs(ds: xr.Dataset) -> dict:
+    """Get all attributes from coordinates and data variables.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset.
+
+    Returns:
+        Dictionary mapping variable names to their attributes.
+    """
     attrs = {}
     for coord in ds.coords:
         attrs[coord] = ds[coord].attrs
@@ -125,7 +182,16 @@ def get_attrs(ds):
     return attrs
 
 
-def set_attrs(ds, attrs):
+def set_attrs(ds: xr.Dataset, attrs: dict) -> xr.Dataset:
+    """Set attributes on coordinates and data variables.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to modify.
+        attrs (dict): Dictionary mapping variable names to their attributes.
+
+    Returns:
+        Modified dataset with updated attributes.
+    """
     for coord in ds.coords:
         if coord in attrs:
             ds[coord].attrs = attrs[coord]
@@ -135,7 +201,15 @@ def set_attrs(ds, attrs):
     return ds
 
 
-def add_fill_value_to_attrs(ds):
+def add_fill_value_to_attrs(ds: xr.Dataset) -> xr.Dataset:
+    """Add _FillValue and missing_value attributes if not present.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to modify.
+
+    Returns:
+        Dataset with fill value attributes added (default: 1.e+20).
+    """
     for coord in ds.coords:
         if '_FillValue' not in ds.coords[coord].attrs:
             ds.coords[coord].attrs['_FillValue'] = 1.e+20
@@ -148,21 +222,50 @@ def add_fill_value_to_attrs(ds):
     return ds
 
 
-def set_fill_value_to_nan(ds):
+def set_fill_value_to_nan(ds: xr.Dataset) -> xr.Dataset:
+    """Replace fill values with NaN in data variables.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to modify.
+
+    Returns:
+        Dataset with fill values replaced by NaN.
+    """
     for var in ds.data_vars:
         fill_value = ds[var].attrs.get('_FillValue', 1e+20)
         ds[var] = ds[var].where(ds[var] != fill_value)
     return ds
 
 
-def set_nan_to_fill_value(ds):
+def set_nan_to_fill_value(ds: xr.Dataset) -> xr.Dataset:
+    """Replace NaN values with fill values in data variables.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to modify.
+
+    Returns:
+        Dataset with NaN values replaced by fill values.
+    """
     for var in ds.data_vars:
         fill_value = ds[var].attrs.get('_FillValue', 1e+20)
         ds[var] = ds[var].where(~np.isnan(ds[var]), fill_value)
     return ds
 
 
-def create_mask(ds, df, layer):
+def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
+    """Create a spatial mask from a geometry layer.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset with lat/lon coordinates.
+        df (pd.DataFrame): GeoDataFrame with geometry column.
+        layer (int): Index of the layer to use from the GeoDataFrame.
+
+    Returns:
+        Xarray dataset with a 'mask' variable clipped to the geometry.
+
+    Note:
+        Requires geopandas and rioxarray to be installed.
+    """
     import shapely.geometry
     logger.info('create mask')
 
@@ -183,7 +286,20 @@ def create_mask(ds, df, layer):
     return mask_ds
 
 
-def to_dataframe(ds):
+def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
+    """Convert an xarray Dataset to a pandas DataFrame.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to convert.
+
+    Returns:
+        Pandas DataFrame with coordinates as columns and data variables as columns.
+            Attributes are preserved in df.attrs['coords'] and df.attrs['data_vars'].
+
+    Note:
+        Time coordinates are converted to datetime64[ns] format.
+        Data variables are converted to float64.
+    """
     if 'time' in ds.coords:
         ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
 

@@ -1,31 +1,84 @@
-def get_coord(df):
+"""Pandas DataFrame utilities for ISIMIP data."""
+import pandas as pd
+
+
+def get_coord(df: pd.DataFrame) -> str:
+    """Get the first coordinate name from DataFrame attributes.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'coords' in attrs.
+
+    Returns:
+        Name of the first coordinate.
+    """
     return next(iter(df.attrs['coords']))
 
 
-def get_coord_label(df):
+def get_coord_label(df: pd.DataFrame) -> str:
+    """Get a formatted label for the coordinate with units.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'coords' in attrs.
+
+    Returns:
+        Formatted string like "Coordinate Name [units]" or just the name if no units.
+    """
     coord = get_coord(df)
     name = df.attrs['coords'][coord].get('long_name', coord)
     units = df.attrs['coords'][coord].get('units')
     return f'{name} [{units}]' if units else name
 
 
-def get_coord_axis(df):
+def get_coord_axis(df: pd.DataFrame) -> str | None:
+    """Get the axis attribute for the coordinate.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'coords' in attrs.
+
+    Returns:
+        Axis attribute (e.g., 'T', 'X', 'Y'), or None if not set.
+    """
     coord = get_coord(df)
     return df.attrs['coords'][coord].get('axis')
 
 
-def get_data_var(df):
+def get_data_var(df: pd.DataFrame) -> str:
+    """Get the first data variable name from DataFrame attributes.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'data_vars' in attrs.
+
+    Returns:
+        Name of the first data variable.
+    """
     return next(iter(df.attrs['data_vars']))
 
 
-def get_data_var_label(df):
+def get_data_var_label(df: pd.DataFrame) -> str:
+    """Get a formatted label for the data variable with units.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'data_vars' in attrs.
+
+    Returns:
+        Formatted string like "Variable Name [units]" or just the name if no units.
+    """
     data_var = get_data_var(df)
     data_var_name = df.attrs['data_vars'][data_var].get('long_name', data_var)
     data_var_units = df.attrs['data_vars'][data_var].get('units')
     return f'{data_var_name} [{data_var_units}]' if data_var_units else data_var_name
 
 
-def compute_average(df, area=True):
+def compute_average(df: pd.DataFrame, area: bool = True) -> pd.DataFrame:
+    """Compute yearly average with optional standard deviation bounds.
+
+    Args:
+        df (pd.DataFrame): DataFrame with time column and data variable.
+        area (bool): Whether to include lower/upper bounds using std (default: True).
+
+    Returns:
+        DataFrame with yearly aggregated data.
+    """
     data_var = get_data_var(df)
     data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
     data_var_units = df.attrs['data_vars'][data_var].get('units')
@@ -59,7 +112,15 @@ def compute_average(df, area=True):
     return df
 
 
-def group_by_day(df):
+def group_by_day(df: pd.DataFrame) -> pd.DataFrame:
+    """Group data by day of year and compute mean.
+
+    Args:
+        df (pd.DataFrame): DataFrame with time column and data variable.
+
+    Returns:
+        DataFrame grouped by day of year (1-365/366).
+    """
     data_var = get_data_var(df)
 
     df['day'] = df['time'].dt.dayofyear
@@ -69,7 +130,15 @@ def group_by_day(df):
     return df
 
 
-def group_by_month(df):
+def group_by_month(df: pd.DataFrame) -> pd.DataFrame:
+    """Group data by month and compute mean.
+
+    Args:
+        df (pd.DataFrame): DataFrame with time column and data variable.
+
+    Returns:
+        DataFrame grouped by month (1-12).
+    """
     data_var = get_data_var(df)
 
     df['month'] = df['time'].dt.month
@@ -79,7 +148,15 @@ def group_by_month(df):
     return df
 
 
-def normalize(df):
+def normalize(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize data variable using z-score normalization.
+
+    Args:
+        df (pd.DataFrame): DataFrame with data variable to normalize.
+
+    Returns:
+        DataFrame with normalized data variable (mean=0, std=1).
+    """
     data_var = get_data_var(df)
     data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
 
@@ -92,6 +169,15 @@ def normalize(df):
     return df
 
 
-def create_label(df, labels):
+def create_label(df: pd.DataFrame, labels: list[str]) -> pd.DataFrame:
+    """Add a label column to DataFrame by joining label strings.
+
+    Args:
+        df (pd.DataFrame): DataFrame to add label to.
+        labels (list[str]): List of label strings to join with spaces.
+
+    Returns:
+        DataFrame with added 'label' column.
+    """
     df['label'] = ' '.join(labels)
     return df

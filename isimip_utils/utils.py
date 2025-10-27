@@ -1,17 +1,34 @@
+"""Additional utility functions for ISIMIP tools."""
 from itertools import product
+from pathlib import Path
+from typing import Any
 
 
 class Singleton:
-    _instance = None
+    """Base class for implementing the singleton pattern.
 
-    def __new__(cls):
+    Ensures only one instance of a class exists. Subclasses will share
+    a single instance with a 'data' attribute initialized as an empty dict.
+    """
+    _instance: Any = None
+
+    def __new__(cls) -> 'Singleton':
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.data = {}
         return cls._instance
 
 
-def parse_filelist(filelist_file):
+def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
+    """Parse a filelist file into a set of file paths.
+
+    Args:
+        filelist_file (str | Path | None): Path to file containing list of paths (one per line).
+            Lines starting with '#' are treated as comments.
+
+    Returns:
+        Set of file paths, or None if filelist_file is None/empty.
+    """
     if filelist_file:
         with open(filelist_file) as f:
             filelist = {line for line in f.read().splitlines() if (line and not line.startswith('#'))}
@@ -21,7 +38,17 @@ def parse_filelist(filelist_file):
     return filelist
 
 
-def exclude_path(exclude, path):
+def exclude_path(exclude: list[str] | None, path: Path | str) -> bool:
+    """Check if a path should be excluded based on exclude patterns.
+
+    Args:
+        exclude (list[str] | None): List of exclude patterns (strings). Path is excluded if it
+            starts with any pattern.
+        path (Path | str): Path to check for exclusion.
+
+    Returns:
+        True if path should be excluded, False otherwise.
+    """
     if exclude:
         for exclude_string in exclude:
             if str(path).startswith(exclude_string):
@@ -29,7 +56,17 @@ def exclude_path(exclude, path):
     return False
 
 
-def include_path(include, path):
+def include_path(include: list[str] | None, path: Path | str) -> bool:
+    """Check if a path should be included based on include patterns.
+
+    Args:
+        include (list[str] | None): List of include patterns (strings). Path is included if it
+            starts with any pattern, or if include list is None/empty.
+        path (Path | str): Path to check for inclusion.
+
+    Returns:
+        True if path should be included, False otherwise.
+    """
     if include:
         for include_string in include:
             if str(path).startswith(include_string):
@@ -39,22 +76,59 @@ def include_path(include, path):
         return True
 
 
-def get_permutations(parameters):
+def get_permutations(parameters: dict[str, list]) -> list[tuple]:
+    """Generate all permutations from parameter value lists.
+
+    Args:
+        parameters (dict[str, list]): Dictionary mapping parameter names to lists of values.
+
+    Returns:
+        List of tuples representing all possible combinations of parameter values.
+    """
     return list(product(*parameters.values()))
 
 
-def get_placeholders(parameters, permutation):
+def get_placeholders(parameters: dict[str, list], permutation: tuple) -> dict:
+    """Convert a permutation tuple into a dictionary of placeholders.
+
+    Args:
+        parameters (dict[str, list]): Dictionary mapping parameter names to lists of values.
+        permutation (tuple): Tuple of values representing one permutation.
+
+    Returns:
+        Dictionary mapping parameter names to their values in this permutation.
+    """
     return dict(zip(parameters.keys(), permutation, strict=True))
 
 
-def join_parameters(parameters, max_count=5, max_label='various'):
+def join_parameters(parameters: dict[str, list[str]], max_count: int = 5,
+                    max_label: str = 'various') -> dict[str, str]:
+    """Join parameter values into strings, with fallback for large value sets.
+
+    Args:
+        parameters (dict[str, list[str]]): Dictionary mapping parameter names to lists of values.
+        max_count (int): Maximum number of values to join (default: 5).
+        max_label (str): Label to use when value count exceeds max_count (default: 'various').
+
+    Returns:
+        Dictionary mapping parameter names to joined strings or max_label.
+    """
     return {
         key: (max_label if len(values) > max_count else '+'.join(values))
         for key, values in parameters.items()
     }
 
 
-def copy_placeholders(*placeholder_args, **kwargs):
+def copy_placeholders(*placeholder_args: dict, **kwargs: Any) -> dict:
+    """Merge multiple placeholder dictionaries and additional kwargs.
+
+    Args:
+        *placeholder_args (dict): Variable number of placeholder dictionaries to merge.
+        **kwargs (Any): Additional key-value pairs to add to the result.
+
+    Returns:
+        Dictionary containing all merged placeholders.
+    """
     placeholders = {
         key: value
         for placeholder_arg in placeholder_args
@@ -64,7 +138,21 @@ def copy_placeholders(*placeholder_args, **kwargs):
     return placeholders
 
 
-def update_year(placeholders, key, year, operator):
+def update_year(placeholders: dict, key: str, year: int | str, operator: str) -> None:
+    """Update a year placeholder based on comparison operator.
+
+    Args:
+        placeholders (dict): Dictionary of placeholders to update.
+        key (str): Key in placeholders dictionary to update.
+        year (int | str): Year value to compare/set.
+        operator (str): Comparison operator ('<' for minimum, '>' for maximum).
+
+    Raises:
+        RuntimeError: If operator is not '<' or '>'.
+
+    Note:
+        Updates placeholders[key] in-place if condition is met.
+    """
     if operator not in ('<', '>'):
         raise RuntimeError(f'operator "{operator}" not supported')
 

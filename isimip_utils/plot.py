@@ -1,6 +1,8 @@
+"""Plotting utilities using Altair for ISIMIP data visualization."""
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 import altair as alt
 import numpy as np
@@ -12,7 +14,7 @@ from isimip_utils.utils import get_permutations
 logger = logging.getLogger(__name__)
 
 
-def default_color_theme():
+def default_color_theme() -> dict:
     return {
         "config": {
             "mark": {"color": "steelblue"}
@@ -25,7 +27,15 @@ alt.themes.register("default_color_theme", default_color_theme)
 alt.themes.enable("default_color_theme")
 
 
-def save_plot(chart, path, *args, **kwargs):
+def save_plot(chart: alt.Chart, path: str | Path, *args: Any, **kwargs: Any) -> None:
+    """Save an Altair chart to a file.
+
+    Args:
+        chart (alt.Chart): Altair chart to save.
+        path (str | Path): Output file path.
+        *args (Any): Additional positional arguments for chart.save().
+        **kwargs (Any): Additional keyword arguments for chart.save().
+    """
     path = Path(path)
 
     logger.info(f'save {path.absolute()}')
@@ -33,7 +43,14 @@ def save_plot(chart, path, *args, **kwargs):
     chart.save(path, *args, **kwargs)
 
 
-def save_index(index_path):
+def save_index(index_path: Path) -> None:
+    """Save an HTML index file for browsing plot images.
+
+    Creates an interactive HTML page for viewing SVG/PNG files in a directory.
+
+    Args:
+        index_path (Path): Path where the index.html file will be saved.
+    """
     index_json = json.dumps([
         str(p.name) for p in index_path.parent.iterdir() if p.suffix in ['.svg', '.png']
     ], indent=2).replace('\n', '\n    ')
@@ -93,7 +110,15 @@ def save_index(index_path):
 </html>'''.replace(r'{{ index_json }}', index_json).strip())
 
 
-def get_plot_title(permutation):
+def get_plot_title(permutation: tuple) -> dict:
+    """Create a plot title from a permutation tuple.
+
+    Args:
+        permutation (tuple): Tuple of strings to join as title.
+
+    Returns:
+        Dictionary with Altair title configuration.
+    """
     return {
         "text": ' · '.join(permutation),
         "fontSize": 16,
@@ -101,10 +126,32 @@ def get_plot_title(permutation):
     }
 
 
-def plot_line(df, x_field=None, x_label=None, x_type=None,
-                  y_field=None, y_label=None, y_type=None, y_format=None,
-                  color_field=None, color_type=None, color_range=None,
-                  legend=True, empty=False, **mark_kwargs):
+def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None = None,
+              x_type: str | None = None, y_field: str | None = None, y_label: str | None = None,
+              y_type: str | None = None, y_format: str | None = None, color_field: str | None = None,
+              color_type: str | None = None, color_range: list | None = None, legend: bool = True,
+              empty: bool = False, **mark_kwargs: Any) -> alt.Chart:
+    """Create a line plot from a DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame to plot.
+        x_field (str | None): Column name for x-axis (default: auto-detect from attrs).
+        x_label (str | None): Label for x-axis (default: auto-detect from attrs).
+        x_type (str | None): Altair type for x-axis (default: 'T' for time, 'Q' for quantitative).
+        y_field (str | None): Column name for y-axis (default: auto-detect from attrs).
+        y_label (str | None): Label for y-axis (default: auto-detect from attrs).
+        y_type (str | None): Altair type for y-axis (default: 'Q').
+        y_format (str | None): Format string for y-axis values.
+        color_field (str | None): Column name for color encoding (default: 'label').
+        color_type (str | None): Altair type for color (default: 'N').
+        color_range (list | None): Custom color range for scale.
+        legend (bool): Whether to show legend (default: True).
+        empty (bool): Whether to create an empty plot with NaN values (default: False).
+        **mark_kwargs (Any): Additional keyword arguments for mark_line().
+
+    Returns:
+        Altair Chart object with line plot (and optional area for lower/upper bounds).
+    """
 
     x_field = x_field or get_coord(df)
     x_label = x_label or get_coord_label(df)
@@ -156,8 +203,26 @@ def plot_line(df, x_field=None, x_label=None, x_type=None,
     return chart
 
 
-def plot_map(df, color_field=None, color_type=None, color_range=None, color_label=None, color_format=None,
-                 bin_size=1, legend=True, empty=False):
+def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str | None = None,
+             color_range: list | None = None, color_label: str | None = None,
+             color_format: str | None = None, bin_size: int = 1, legend: bool = True,
+             empty: bool = False) -> alt.Chart:
+    """Create a geographic map plot from a DataFrame with lat/lon coordinates.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'lat' and 'lon' columns.
+        color_field (str | None): Column name for color encoding (default: auto-detect from attrs).
+        color_type (str | None): Altair type for color (default: 'Q').
+        color_range (list | None): Custom color range for scale.
+        color_label (str | None): Label for color legend (default: auto-detect from attrs).
+        color_format (str | None): Format string for color legend values.
+        bin_size (int): Bin size for aggregating grid cells (default: 1).
+        legend (bool): Whether to show legend (default: True).
+        empty (bool): Whether to create an empty plot (default: False).
+
+    Returns:
+        Altair Chart object with rectangular heatmap.
+    """
     lon = np.sort(df['lon'].unique())
     lon_size = len(lon)
     lon_bin = float(abs(lon[1] - lon[0])) * bin_size
@@ -216,7 +281,22 @@ def plot_map(df, color_field=None, color_type=None, color_range=None, color_labe
     )
 
 
-def plot_grid(parameters, plots, empty_plot, layer=True, x='shared', y='shared', color='shared'):
+def plot_grid(parameters: dict, plots: dict, empty_plot: alt.Chart, layer: bool = True,
+              x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
+    """Create a grid of plots organized by parameter permutations.
+
+    Args:
+        parameters (dict): Dictionary of parameters with lists of values.
+        plots (dict): Dictionary mapping permutation tuples to Chart objects.
+        empty_plot (alt.Chart): Chart to use when a permutation has no data.
+        layer (bool): Whether to layer plots or concatenate vertically (default: True).
+        x (str): Scale resolution for x-axis ('shared', 'independent', default: 'shared').
+        y (str): Scale resolution for y-axis ('shared', 'independent', default: 'shared').
+        color (str): Scale resolution for color ('shared', 'independent', default: 'shared').
+
+    Returns:
+        Altair Chart object with grid layout.
+    """
     rows = []
     prev_permutation = None
 

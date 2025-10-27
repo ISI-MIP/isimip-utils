@@ -1,4 +1,7 @@
+"""Functions to open and read NetCDF files using netCDF4."""
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 from netCDF4 import Dataset
@@ -9,17 +12,49 @@ FLOAT_TYPES = [np.float32, np.float64]
 INT_TYPES = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64]
 
 
-def open_dataset_read(file_path):
+def open_dataset(file_path: str | Path) -> Dataset:
+    """Open a NetCDF dataset in read-only mode.
+
+    Args:
+        file_path (str | Path): Path to the NetCDF file.
+
+    Returns:
+        NetCDF4 Dataset object opened in read mode.
+    """
     return Dataset(file_path, 'r')
 
 
-def open_dataset_write(file_path):
+def open_dataset_write(file_path: str | Path) -> Dataset:
+    """Open a NetCDF dataset in read/write mode.
+
+    Args:
+        file_path (str | Path): Path to the NetCDF file.
+
+    Returns:
+        NetCDF4 Dataset object opened in read/write mode.
+    """
     return Dataset(file_path, 'r+')
 
 
-def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
-                 time_unit='days since 1601-1-1 00:00:00',
-                 time_calendar='proleptic_gregorian', attrs={}, **variables):
+def init_dataset(file_path: str | Path, diskless: bool = False, lon: int = 720, lat: int = 360,
+                 time: None | np.ndarray = None, time_unit: str = 'days since 1601-1-1 00:00:00',
+                 time_calendar: str = 'proleptic_gregorian', attrs: dict = {}, **variables: Any) -> Dataset:
+    """Initialize a new NetCDF4 dataset with standard dimensions and variables.
+
+    Args:
+        file_path (str | Path): Path where the NetCDF file will be created.
+        diskless (bool): If True, create dataset in memory (default: False).
+        lon (int): Number of longitude points (default: 720).
+        lat (int): Number of latitude points (default: 360).
+        time (None | np.ndarray): Time dimension configuration (default: None).
+        time_unit (str): Units for the time dimension (default: 'days since 1601-1-1 00:00:00').
+        time_calendar (str): Calendar type for time dimension (default: 'proleptic_gregorian').
+        attrs (dict): Dictionary of attributes for variables and global attributes.
+        **variables (Any): Data variables to create in the dataset.
+
+    Returns:
+        Initialized NetCDF4 Dataset object.
+    """
     # create NetCDF dataset
     ds = Dataset(file_path, 'w', format='NETCDF4_CLASSIC', diskless=diskless)
 
@@ -83,11 +118,27 @@ def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
     return ds
 
 
-def get_data_model(dataset):
+def get_data_model(dataset: Dataset) -> str:
+    """Get the data model of a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+
+    Returns:
+        String representing the data model (e.g., 'NETCDF4', 'NETCDF4_CLASSIC').
+    """
     return dataset.data_model
 
 
-def get_dimensions(dataset):
+def get_dimensions(dataset: Dataset) -> dict[str, int]:
+    """Get dimensions from a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+
+    Returns:
+        Dictionary mapping dimension names to their sizes.
+    """
     dimensions = {}
     for dimension_name, dimension in dataset.dimensions.items():
         dimensions[dimension_name] = dimension.size
@@ -95,7 +146,16 @@ def get_dimensions(dataset):
     return dimensions
 
 
-def get_variables(dataset, convert=False):
+def get_variables(dataset: Dataset, convert: bool = False) -> dict[str, Any]:
+    """Get variables and their attributes from a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+        convert (bool): If True, convert numpy types to Python types (default: False).
+
+    Returns:
+        Dictionary mapping variable names to their attributes and dimensions.
+    """
     variables = {}
     for variable_name, variable in dataset.variables.items():
 
@@ -111,7 +171,16 @@ def get_variables(dataset, convert=False):
     return variables
 
 
-def get_global_attributes(dataset, convert=False):
+def get_global_attributes(dataset: Dataset, convert: bool = False) -> dict[str, Any]:
+    """Get global attributes from a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+        convert (bool): If True, convert numpy types to Python types (default: False).
+
+    Returns:
+        Dictionary of global attributes.
+    """
     if convert:
         global_attributes = {}
         for key, value in dataset.__dict__.items():
@@ -122,7 +191,15 @@ def get_global_attributes(dataset, convert=False):
     return global_attributes
 
 
-def convert_attribute(value):
+def convert_attribute(value: Any) -> Any:
+    """Convert numpy types to Python native types.
+
+    Args:
+        value (Any): Value to convert (may be numpy array, float, int, or other type).
+
+    Returns:
+        Converted value with Python native types.
+    """
     if type(value) in LIST_TYPES:
         value = [convert_attribute(v) for v in value]
     elif type(value) in FLOAT_TYPES:
@@ -132,7 +209,14 @@ def convert_attribute(value):
     return value
 
 
-def update_global_attributes(dataset, set_attributes={}, delete_attributes=[]):
+def update_global_attributes(dataset: Dataset, set_attributes: dict = {}, delete_attributes: list = []) -> None:
+    """Update global attributes of a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+        set_attributes (dict): Dictionary of attributes to set or update.
+        delete_attributes (list): List of attribute names to delete.
+    """
     for attr in dataset.__dict__:
         if attr in delete_attributes:
             dataset.delncattr(attr)
@@ -141,7 +225,15 @@ def update_global_attributes(dataset, set_attributes={}, delete_attributes=[]):
         dataset.setncattr(attr, value2string(value))
 
 
-def value2string(value):
+def value2string(value: Any) -> str:
+    """Convert a value to string representation.
+
+    Args:
+        value (Any): Value to convert. Datetime objects get ISO format with 'Z' suffix.
+
+    Returns:
+        String representation of the value.
+    """
     if isinstance(value, datetime):
         return value.isoformat() + 'Z',
     else:
