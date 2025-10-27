@@ -30,7 +30,7 @@ class Settings(Singleton):
         else:
             self._settings[name] = value
 
-    def dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the settings as a dictionary.
 
         Returns:

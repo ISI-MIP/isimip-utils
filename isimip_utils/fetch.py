@@ -19,6 +19,7 @@ PROTOCOL_LOCATIONS = [
     'https://protocol2.isimip.org',
 ]
 
+
 def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
     """Fetch definitions from ISIMIP protocol locations.
 
@@ -54,7 +55,7 @@ def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PR
                 logger.debug('definitions = %s', definitions)
                 return definitions
 
-    raise NotFound(f'no definitions found for {path}')
+    raise NotFound(f'No definitions found for {path}.')
 
 
 def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
@@ -101,7 +102,7 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
 
                 return pattern
 
-    raise NotFound(f'no pattern found for {path}')
+    raise NotFound(f'No pattern found for {path}.')
 
 
 def fetch_schema(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> Any:
@@ -127,7 +128,7 @@ def fetch_schema(path: str | Path, protocol_locations: str | list[str] = PROTOCO
                 logger.debug('schema_json = %s', schema_json)
                 return schema_json
 
-    raise NotFound(f'no schema found for {path}')
+    raise NotFound(f'No schema found for {path}.')
 
 
 def fetch_tree(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> Any:
@@ -153,7 +154,16 @@ def fetch_tree(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_
                 logger.debug('tree_json = %s', tree_json)
                 return tree_json
 
-    raise NotFound(f'no tree found for {path}')
+    raise NotFound(f'No tree found for {path}.')
+
+
+def fetch_resource(resource_location: str | Path) -> dict:
+    if urlparse(resource_location).scheme:
+        return fetch_json(resource_location)
+    else:
+        return load_json(resource_location)
+
+    raise NotFound(f'No resource found at {resource_location}.')
 
 
 def find_json(protocol_location: str, sub_location: str, path: str | Path) -> Generator[tuple[Path, Any], None, None]:

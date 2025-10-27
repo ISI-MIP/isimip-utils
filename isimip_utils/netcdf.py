@@ -12,7 +12,7 @@ FLOAT_TYPES = [np.float32, np.float64]
 INT_TYPES = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64]
 
 
-def open_dataset(file_path: str | Path) -> Dataset:
+def open_dataset_read(file_path: str | Path) -> Dataset:
     """Open a NetCDF dataset in read-only mode.
 
     Args:

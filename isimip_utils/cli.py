@@ -79,20 +79,21 @@ def parse_list(string: str) -> list[str]:
     return [value.strip() for value in string.split(',')]
 
 
-def parse_version(value: str) -> datetime:
+def parse_version(value: str) -> str:
     """Parse a version string in YYYYMMDD format.
 
     Args:
         value (str): Version string in YYYYMMDD format.
 
     Returns:
-        Parsed datetime object.
+        Version string in YYYYMMDD format.
 
     Raises:
         argparse.ArgumentTypeError: If format is incorrect.
     """
     try:
-        return datetime.strptime(value, '%Y%m%d')
+        datetime.strptime(value, '%Y%m%d')
+        return value
     except ValueError as e:
         raise argparse.ArgumentTypeError('incorrect format, should be YYYYMMDD') from e
 

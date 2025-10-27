@@ -10,20 +10,20 @@ import xarray as xr
 logger = logging.getLogger(__name__)
 
 
-def init_dataset(lon: int = 720, lat: int = 360, time: np.array | None = None,
+def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
                  time_unit: str = 'days since 1601-1-1 00:00:00',
                  time_calendar: str = 'proleptic_gregorian',
-                 attrs: dict = {}, **variables: list[np.array]) -> xr.Dataset:
+                 attrs: dict = {}, **variables: np.ndarray) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
 
     Args:
         lon (int): Number of longitude points (default: 720).
         lat (int): Number of latitude points (default: 360).
-        time (np.array | None): Time coordinate array, or None to omit time dimension (default: None).
+        time (np.ndarray | None): Time coordinate array, or None to omit time dimension (default: None).
         time_unit (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
         time_calendar (str): Calendar type for time coordinate (default: 'proleptic_gregorian').
         attrs (dict): Dictionary of attributes for variables and global attributes.
-        **variables (list[np.array]): Data variables to include in the dataset.
+        **variables (np.ndarray): Data variables to include in the dataset.
 
     Returns:
         Initialized xarray Dataset with coordinates and data variables.
