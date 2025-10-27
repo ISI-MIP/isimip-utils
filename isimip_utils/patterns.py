@@ -1,6 +1,7 @@
 """Functions to match file names and extract ISIMIP specifiers."""
 import logging
 import re
+from collections.abc import Iterable
 from pathlib import Path
 
 from .exceptions import DidNotMatch
@@ -155,3 +156,22 @@ def match_string(pattern: re.Pattern, string: str) -> tuple[Path, dict]:
         return Path(match.group(0)), specifiers
     else:
         raise DidNotMatch(f'No match for {string} ("{pattern.pattern}")')
+
+
+def find_files(pattern: re.Pattern, file_iter: Iterable[Path]) -> list[dict]:
+    """Find files matching a regex pattern from an iterator.
+
+    Args:
+        pattern (re.Pattern): Compiled regular expression pattern to match against file paths.
+        file_iter (Iterable[Path]): Iterator over file paths to search through.
+
+    Returns:
+        List of dictionaries containing 'path' and any named groups from the regex match.
+    """
+    files = []
+    for path in sorted(file_iter):
+        match = pattern.search(str(path))
+        if match:
+            files.append(dict(path=path, **match.groupdict()))
+
+    return files
