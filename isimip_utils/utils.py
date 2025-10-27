@@ -1,4 +1,5 @@
 """Additional utility functions for ISIMIP tools."""
+from collections.abc import Callable
 from itertools import product
 from pathlib import Path
 from typing import Any
@@ -19,23 +20,32 @@ class Singleton:
         return cls._instance
 
 
-def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
-    """Parse a filelist file into a set of file paths.
+class cached_property:
+    """Decorator that converts a method into a cached property.
 
-    Args:
-        filelist_file (str | Path | None): Path to file containing list of paths (one per line).
-            Lines starting with '#' are treated as comments.
+    The property value is computed once and then cached as an instance attribute.
+    Subsequent accesses return the cached value without re-computing.
 
-    Returns:
-        Set of file paths, or None if filelist_file is None/empty.
+    Simplified version of
+    [Django's cached_property](https://github.com/django/django/blob/main/django/utils/functional.py).
     """
-    if filelist_file:
-        with open(filelist_file) as f:
-            filelist = {line for line in f.read().splitlines() if (line and not line.startswith('#'))}
-    else:
-        filelist = None
 
-    return filelist
+    name: str | None = None
+
+    def __init__(self, func: Callable) -> None:
+        self.func = func
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        if self.name is None:
+            self.name = name
+        else:
+            raise TypeError("Cannot assign the same cached_property to two different names")
+
+    def __get__(self, instance: Any, cls: type | None = None) -> Any:
+        if instance is None:
+            return self
+        value = instance.__dict__[self.name] = self.func(instance)
+        return value
 
 
 def exclude_path(exclude: list[str] | None, path: Path | str) -> bool:
