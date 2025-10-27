@@ -109,6 +109,25 @@ def parse_path(value: str) -> Path:
     return Path(value).expanduser()
 
 
+def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
+    """Parse a filelist file into a set of file paths.
+
+    Args:
+        filelist_file (str | Path | None): Path to file containing list of paths (one per line).
+            Lines starting with '#' are treated as comments.
+
+    Returns:
+        Set of file paths, or None if filelist_file is None/empty.
+    """
+    if filelist_file:
+        with open(filelist_file) as f:
+            filelist = {line for line in f.read().splitlines() if (line and not line.startswith('#'))}
+    else:
+        filelist = None
+
+    return filelist
+
+
 class ArgumentParser(argparse.ArgumentParser):
     """Extended ArgumentParser that reads defaults from config files and environment.
 
