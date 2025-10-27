@@ -127,6 +127,25 @@ def open_dataset(path: str | Path, decode_cf: bool = False, load: bool = False) 
     return ds
 
 
+def load_dataset(path: str | Path, decode_cf: bool = False) -> xr.Dataset:
+    """Open a NetCDF dataset using xarray and load data into memory immediately.
+
+    Args:
+        path (str | Path): Path to the NetCDF file.
+        decode_cf (bool): Whether to decode CF conventions (default: False).
+
+    Returns:
+        Xarray Dataset object.
+
+    Note:
+        Handles non-standard time units like 'growing seasons' by converting
+        them to 'common_years' with a 365_day calendar.
+
+        This is a shortcut for `open_dataset(path, decode_cf, load=True)`.
+    """
+    return open_dataset(path, decode_cf, load=True)
+
+
 def write_dataset(ds: xr.Dataset, path: str | Path):
     """Write an xarray dataset to a NetCDF file.
 
