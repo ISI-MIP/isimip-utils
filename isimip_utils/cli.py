@@ -166,7 +166,13 @@ class ArgumentParser(argparse.ArgumentParser):
                 if os.getenv(key_upper):
                     # if the attribute is in the environment, take the value
                     value = os.getenv(key_upper)
-                    # setattr(default_args, key, )
+                    if value.lower() == 'true':
+                        value = True
+                    elif value.lower() == 'false':
+                        value = False
+                    elif value.lower() == 'none':
+                        value = None
+
                 elif config and key in config:
                     # if the attribute is in the config file, take it from there
                     value = config.get(key)
