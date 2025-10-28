@@ -18,7 +18,8 @@ def setup_env() -> None:
 
 
 def setup_logs(log_level: str = 'WARN', log_file: str | None = None,
-               log_console: bool = True, log_rich: bool = True) -> None:
+               log_console: bool = True, log_rich: bool = True,
+               show_time: bool = False, show_path: bool = False) -> None:
     """Configure logging with console and/or file handlers.
 
     Args:
@@ -26,6 +27,8 @@ def setup_logs(log_level: str = 'WARN', log_file: str | None = None,
         log_file (str | None): Path to log file, or None for no file logging (default: None).
         log_console (bool): Whether to log to console (default: True).
         log_rich (bool): Whether to use RichHandler for console logging (default: True).
+        show_time (bool): Whether to show the time in the console logs (default: False).
+        show_path (bool): Whether to show the path in the console logs (default: False).
     """
     log_level = log_level.upper()
 
@@ -34,10 +37,18 @@ def setup_logs(log_level: str = 'WARN', log_file: str | None = None,
 
     if log_console:
         if log_rich:
-            console_handler = RichHandler()
+            console_handler = RichHandler(show_time=show_time, show_path=show_path)
         else:
+            fmt = ''
+            if show_time:
+                fmt += '[%(asctime)s] '
+            fmt += '%(levelname)s - '
+            if show_path:
+                fmt += '%(filename)s:%(lineno)d - '
+            fmt += '%(message)s'
+
             console_handler = logging.StreamHandler()
-            console_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
+            console_handler.setFormatter(logging.Formatter(fmt))
 
         console_handler.setLevel(log_level)
         root_logger.addHandler(console_handler)
