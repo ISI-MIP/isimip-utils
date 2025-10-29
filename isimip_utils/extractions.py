@@ -230,7 +230,7 @@ def concat_extraction(ds1: xr.Dataset | None, ds2: xr.Dataset) -> xr.Dataset:
     """
     if ds1 is None:
         return ds2.copy()
-    elif 'time' not in ds2.sizes:
+    elif not ds2.sizes.get('time'):
         return ds1
     else:
         # apply offset when time units or calendar diverges
