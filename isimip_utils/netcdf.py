@@ -109,7 +109,11 @@ def init_dataset(file_path: str | Path, diskless: bool = False, lon: int = 720, 
         for key, value in attrs.get(variable_name, {}).items():
             setattr(var, key, value)
 
+        # set missing value
         var.missing_value = np.float32(FILL_VALUE)
+
+        # set variable data
+        var[:] = variable
 
     # set global attributes
     for key, value in attrs.get('global', {}).items():
