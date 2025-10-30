@@ -129,7 +129,8 @@ def get_plot_title(permutation: tuple) -> dict:
 def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None = None,
               x_type: str | None = None, y_field: str | None = None, y_label: str | None = None,
               y_type: str | None = None, y_format: str | None = None, color_field: str | None = None,
-              color_type: str | None = None, color_range: list | None = None, legend: bool = True,
+              color_type: str | None = None, color_domain: list | None = None, color_range: list | None = None,
+              color_scheme: str | None = None, color_title: str | None = 'Legend', legend: bool = True,
               empty: bool = False, **mark_kwargs: Any) -> alt.Chart:
     """Create a line plot from a DataFrame.
 
@@ -144,7 +145,10 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         y_format (str | None): Format string for y-axis values.
         color_field (str | None): Column name for color encoding (default: 'label').
         color_type (str | None): Altair type for color (default: 'N').
+        color_domain (list | None): Custom color domain.
         color_range (list | None): Custom color range for scale.
+        color_scheme (str | None): Custom color scheme for scale.
+        color_title (str | None): Title for color (default: 'Legend').
         legend (bool): Whether to show legend (default: True).
         empty (bool): Whether to create an empty plot with NaN values (default: False).
         **mark_kwargs (Any): Additional keyword arguments for mark_line().
@@ -176,10 +180,23 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
     else:
         color_field = color_field or 'label'
         color_type = color_type or 'N'
+
+        color_scale_args = {}
+        if color_domain:
+            color_scale_args['domain'] = color_domain
+        if color_range:
+            color_scale_args['range'] = color_range
+        if color_scheme:
+            color_scale_args['scheme'] = color_scheme
+
+        color_legend_args = {}
+        if color_title:
+            color_legend_args['title'] = color_title
+
         color = alt.Color(
             f'{color_field}:{color_type}',
-            scale=alt.Scale(range=color_range) if color_range else alt.Scale(),
-            legend=alt.Legend(title='Legend', padding=10) if legend else None
+            scale=alt.Scale(**color_scale_args),
+            legend=alt.Legend(padding=10, **color_legend_args) if legend else None
         )
 
     if empty:
@@ -204,8 +221,8 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
 
 
 def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str | None = None,
-             color_range: list | None = None, color_label: str | None = None,
-             color_format: str | None = None, bin_size: int = 1, legend: bool = True,
+             color_domain: list | None = None, color_range: list | None = None, color_scheme: str | None = None,
+             color_label: str | None = None, color_format: str | None = None, bin_size: int = 1, legend: bool = True,
              empty: bool = False) -> alt.Chart:
     """Create a geographic map plot from a DataFrame with lat/lon coordinates.
 
@@ -213,7 +230,9 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
         df (pd.DataFrame): DataFrame with 'lat' and 'lon' columns.
         color_field (str | None): Column name for color encoding (default: auto-detect from attrs).
         color_type (str | None): Altair type for color (default: 'Q').
+        color_domain (list | None): Custom color domain.
         color_range (list | None): Custom color range for scale.
+        color_scheme (str | None): Custom color scheme for scale.
         color_label (str | None): Label for color legend (default: auto-detect from attrs).
         color_format (str | None): Format string for color legend values.
         bin_size (int): Bin size for aggregating grid cells (default: 1).
@@ -258,6 +277,14 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
         color_type = color_type or 'Q'
         color_label = color_label or get_data_var_label(df)
 
+        color_scale_args = {}
+        if color_domain:
+            color_scale_args['domain'] = color_domain
+        if color_range:
+            color_scale_args['range'] = color_range
+        if color_scheme:
+            color_scale_args['scheme'] = color_scheme
+
         color_legend_args = {}
         if color_format:
             color_legend_args['format'] = color_format
@@ -265,7 +292,7 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
         color = alt.Color(
             f'{color_field}:{color_type}',
             title=color_label,
-            scale=alt.Scale(range=color_range) if color_range else alt.Scale(),
+            scale=alt.Scale(**color_scale_args),
             legend=alt.Legend(padding=10, **color_legend_args) if legend else None
         )
 
