@@ -37,23 +37,20 @@ def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PR
         protocol_locations = [protocol_locations]
 
     for protocol_location in protocol_locations:
-        for definitions_path, definitions_json in find_json(protocol_location, 'definitions', path):
-            if definitions_json:
-                logger.debug('definitions_path = %s', definitions_path)
-                logger.debug('definitions_json = %s', definitions_json)
+        definitions_json = find_json(protocol_location, 'definitions', path)
+        if definitions_json:
+            definitions = {}
+            for definition_name, definition in definitions_json.items():
+                # convert the definitions to dicts if they are lists
+                if isinstance(definition, list):
+                    definitions[definition_name] = {
+                        row['specifier']: row for row in definition
+                    }
+                else:
+                    definitions[definition_name] = definition
 
-                definitions = {}
-                for definition_name, definition in definitions_json.items():
-                    # convert the definitions to dicts if they are lists
-                    if isinstance(definition, list):
-                        definitions[definition_name] = {
-                            row['specifier']: row for row in definition
-                        }
-                    else:
-                        definitions[definition_name] = definition
-
-                logger.debug('definitions = %s', definitions)
-                return definitions
+            logger.debug('definitions = %s', definitions)
+            return definitions
 
     raise NotFound(f'No definitions found for {path}.')
 
@@ -76,31 +73,28 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
         protocol_locations = [protocol_locations]
 
     for protocol_location in protocol_locations:
-        for pattern_path, pattern_json in find_json(protocol_location, 'pattern', path):
-            if pattern_json:
-                logger.debug('pattern_path = %s', pattern_path)
-                logger.debug('pattern_json = %s', pattern_json)
+        pattern_json = find_json(protocol_location, 'pattern', path)
+        if pattern_json:
+            if not all([
+                isinstance(pattern_json['path'], str),
+                isinstance(pattern_json['file'], str),
+                isinstance(pattern_json['dataset'], str),
+                isinstance(pattern_json['suffix'], list)
+            ]):
+                break
 
-                if not all([
-                    isinstance(pattern_json['path'], str),
-                    isinstance(pattern_json['file'], str),
-                    isinstance(pattern_json['dataset'], str),
-                    isinstance(pattern_json['suffix'], list)
-                ]):
-                    break
+            pattern = {
+                'path': re.compile(pattern_json['path']),
+                'file': re.compile(pattern_json['file']),
+                'dataset': re.compile(pattern_json['dataset']),
+                'suffix': pattern_json['suffix'],
+                'specifiers': pattern_json.get('specifiers', []),
+                'specifiers_map': pattern_json.get('specifiers_map', {})
+            }
 
-                pattern = {
-                    'path': re.compile(pattern_json['path']),
-                    'file': re.compile(pattern_json['file']),
-                    'dataset': re.compile(pattern_json['dataset']),
-                    'suffix': pattern_json['suffix'],
-                    'specifiers': pattern_json.get('specifiers', []),
-                    'specifiers_map': pattern_json.get('specifiers_map', {})
-                }
+            logger.debug('pattern = %s', pattern)
 
-                logger.debug('pattern = %s', pattern)
-
-                return pattern
+            return pattern
 
     raise NotFound(f'No pattern found for {path}.')
 
@@ -122,11 +116,9 @@ def fetch_schema(path: str | Path, protocol_locations: str | list[str] = PROTOCO
         protocol_locations = [protocol_locations]
 
     for protocol_location in protocol_locations:
-        for schema_path, schema_json in find_json(protocol_location, 'schema', path):
-            if schema_json:
-                logger.debug('schema_path = %s', schema_path)
-                logger.debug('schema_json = %s', schema_json)
-                return schema_json
+        schema_json = find_json(protocol_location, 'schema', path)
+        if schema_json:
+            return schema_json
 
     raise NotFound(f'No schema found for {path}.')
 
@@ -148,11 +140,9 @@ def fetch_tree(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_
         protocol_locations = [protocol_locations]
 
     for protocol_location in protocol_locations:
-        for tree_path, tree_json in find_json(protocol_location, 'tree', path):
-            if tree_json:
-                logger.debug('tree_path = %s', tree_path)
-                logger.debug('tree_json = %s', tree_json)
-                return tree_json
+        tree_json = find_json(protocol_location, 'tree', path)
+        if tree_json:
+            return tree_json
 
     raise NotFound(f'No tree found for {path}.')
 
@@ -174,17 +164,23 @@ def find_json(protocol_location: str, sub_location: str, path: str | Path) -> Ge
         sub_location (str): Subdirectory within protocol location (e.g., 'definitions', 'pattern').
         path (str | Path): Path to search for JSON files.
 
-    Yields:
-        Tuples of (current_path, json_content) for each path component.
+    Returns:
+        The JSON response from the first matching path.
     """
     path_components = Path(path).parts
     for i in range(len(path_components), 0, -1):
         current_path = Path(os.sep.join(path_components[:i+1])).with_suffix('.json')
 
         if urlparse(protocol_location).scheme:
-            yield current_path, fetch_json(f'{protocol_location}/{sub_location}/{current_path}')
+            data = fetch_json(f'{protocol_location}/{sub_location}/{current_path}')
         else:
-            yield current_path, load_json(Path(protocol_location) / 'output' / sub_location / current_path)
+            data = load_json(Path(protocol_location) / 'output' / sub_location / current_path)
+
+        logger.debug('path = %s', current_path)
+        logger.debug('data = %s', data)
+
+        if data is not None:
+            return data
 
 
 def fetch_json(location: str) -> Any | None:
