@@ -12,3 +12,7 @@ __pycache__/
 /dist
 /*.egg-info
 /.pytest_cache
+.aider*
+
+/testing/datasets
+/testing/protocol

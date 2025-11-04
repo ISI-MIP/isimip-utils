@@ -44,10 +44,15 @@ shapes = [
     "rioxarray",
 ]
 dev = [
+    "isimip-utils[pytest]",
     "build",
     "pre-commit",
     "ruff",
     "twine",
+]
+pytest = [
+    "pytest",
+    "pytest-cov"
 ]
 docs = [
     "mkdocs",
@@ -92,7 +97,11 @@ known-first-party = [
 section-order = [
     "future",
     "standard-library",
+    "pytest",
     "third-party",
     "first-party",
     "local-folder"
 ]
+
+[tool.ruff.lint.isort.sections]
+pytest = ["pytest"]
