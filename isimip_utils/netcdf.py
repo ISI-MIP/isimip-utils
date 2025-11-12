@@ -36,7 +36,7 @@ def open_dataset_write(file_path: str | Path) -> Dataset:
     return Dataset(file_path, 'r+')
 
 
-def init_dataset(file_path: str | Path, diskless: bool = False, lon: int = 720, lat: int = 360,
+def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool = False, lon: int = 720, lat: int = 360,
                  time: None | np.ndarray = None, time_unit: str = 'days since 1601-1-1 00:00:00',
                  time_calendar: str = 'proleptic_gregorian', attrs: dict = {}, **variables: Any) -> Dataset:
     """Initialize a new NetCDF4 dataset with standard dimensions and variables.
@@ -44,6 +44,7 @@ def init_dataset(file_path: str | Path, diskless: bool = False, lon: int = 720, 
     Args:
         file_path (str | Path): Path where the NetCDF file will be created.
         diskless (bool): If True, create dataset in memory (default: False).
+        overwrite (bool): If True, overwrite existing dataset (default: False).
         lon (int): Number of longitude points (default: 720).
         lat (int): Number of latitude points (default: 360).
         time (None | np.ndarray): Time dimension configuration (default: None).
@@ -55,6 +56,10 @@ def init_dataset(file_path: str | Path, diskless: bool = False, lon: int = 720, 
     Returns:
         Initialized NetCDF4 Dataset object.
     """
+    # overwrite existing file
+    if overwrite and file_path.exists():
+        file_path.unlink()
+
     # create NetCDF dataset
     ds = Dataset(file_path, 'w', format='NETCDF4_CLASSIC', diskless=diskless)
 
