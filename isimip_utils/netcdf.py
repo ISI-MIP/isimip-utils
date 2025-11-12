@@ -218,7 +218,8 @@ def convert_attribute(value: Any) -> Any:
     return value
 
 
-def update_global_attributes(dataset: Dataset, set_attributes: dict = {}, delete_attributes: list = []) -> None:
+def update_global_attributes(dataset: Dataset, set_attributes: dict | None = None,
+                             delete_attributes: list | None = None) -> None:
     """Update global attributes of a NetCDF dataset.
 
     Args:
@@ -226,12 +227,14 @@ def update_global_attributes(dataset: Dataset, set_attributes: dict = {}, delete
         set_attributes (dict): Dictionary of attributes to set or update.
         delete_attributes (list): List of attribute names to delete.
     """
-    for attr in dataset.__dict__:
-        if attr in delete_attributes:
-            dataset.delncattr(attr)
+    if delete_attributes is not None:
+        for attr in dataset.__dict__:
+            if attr in delete_attributes:
+                dataset.delncattr(attr)
 
-    for attr, value in set_attributes.items():
-        dataset.setncattr(attr, value2string(value))
+    if set_attributes is not None:
+        for attr, value in set_attributes.items():
+            dataset.setncattr(attr, value2string(value))
 
 
 def value2string(value: Any) -> str:
@@ -244,6 +247,6 @@ def value2string(value: Any) -> str:
         String representation of the value.
     """
     if isinstance(value, datetime):
-        return value.isoformat() + 'Z',
+        return value.isoformat() + 'Z'
     else:
         return str(value)
