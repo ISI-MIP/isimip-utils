@@ -15,5 +15,6 @@ __pycache__/
 .aider*
 
 /testing/datasets
+/testing/extractions
 /testing/output
 /testing/protocol
