@@ -329,10 +329,10 @@ def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
 
     df = ds.to_dataframe().reset_index()
     df.attrs['coords'] = {
-        coord: ds[coord].attrs for coord in ds.coords
+        coord: ds[coord].attrs for coord in ds.coords if (ds[coord].size > 1)
     }
     df.attrs['data_vars'] = {
-        data_var: ds[data_var].attrs for data_var in ds.data_vars
+        data_var: ds[data_var].attrs for data_var in ds.data_vars if (ds[data_var].size > 1)
     }
 
     return df
