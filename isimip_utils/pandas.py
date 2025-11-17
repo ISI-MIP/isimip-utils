@@ -2,7 +2,19 @@
 import pandas as pd
 
 
-def get_coord(df: pd.DataFrame) -> str:
+def get_coords(df: pd.DataFrame) -> tuple:
+    """Get the coordinate names from DataFrame attributes.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'coords' in attrs.
+
+    Returns:
+        Name of the coordinates.
+    """
+    return tuple(df.attrs['coords'])
+
+
+def get_first_coord(df: pd.DataFrame) -> str:
     """Get the first coordinate name from DataFrame attributes.
 
     Args:
@@ -11,10 +23,27 @@ def get_coord(df: pd.DataFrame) -> str:
     Returns:
         Name of the first coordinate.
     """
-    return next(iter(df.attrs['coords']))
+    return next(iter(get_coords(df)))
 
 
-def get_coord_label(df: pd.DataFrame) -> str:
+def get_coord_labels(df: pd.DataFrame) -> tuple:
+    """Get a formatted labels for the coordinates with units.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'coords' in attrs.
+
+    Returns:
+        Formatted string like "Coordinate Name [units]" or just the name if no units.
+    """
+    labels = []
+    for coord in get_coords(df):
+        name = df.attrs['coords'][coord].get('long_name', coord)
+        units = df.attrs['coords'][coord].get('units')
+        labels.append(f'{name} [{units}]' if units else name)
+    return tuple(labels)
+
+
+def get_first_coord_label(df: pd.DataFrame) -> str | None:
     """Get a formatted label for the coordinate with units.
 
     Args:
@@ -23,14 +52,26 @@ def get_coord_label(df: pd.DataFrame) -> str:
     Returns:
         Formatted string like "Coordinate Name [units]" or just the name if no units.
     """
-    coord = get_coord(df)
-    name = df.attrs['coords'][coord].get('long_name', coord)
-    units = df.attrs['coords'][coord].get('units')
-    return f'{name} [{units}]' if units else name
+    return next(iter(get_coord_labels(df)))
 
 
-def get_coord_axis(df: pd.DataFrame) -> str | None:
-    """Get the axis attribute for the coordinate.
+def get_coord_axes(df: pd.DataFrame) -> tuple:
+    """Get the axis attribute for all coordinates.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'coords' in attrs.
+
+    Returns:
+        Axis attribute (e.g., 'T', 'X', 'Y').
+    """
+    axes = []
+    for coord in get_coords(df):
+        axes.append(df.attrs['coords'][coord].get('axis'))
+    return tuple(axes)
+
+
+def get_first_coord_axis(df: pd.DataFrame) -> str | None:
+    """Get the axis attribute for the first coordinate.
 
     Args:
         df (pd.DataFrame): DataFrame with 'coords' in attrs.
@@ -38,11 +79,22 @@ def get_coord_axis(df: pd.DataFrame) -> str | None:
     Returns:
         Axis attribute (e.g., 'T', 'X', 'Y'), or None if not set.
     """
-    coord = get_coord(df)
-    return df.attrs['coords'][coord].get('axis')
+    return next(iter(get_coord_axes(df)))
 
 
-def get_data_var(df: pd.DataFrame) -> str:
+def get_data_vars(df: pd.DataFrame) -> tuple:
+    """Get the data variable names from DataFrame attributes.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'data_vars' in attrs.
+
+    Returns:
+        Names of the data variables.
+    """
+    return tuple(df.attrs['data_vars'])
+
+
+def get_first_data_var(df: pd.DataFrame) -> str:
     """Get the first data variable name from DataFrame attributes.
 
     Args:
@@ -51,10 +103,10 @@ def get_data_var(df: pd.DataFrame) -> str:
     Returns:
         Name of the first data variable.
     """
-    return next(iter(df.attrs['data_vars']))
+    return next(iter(get_data_vars(df)))
 
 
-def get_data_var_label(df: pd.DataFrame) -> str:
+def get_data_var_labels(df: pd.DataFrame) -> str:
     """Get a formatted label for the data variable with units.
 
     Args:
@@ -63,13 +115,27 @@ def get_data_var_label(df: pd.DataFrame) -> str:
     Returns:
         Formatted string like "Variable Name [units]" or just the name if no units.
     """
-    data_var = get_data_var(df)
-    data_var_name = df.attrs['data_vars'][data_var].get('long_name', data_var)
-    data_var_units = df.attrs['data_vars'][data_var].get('units')
-    return f'{data_var_name} [{data_var_units}]' if data_var_units else data_var_name
+    labels = []
+    for data_var in get_data_vars(df):
+        data_var_name = df.attrs['data_vars'][data_var].get('long_name', data_var)
+        data_var_units = df.attrs['data_vars'][data_var].get('units')
+        labels.append(f'{data_var_name} [{data_var_units}]' if data_var_units else data_var_name)
+    return tuple(labels)
 
 
-def compute_average(df: pd.DataFrame, area: bool = True) -> pd.DataFrame:
+def get_first_data_var_label(df: pd.DataFrame) -> str:
+    """Get a formatted label for the data variable with units.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'data_vars' in attrs.
+
+    Returns:
+        Formatted string like "Variable Name [units]" or just the name if no units.
+    """
+    return next(iter(get_data_var_labels(df)))
+
+
+def compute_average(df: pd.DataFrame, data_var: str, area: bool = True) -> pd.DataFrame:
     """Compute yearly average with optional standard deviation bounds.
 
     Args:
@@ -79,7 +145,6 @@ def compute_average(df: pd.DataFrame, area: bool = True) -> pd.DataFrame:
     Returns:
         DataFrame with yearly aggregated data.
     """
-    data_var = get_data_var(df)
     data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
     data_var_units = df.attrs['data_vars'][data_var].get('units')
 
@@ -112,7 +177,7 @@ def compute_average(df: pd.DataFrame, area: bool = True) -> pd.DataFrame:
     return df
 
 
-def group_by_day(df: pd.DataFrame) -> pd.DataFrame:
+def group_by_day(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
     """Group data by day of year and compute mean.
 
     Args:
@@ -121,8 +186,6 @@ def group_by_day(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame grouped by day of year (1-365/366).
     """
-    data_var = get_data_var(df)
-
     df['day'] = df['time'].dt.dayofyear
     df = df.groupby('day')[data_var].mean().reset_index()
     df.attrs['coords'] = {'day': { 'long_name': 'Day of the year'}}
@@ -130,7 +193,7 @@ def group_by_day(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def group_by_month(df: pd.DataFrame) -> pd.DataFrame:
+def group_by_month(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
     """Group data by month and compute mean.
 
     Args:
@@ -139,8 +202,6 @@ def group_by_month(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame grouped by month (1-12).
     """
-    data_var = get_data_var(df)
-
     df['month'] = df['time'].dt.month
     df = df.groupby('month')[data_var].mean().reset_index()
     df.attrs['coords'] = {'month': {'long_name': 'Month of the year'}}
@@ -148,7 +209,7 @@ def group_by_month(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def normalize(df: pd.DataFrame) -> pd.DataFrame:
+def normalize(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
     """Normalize data variable using z-score normalization.
 
     Args:
@@ -157,7 +218,6 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with normalized data variable (mean=0, std=1).
     """
-    data_var = get_data_var(df)
     data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
 
     mean, std =  df[data_var].mean(), df[data_var].std()
