@@ -91,12 +91,12 @@ def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
     return ds
 
 
-def open_dataset(path: str | Path, decode_cf: bool = False, load: bool = False) -> xr.Dataset:
+def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -> xr.Dataset:
     """Open a NetCDF dataset using xarray.
 
     Args:
         path (str | Path): Path to the NetCDF file.
-        decode_cf (bool): Whether to decode CF conventions (default: False).
+        decode_cf (bool): Whether to decode CF conventions (default: True).
         load (bool): Whether to load data into memory immediately (default: False).
 
     Returns:
@@ -127,12 +127,12 @@ def open_dataset(path: str | Path, decode_cf: bool = False, load: bool = False) 
     return ds
 
 
-def load_dataset(path: str | Path, decode_cf: bool = False) -> xr.Dataset:
+def load_dataset(path: str | Path, decode_cf: bool = True) -> xr.Dataset:
     """Open a NetCDF dataset using xarray and load data into memory immediately.
 
     Args:
         path (str | Path): Path to the NetCDF file.
-        decode_cf (bool): Whether to decode CF conventions (default: False).
+        decode_cf (bool): Whether to decode CF conventions (default: True).
 
     Returns:
         Xarray Dataset object.
