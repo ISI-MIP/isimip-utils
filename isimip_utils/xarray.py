@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
-                 time_unit: str = 'days since 1601-1-1 00:00:00',
+                 time_units: str = 'days since 1601-1-1 00:00:00',
                  time_calendar: str = 'proleptic_gregorian',
                  attrs: dict = {}, **variables: np.ndarray) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
@@ -20,7 +20,7 @@ def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
         lon (int): Number of longitude points (default: 720).
         lat (int): Number of latitude points (default: 360).
         time (np.ndarray | None): Time coordinate array, or None to omit time dimension (default: None).
-        time_unit (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
+        time_units (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
         time_calendar (str): Calendar type for time coordinate (default: 'proleptic_gregorian').
         attrs (dict): Dictionary of attributes for variables and global attributes.
         **variables (np.ndarray): Data variables to include in the dataset.
@@ -30,8 +30,10 @@ def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
     """
 
     # create coordinates
+    dims = ('lat', 'lon')
     coords = {}
     if time is not None:
+        dims = ('time', 'lat', 'lon')
         coords['time'] = time
 
     lon_delta = 360.0 / lon
@@ -42,7 +44,7 @@ def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
 
     # create data variables
     data_vars = {
-        var_name: (['time', 'lon', 'lat'], var)
+        var_name: (dims, var)
         for var_name, var in variables.items()
     }
 
@@ -54,7 +56,7 @@ def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
         ds.coords['time'].attrs = {
             'standard_name': 'time',
             'long_name': 'Time',
-            'units': time_unit,
+            'units': time_units,
             'calendar': time_calendar,
             'axis': 'T',
             '_FillValue': 1.e+20
