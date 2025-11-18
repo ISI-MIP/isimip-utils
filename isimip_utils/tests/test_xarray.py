@@ -23,7 +23,9 @@ from isimip_utils.xarray import (
 
 datasets_path = Path('testing/datasets')
 
-dataset_path = datasets_path / "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2015_2020.nc"  # noqa: E501
+input_path = datasets_path / "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2015_2020.nc"  # noqa: E501
+
+output_path = datasets_path / "ISIMIP3a/OutputData/agriculture/LPJmL/gswp3-w5e5/historical/lpjml_gswp3-w5e5_obsclim_2015soc_default_yield-mai-noirr_global_annual-gs_1901_2016.nc"  # noqa: E501
 
 landseamask_path = datasets_path / 'ISIMIP3a/InputData/geo_conditions/landseamask/landseamask.nc'
 
@@ -70,15 +72,22 @@ def test_init_dataset_args():
 
 
 def test_open_dataset():
-    with open_dataset(dataset_path) as ds:
+    with open_dataset(input_path) as ds:
         assert isinstance(ds, xr.Dataset)
         assert ds['time'].dtype.type == np.datetime64
 
 
-def test_open_dataset_no_cf():
-    with open_dataset(dataset_path, decode_cf=False) as ds:
+def test_open_dataset_decode_cf_false():
+    with open_dataset(input_path, decode_cf=False) as ds:
         assert isinstance(ds, xr.Dataset)
         assert ds['time'].dtype.type == np.float64
+
+
+def test_open_dataset_growing_seasons():
+    with open_dataset(output_path) as ds:
+        assert isinstance(ds, xr.Dataset)
+        assert isinstance(ds['time'].dtype, object)
+        assert ds['time'].values[0].isoformat() == '1901-01-01T00:00:00'
 
 
 def test_load_dataset():
@@ -115,7 +124,7 @@ def test_order_variables():
 
 
 def test_get_attrs():
-    with open_dataset(dataset_path) as ds:
+    with open_dataset(input_path) as ds:
         attrs = get_attrs(ds)
         assert attrs['lon']['long_name'] == 'Longitude'
         assert attrs['lat']['long_name'] == 'Latitude'
@@ -123,7 +132,7 @@ def test_get_attrs():
 
 
 def test_set_attrs():
-    with open_dataset(dataset_path) as ds:
+    with open_dataset(input_path) as ds:
         attrs = get_attrs(ds)
         attrs['tas']['egg'] = 'spam'
         set_attrs(ds, attrs)

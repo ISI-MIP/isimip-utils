@@ -13,10 +13,14 @@ mask_paths = [
     "ISIMIP3a/InputData/geo_conditions/landseamask/landseamask.nc"
 ]
 
-dataset_paths = [
+input_paths = [
     "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2015_2020.nc",
     "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2021_2030.nc",
     "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2031_2040.nc"
+]
+
+output_paths = [
+    "ISIMIP3a/OutputData/agriculture/LPJmL/gswp3-w5e5/historical/lpjml_gswp3-w5e5_obsclim_2015soc_default_yield-mai-noirr_global_annual-gs_1901_2016.nc"
 ]
 
 protocol_paths = [
@@ -33,15 +37,15 @@ point = (52.395833, 13.061389)
 point_path = "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_point_daily.nc"  # noqa: E501
 
 def main():
-    # download_datasets()
-    # download_protocol()
+    download_datasets()
+    download_protocol()
     create_extractions()
 
 
 def download_datasets():
     datasets_path.mkdir(parents=True, exist_ok=True)
 
-    for path in mask_paths + dataset_paths:
+    for path in mask_paths + input_paths + output_paths:
         file_path = datasets_path / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -66,20 +70,24 @@ def create_extractions():
     west, east, south, north = bbox
     lat, lon = point
 
-    for path in dataset_paths:
-        file_path = datasets_path / path
+    extraction_bbox_path = extractions_path / bbox_path
+    extraction_point_path = extractions_path / point_path
 
-        extraction_bbox = None
-        extraction_point = None
-        with open_dataset(file_path) as ds_file:
-            ds_bbox = select_bbox(ds_file, west, east, south, north)
-            extraction_bbox = concat_extraction(extraction_bbox, ds_bbox)
+    if not all([extraction_bbox_path.exists(), extraction_bbox_path.exists()]):
+        for path in input_paths:
+            file_path = datasets_path / path
 
-            ds_point = select_point(ds_file, lat, lon)
-            extraction_point = concat_extraction(extraction_point, ds_point)
+            extraction_bbox = None
+            extraction_point = None
+            with open_dataset(file_path) as ds_file:
+                ds_bbox = select_bbox(ds_file, west, east, south, north)
+                extraction_bbox = concat_extraction(extraction_bbox, ds_bbox)
 
-    write_dataset(extraction_bbox, extractions_path / bbox_path)
-    write_dataset(extraction_point, extractions_path / point_path)
+                ds_point = select_point(ds_file, lat, lon)
+                extraction_point = concat_extraction(extraction_point, ds_point)
+
+        write_dataset(extraction_bbox, extraction_bbox_path)
+        write_dataset(extraction_point, extraction_point_path)
 
 if __name__ == "__main__":
     main()

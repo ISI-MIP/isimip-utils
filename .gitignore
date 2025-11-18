@@ -12,7 +12,9 @@ __pycache__/
 /dist
 /*.egg-info
 /.pytest_cache
-.aider*
+/.aider*
+/.coverage
+/htmlcov
 
 /testing/datasets
 /testing/extractions
