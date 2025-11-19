@@ -86,16 +86,16 @@ def include_path(include: list[str] | None, path: Path | str) -> bool:
         return True
 
 
-def get_permutations(parameters: dict[str, list]) -> list[tuple]:
+def get_permutations(parameters: dict[str, list]) -> tuple[tuple]:
     """Generate all permutations from parameter value lists.
 
     Args:
         parameters (dict[str, list]): Dictionary mapping parameter names to lists of values.
 
     Returns:
-        List of tuples representing all possible combinations of parameter values.
+        Tuple of tuples representing all possible combinations of parameter values.
     """
-    return list(product(*parameters.values()))
+    return tuple(product(*parameters.values()))
 
 
 def get_placeholders(parameters: dict[str, list], permutation: tuple) -> dict:
