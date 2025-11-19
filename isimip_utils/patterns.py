@@ -170,8 +170,9 @@ def find_files(pattern: re.Pattern, file_iter: Iterable[Path]) -> list[dict]:
     """
     files = []
     for path in sorted(file_iter):
-        match = pattern.search(str(path))
-        if match:
-            files.append(dict(path=path, **match.groupdict()))
+        try:
+            files.append(match_string(pattern, path))
+        except DidNotMatch:
+            pass
 
     return files
