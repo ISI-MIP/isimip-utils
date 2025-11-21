@@ -1,0 +1,313 @@
+from datetime import datetime
+
+import pytest
+
+from isimip_utils.extractions import (
+    compute_spatial_average,
+    compute_temporal_average,
+    concat_extraction,
+    count_values,
+    mask_bbox,
+    mask_mask,
+    select_bbox,
+    select_period,
+    select_point,
+    select_time,
+)
+from isimip_utils.tests import constants, helper
+from isimip_utils.xarray import get_attrs, open_dataset, set_attrs, write_dataset
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_select_time(decode_cf):
+    date = constants.DATE
+
+    path = constants.TAS_PATHS[0]
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-time_') \
+                                                       .replace('2015_2020', '20180101')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = select_time(file_ds, datetime.strptime(date, "%Y-%m-%d"))
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-time-cdo_') \
+                                                .replace('2015_2020', '20180101')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_select_period(decode_cf):
+    start_date, end_date = constants.PERIOD
+
+    path = constants.TAS_PATHS[0]
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-period_') \
+                                                       .replace('2015_2020', '2017_2018')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = select_period(file_ds, datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-period-cdo_') \
+                                                .replace('2015_2020', '2017_2018')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_select_point(decode_cf, path):
+    lat, lon = constants.POINT
+
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-point_')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = select_point(file_ds, lat, lon)
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-point-cdo_')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_select_point_concat(decode_cf):
+    lat, lon = constants.POINT
+
+    extraction_ds = None
+    for path in constants.TAS_PATHS:
+        dataset_path = constants.DATASETS_PATH / path
+
+        with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+            ds = select_point(file_ds, lat, lon)
+            extraction_ds = concat_extraction(extraction_ds, ds)
+
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-point_') \
+                                                       .replace('2031_2040', '2015_2040')
+    extraction_path.unlink(missing_ok=True)
+
+    write_dataset(extraction_ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-point-cdo_') \
+                                                .replace('2031_2040', '2015_2040')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_select_bbox(decode_cf, path):
+    west, east, south, north = constants.BBOX
+
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox_')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = select_bbox(file_ds, west, east, south, north)
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-cdo_')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_select_bbox_concat(decode_cf):
+    west, east, south, north = constants.BBOX
+
+    extraction_ds = None
+    for path in constants.TAS_PATHS:
+        dataset_path = constants.DATASETS_PATH / path
+
+        with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+            ds = select_bbox(file_ds, west, east, south, north)
+            extraction_ds = concat_extraction(extraction_ds, ds)
+
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox_') \
+                                                       .replace('2031_2040', '2015_2040')
+    extraction_path.unlink(missing_ok=True)
+
+    write_dataset(extraction_ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-cdo_') \
+                                                .replace('2031_2040', '2015_2040')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_mask_bbox(decode_cf, path):
+    west, east, south, north = constants.BBOX
+
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-bbox_')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = mask_bbox(file_ds, west, east, south, north)
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-bbox-cdo_')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_mask_bbox_concat(decode_cf):
+    west, east, south, north = constants.BBOX
+
+    extraction_ds = None
+    for path in constants.TAS_PATHS:
+        dataset_path = constants.DATASETS_PATH / path
+
+        with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+            ds = mask_bbox(file_ds, west, east, south, north)
+            extraction_ds = concat_extraction(extraction_ds, ds)
+
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-bbox_') \
+                                                       .replace('2031_2040', '2015_2040')
+    extraction_path.unlink(missing_ok=True)
+
+    write_dataset(extraction_ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-bbox-cdo_') \
+                                                .replace('2031_2040', '2015_2040')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_mask_mask(decode_cf, path):
+    mask_path = constants.DATASETS_PATH / constants.LANDSEAMASK_PATH
+    mask_ds = open_dataset(mask_path)
+
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-mask_')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = mask_mask(file_ds, mask_ds)
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-mask-cdo_')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_mask_mask_concat(decode_cf):
+    mask_path = constants.DATASETS_PATH / constants.LANDSEAMASK_PATH
+    mask_ds = open_dataset(mask_path)
+
+    extraction_ds = None
+    for path in constants.TAS_PATHS:
+        dataset_path = constants.DATASETS_PATH / path
+
+        with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+            ds = mask_mask(file_ds, mask_ds)
+            extraction_ds = concat_extraction(extraction_ds, ds)
+
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-mask_') \
+                                                       .replace('2031_2040', '2015_2040')
+    extraction_path.unlink(missing_ok=True)
+
+    write_dataset(extraction_ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-mask-cdo_') \
+                                                .replace('2031_2040', '2015_2040')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_compute_spatial_average(decode_cf, path):
+    gridarea_path = constants.SHARE_PATH / 'gridarea.nc'
+    gridarea_ds = open_dataset(gridarea_path)
+
+    west, east, south, north = constants.BBOX
+
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-mean_')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        attrs = get_attrs(file_ds)
+        ds = select_bbox(file_ds, west, east, south, north)
+        ds = compute_spatial_average(ds, weights=gridarea_ds["cell_area"])
+        ds = set_attrs(ds, attrs)
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-mean-cdo_')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_compute_spatial_average_concat(decode_cf):
+    gridarea_path = constants.SHARE_PATH / 'gridarea.nc'
+    gridarea_ds = open_dataset(gridarea_path)
+
+    west, east, south, north = constants.BBOX
+
+    extraction_ds = None
+    for path in constants.TAS_PATHS:
+        dataset_path = constants.DATASETS_PATH / path
+
+        with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+            attrs = get_attrs(file_ds)
+            ds = select_bbox(file_ds, west, east, south, north)
+            ds = compute_spatial_average(ds, weights=gridarea_ds["cell_area"])
+            ds = set_attrs(ds, attrs)
+            extraction_ds = concat_extraction(extraction_ds, ds)
+
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-mean_') \
+                                                       .replace('2031_2040', '2015_2040')
+    extraction_path.unlink(missing_ok=True)
+
+    write_dataset(extraction_ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-mean-cdo_') \
+                                                .replace('2031_2040', '2015_2040')
+    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_compute_temporal_average(decode_cf, path):
+    west, east, south, north = constants.BBOX
+
+    dataset_path = constants.DATASETS_PATH / path
+    extraction_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-map_')
+    extraction_path.unlink(missing_ok=True)
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        attrs = get_attrs(file_ds)
+        ds = select_bbox(file_ds, west, east, south, north)
+        ds = compute_temporal_average(ds)
+        ds = set_attrs(ds, attrs)
+        write_dataset(ds, extraction_path)
+
+    cdo_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-map-cdo_')
+    helper.call(f'cdo diff,abslim=0.001 {extraction_path} {cdo_path}')
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_count_values(decode_cf, path):
+    dataset_path = constants.DATASETS_PATH / path
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = count_values(file_ds)
+        assert (ds['tas'] == 720*360).all()
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+@pytest.mark.parametrize('path', constants.TAS_PATHS)
+def test_count_values_mask(decode_cf, path):
+    west, east, south, north = constants.BBOX
+
+    dataset_path = constants.DATASETS_PATH / path
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = mask_bbox(file_ds, west, east, south, north)
+        ds = count_values(ds)
+        assert (ds['tas'] == 400).all()
