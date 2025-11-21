@@ -12,6 +12,18 @@ FLOAT_TYPES = [np.float32, np.float64]
 INT_TYPES = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64]
 
 
+def open_dataset(file_path: str | Path, mode: str = 'r') -> Dataset:
+    """Open a NetCDF dataset (just a wrapper for netcdf.Dataset).
+
+    Args:
+        file_path (str | Path): Path to the NetCDF file.
+        mode (str):
+    Returns:
+        NetCDF4 Dataset object opened in the selected mode.
+    """
+    return Dataset(file_path, mode)
+
+
 def open_dataset_read(file_path: str | Path) -> Dataset:
     """Open a NetCDF dataset in read-only mode.
 
@@ -21,7 +33,7 @@ def open_dataset_read(file_path: str | Path) -> Dataset:
     Returns:
         NetCDF4 Dataset object opened in read mode.
     """
-    return Dataset(file_path, 'r')
+    return open_dataset(file_path)
 
 
 def open_dataset_write(file_path: str | Path) -> Dataset:
@@ -198,6 +210,16 @@ def get_global_attributes(dataset: Dataset, convert: bool = False) -> dict[str, 
         global_attributes = dataset.__dict__
 
     return global_attributes
+
+
+def get_index(dataset: Dataset, lat: float, lon: float) -> tuple[int, int]:
+    dx = dataset.variables['lon'][1] - dataset.variables['lon'][0]
+    dy = dataset.variables['lat'][1] - dataset.variables['lat'][0]
+
+    ix = round(float((lon - dataset.variables['lon'][0]) / dx))
+    iy = round(float((lat - dataset.variables['lat'][0]) / dy))
+
+    return ix, iy
 
 
 def convert_attribute(value: Any) -> Any:

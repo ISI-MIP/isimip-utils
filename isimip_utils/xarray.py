@@ -1,5 +1,6 @@
 """Functions for working with xarray datasets for ISIMIP data."""
 import logging
+from datetime import datetime
 from pathlib import Path
 
 import cftime
@@ -271,6 +272,44 @@ def set_nan_to_fill_value(ds: xr.Dataset) -> xr.Dataset:
         fill_value = ds[var].attrs.get('_FillValue', 1e+20)
         ds[var] = ds[var].where(~np.isnan(ds[var]), fill_value)
     return ds
+
+
+def compute_time(ds: xr.Dataset, timestamp: datetime | None) -> float | None:
+    """Convert a datetime to numeric time value for dataset.
+
+    Args:
+        ds (xr.Dataset): Dataset with time coordinate containing units and calendar.
+        timestamp (datetime | None): Timestamp to convert, or None.
+
+    Returns:
+        Numeric time value in dataset's units, or None if timestamp is None.
+    """
+    units = ds.time.encoding.get('units') or ds.coords['time'].attrs.get('units')
+    calendar = ds.time.encoding.get('calendar') or ds.coords['time'].attrs.get('calendar')
+    return cftime.date2num(timestamp, units=units, calendar=calendar) if timestamp else None
+
+
+def compute_offset(ds1: xr.Dataset, ds2: xr.Dataset) -> xr.DataArray | None:
+    """Compute time offset between two datasets with different time units.
+
+    Args:
+        ds1 (xr.Dataset): First dataset with time coordinate.
+        ds2 (xr.Dataset): Second dataset with time coordinate.
+
+    Returns:
+        Time offset to apply to ds2, or None if units/calendars match.
+    """
+
+    units1 = ds1.time.encoding.get('units') or ds1.coords['time'].attrs.get('units')
+    calendar1 = ds1.time.encoding.get('calendar') or ds1.coords['time'].attrs.get('calendar')
+    units2 = ds2.time.encoding.get('units') or ds2.coords['time'].attrs.get('units')
+    calendar2 = ds2.time.encoding.get('calendar') or ds2.coords['time'].attrs.get('calendar')
+    if units1 != units2 or calendar1 != calendar2:
+        start_time = ds2['time'][0]
+        start_date = cftime.num2date(start_time, units=units2, calendar=calendar2)
+        offset = cftime.date2num(start_date, units=units1, calendar=calendar1) - start_time
+        logger.debug(f'time axis diverges "{units1}"/"{units2}" "{calendar1}"/"{calendar2}" offset={offset.values}')
+        return offset
 
 
 def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:

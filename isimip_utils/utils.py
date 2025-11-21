@@ -4,6 +4,8 @@ from itertools import product
 from pathlib import Path
 from typing import Any
 
+from .exceptions import ValidationError
+
 
 class Singleton:
     """Base class for implementing the singleton pattern.
@@ -85,6 +87,41 @@ def include_path(include: list[str] | None, path: Path | str) -> bool:
     else:
         return True
 
+
+def validate_lat(lat: float) -> None:
+    """Validate latitude value is within valid range.
+
+    Args:
+        lat (float): Latitude value to validate.
+
+    Raises:
+        ValidationError: If latitude is outside -90 to 90 range.
+    """
+    try:
+        if lat < -90:
+            raise ValidationError(f'lat={lat} must be > -90')
+        elif lat > 90:
+            raise ValidationError(f'lat={lat} must be < 90')
+    except TypeError as e:
+        raise ValidationError(f'lat={lat} is a valid number') from e
+
+
+def validate_lon(lon: float) -> None:
+    """Validate longitude value is within valid range.
+
+    Args:
+        lon (float): Longitude value to validate.
+
+    Raises:
+        ValidationError: If longitude is outside -180 to 180 range.
+    """
+    try:
+        if lon < -180:
+            raise ValidationError(f'lon={lon} must be > -180')
+        elif lon > 180:
+            raise ValidationError(f'lon={lon} must be < 180')
+    except TypeError as e:
+        raise ValidationError(f'lon={lon} is a valid number') from e
 
 def get_permutations(parameters: dict[str, list]) -> tuple[tuple]:
     """Generate all permutations from parameter value lists.

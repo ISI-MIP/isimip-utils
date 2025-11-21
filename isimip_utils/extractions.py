@@ -2,11 +2,12 @@
 import logging
 from datetime import datetime
 
-import cftime
 import numpy as np
 import xarray as xr
 
-from isimip_utils.exceptions import ExtractionError, ValidationError
+from isimip_utils.exceptions import ExtractionError
+from isimip_utils.utils import validate_lat, validate_lon
+from isimip_utils.xarray import compute_offset, compute_time
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +23,16 @@ def select_time(ds: xr.Dataset, timestamp: datetime) -> xr.Dataset | None:
         Dataset at the selected time, or None if timestamp is outside range.
     """
     logger.info(f'select time time={timestamp}')
-    time = compute_time(ds, timestamp)
-    if time < 0 or time > ds['time'].max():
+    if ds.time.encoding.get('units'):
+        time = np.datetime64(timestamp)
+    else:
+        time = compute_time(ds, timestamp)
+
+    if time < ds['time'].min() or time > ds['time'].max():
         logger.warn(f'Selected time={time} is outside the dataset.')
         return None
-    else:
-        return ds.sel(time=time, method='nearest')
+
+    return ds.sel(time=time, method='nearest')
 
 
 def select_period(ds: xr.Dataset, start: datetime | None, end: datetime | None) -> xr.Dataset:
@@ -45,11 +50,10 @@ def select_period(ds: xr.Dataset, start: datetime | None, end: datetime | None) 
         ExtractionError: If no time axis remains after selection.
     """
     logger.info(f'select period start={start} end={end}')
-    units = ds.coords['time'].attrs['units']
-    calendar = ds.coords['time'].attrs['calendar']
-
-    start_time = cftime.date2num(start, units=units, calendar=calendar) if start else None
-    end_time = cftime.date2num(end, units=units, calendar=calendar) if end else None
+    if ds.time.encoding.get('units'):
+        start_time, end_time = np.datetime64(start), np.datetime64(end)
+    else:
+        start_time, end_time = compute_time(ds, start), compute_time(ds, end)
 
     ds = ds.sel(time=slice(start_time, end_time))
 
@@ -170,7 +174,7 @@ def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask',
         Masked dataset with values where mask is 1 (or 0 if inverse=True).
     """
     logger.info(f'mask {mask_var}')
-    return ds.where(mask_ds[mask_var] == 0 if inverse else 1)
+    return ds.where(np.isclose(mask_ds[mask_var], 0 if inverse else 1))
 
 
 def compute_spatial_average(ds: xr.Dataset, weights: xr.DataArray | None = None) -> xr.Dataset:
@@ -233,77 +237,10 @@ def concat_extraction(ds1: xr.Dataset | None, ds2: xr.Dataset) -> xr.Dataset:
     elif not ds2.sizes.get('time'):
         return ds1
     else:
-        # apply offset when time units or calendar diverges
-        offset = compute_offset(ds1, ds2)
-        if offset is not None:
-            ds2 = ds2.assign_coords(time=ds2['time'] + offset)
+        if not ds1.time.encoding:
+            # apply offset when time units or calendar diverges, but only if times where not decoded
+            offset = compute_offset(ds1, ds2)
+            if offset is not None:
+                ds2 = ds2.assign_coords(time=ds2['time'] + offset)
 
         return xr.concat([ds1, ds2], 'time')
-
-
-def compute_time(ds: xr.Dataset, timestamp: datetime | None) -> float | None:
-    """Convert a datetime to numeric time value for dataset.
-
-    Args:
-        ds (xr.Dataset): Dataset with time coordinate containing units and calendar.
-        timestamp (datetime | None): Timestamp to convert, or None.
-
-    Returns:
-        Numeric time value in dataset's units, or None if timestamp is None.
-    """
-    units = ds.coords['time'].attrs['units']
-    calendar = ds.coords['time'].attrs['calendar']
-    return cftime.date2num(timestamp, units=units, calendar=calendar) if timestamp else None
-
-
-def compute_offset(ds1: xr.Dataset, ds2: xr.Dataset) -> xr.DataArray | None:
-    """Compute time offset between two datasets with different time units.
-
-    Args:
-        ds1 (xr.Dataset): First dataset with time coordinate.
-        ds2 (xr.Dataset): Second dataset with time coordinate.
-
-    Returns:
-        Time offset to apply to ds2, or None if units/calendars match.
-    """
-    units1 = ds1.coords['time'].attrs['units']
-    units2 = ds2.coords['time'].attrs['units']
-    calendar1 = ds1.coords['time'].attrs['calendar']
-    calendar2 = ds2.coords['time'].attrs['calendar']
-
-    if units1 != units2 or calendar1 != calendar2:
-        start_time = ds2['time'][0]
-        start_date = cftime.num2date(start_time, units=units2, calendar=calendar2)
-        offset = cftime.date2num(start_date, units=units1, calendar=calendar1) - start_time
-        logger.debug(f'time axis diverges "{units1}"/"{units2}" "{calendar1}"/"{calendar2}" offset={offset.values}')
-        return offset
-
-
-def validate_lat(lat: float) -> None:
-    """Validate latitude value is within valid range.
-
-    Args:
-        lat (float): Latitude value to validate.
-
-    Raises:
-        ValidationError: If latitude is outside -90 to 90 range.
-    """
-    if lat < -90:
-        raise ValidationError(f'lat={lat} must be > -90')
-    elif lat > 90:
-        raise ValidationError(f'lat={lat} must be < 90')
-
-
-def validate_lon(lon: float) -> None:
-    """Validate longitude value is within valid range.
-
-    Args:
-        lon (float): Longitude value to validate.
-
-    Raises:
-        ValidationError: If longitude is outside -180 to 180 range.
-    """
-    if lon < -180:
-        raise ValidationError(f'lon={lon} must be > -180')
-    elif lon > 180:
-        raise ValidationError(f'lon={lon} must be < 180')
