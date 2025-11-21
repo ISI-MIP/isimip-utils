@@ -1,93 +1,225 @@
 #!/usr/bin/env python3
-from pathlib import Path
-from subprocess import check_call
+from isimip_utils.tests import constants, helper
 
-from isimip_utils.extractions import concat_extraction, select_bbox, select_point
-from isimip_utils.xarray import open_dataset, write_dataset
-
-datasets_path = Path("testing/datasets")
-extractions_path = Path("testing/extractions")
-protocol_path = Path("testing/protocol/output")
-
-mask_paths = [
-    "ISIMIP3a/InputData/geo_conditions/landseamask/landseamask.nc"
-]
-
-input_paths = [
-    "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2015_2020.nc",
-    "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2021_2030.nc",
-    "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2031_2040.nc"
-]
-
-output_paths = [
-    "ISIMIP3a/OutputData/agriculture/LPJmL/gswp3-w5e5/historical/lpjml_gswp3-w5e5_obsclim_2015soc_default_yield-mai-noirr_global_annual-gs_1901_2016.nc"
-]
-
-protocol_paths = [
-    "definitions/ISIMIP3a/OutputData/agriculture.json",
-    "pattern/ISIMIP3a/OutputData/agriculture.json",
-    "schema/ISIMIP3a/OutputData/agriculture.json",
-    "tree/ISIMIP3a/OutputData/agriculture.json"
-]
-
-bbox = (0, 10, -5, 5)
-bbox_path = "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_bbox_daily.nc"  # noqa: E501
-
-point = (52.395833, 13.061389)
-point_path = "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_point_daily.nc"  # noqa: E501
 
 def main():
     download_datasets()
     download_protocol()
-    create_extractions()
+    run_gridfile()
+    run_select_time()
+    run_select_period()
+    run_select_point()
+    run_select_bbox()
+    run_select_bbox_mean()
+    run_select_bbox_map()
+    run_mask_bbox()
+    run_mask_mask()
 
 
 def download_datasets():
-    datasets_path.mkdir(parents=True, exist_ok=True)
+    constants.DATASETS_PATH.mkdir(parents=True, exist_ok=True)
 
-    for path in mask_paths + input_paths + output_paths:
-        file_path = datasets_path / path
+    for path in [constants.LANDSEAMASK_PATH, *constants.TAS_PATHS, constants.YIELD_PATH]:
+        file_path = constants.DATASETS_PATH / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         url = f"https://files.isimip.org/{path}"
 
-        check_call(['wget', '-c', url, '-O', file_path])
+        helper.call(f'wget -c {url} -O {file_path}')
 
 
 def download_protocol():
-    protocol_path.mkdir(parents=True, exist_ok=True)
+    constants.PROTOCOL_PATH.mkdir(parents=True, exist_ok=True)
 
-    for path in protocol_paths:
-        file_path = protocol_path / path
+    for path in constants.PROTOCOL_PATHS:
+        file_path = constants.PROTOCOL_PATH / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         url = f"https://protocol.isimip.org/{path}"
 
-        check_call(['wget', '-c', url, '-O', file_path])
+        helper.call(f'wget -c {url} -O {file_path}')
 
 
-def create_extractions():
-    west, east, south, north = bbox
-    lat, lon = point
+def run_gridfile():
+    input_path = constants.DATASETS_PATH / constants.TAS_PATHS[0]
+    output_path = constants.SHARE_PATH / 'gridarea.nc'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    extraction_bbox_path = extractions_path / bbox_path
-    extraction_point_path = extractions_path / point_path
+    helper.call(f'cdo gridarea {input_path} {output_path}')
 
-    if not all([extraction_bbox_path.exists(), extraction_bbox_path.exists()]):
-        for path in input_paths:
-            file_path = datasets_path / path
 
-            extraction_bbox = None
-            extraction_point = None
-            with open_dataset(file_path) as ds_file:
-                ds_bbox = select_bbox(ds_file, west, east, south, north)
-                extraction_bbox = concat_extraction(extraction_bbox, ds_bbox)
+def run_select_time():
+    date = constants.DATE
 
-                ds_point = select_point(ds_file, lat, lon)
-                extraction_point = concat_extraction(extraction_point, ds_point)
+    path = constants.TAS_PATHS[0]
 
-        write_dataset(extraction_bbox, extraction_bbox_path)
-        write_dataset(extraction_point, extraction_point_path)
+    input_path = constants.DATASETS_PATH / path
+
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-time-cdo_') \
+                                                   .replace('2015_2020', '20180101')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+
+    helper.call(f'cdo -f nc4c -z zip_5 -L seldate,{date} {input_path} {output_path}')
+
+
+def run_select_period():
+    start_date, end_date = constants.PERIOD
+
+    path = constants.TAS_PATHS[0]
+
+    input_path = constants.DATASETS_PATH / path
+
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-period-cdo_') \
+                                                   .replace('2015_2020', '2017_2018')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+
+    helper.call(f'cdo -f nc4c -z zip_5 -L seldate,{start_date},{end_date} {input_path} {output_path}')
+
+
+def run_select_point():
+    ix, iy = constants.POINT_INDEX
+
+    # add one since cdo is counting from 1!
+    ix, iy = ix + 1, iy + 1
+
+    output_paths = []
+    for path in constants.TAS_PATHS:
+        input_path = constants.DATASETS_PATH / path
+
+        output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-point-cdo_')
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.unlink(missing_ok=True)
+
+        output_paths.append(str(output_path))
+
+        helper.call(f'cdo -f nc4c -z zip_5 -L -selindexbox,{ix},{ix},{iy},{iy} {input_path} {output_path}')
+
+    input_paths = ' '.join(output_paths)
+
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-point-cdo_') \
+                                                   .replace('2031_2040', '2015_2040')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+
+    helper.call(f'cdo -f nc4c -z zip_5 cat {input_paths} {output_path}')
+
+
+def run_select_bbox():
+    west, east, south, north = constants.BBOX
+
+    output_paths = []
+    for path in constants.TAS_PATHS:
+        input_path = constants.DATASETS_PATH / path
+
+        output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-cdo_')
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.unlink(missing_ok=True)
+
+        output_paths.append(str(output_path))
+
+        helper.call(f'cdo -f nc4c -z zip_5 -L -sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+
+    input_paths = ' '.join(output_paths)
+
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-cdo_') \
+                                                   .replace('2031_2040', '2015_2040')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+
+    helper.call(f'cdo -f nc4c -z zip_5 cat {input_paths} {output_path}')
+
+
+def run_select_bbox_mean():
+    west, east, south, north = constants.BBOX
+
+    output_paths = []
+    for path in constants.TAS_PATHS:
+        input_path = constants.DATASETS_PATH / path
+
+        output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-mean-cdo_')
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.unlink(missing_ok=True)
+
+        output_paths.append(str(output_path))
+
+        helper.call('cdo -f nc4c -z zip_5 -L -fldmean ' \
+                    f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+
+    input_paths = ' '.join(output_paths)
+
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-mean-cdo_') \
+                                                   .replace('2031_2040', '2015_2040')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+
+    helper.call(f'cdo -f nc4c -z zip_5 cat {input_paths} {output_path}')
+
+
+def run_select_bbox_map():
+    west, east, south, north = constants.BBOX
+
+    for path in constants.TAS_PATHS:
+        input_path = constants.DATASETS_PATH / path
+
+        output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-map-cdo_')
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.unlink(missing_ok=True)
+
+        helper.call('cdo -f nc4c -z zip_5 -L timmean ' \
+                    f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+
+
+def run_mask_bbox():
+    west, east, south, north = constants.BBOX
+
+    output_paths = []
+    for path in constants.TAS_PATHS:
+        input_path = constants.DATASETS_PATH / path
+
+        output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-bbox-cdo_')
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.unlink(missing_ok=True)
+
+        output_paths.append(str(output_path))
+
+        helper.call(f'cdo -f nc4c -z zip_5 -L -masklonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+
+    input_paths = ' '.join(output_paths)
+
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-bbox-cdo_') \
+                                                   .replace('2031_2040', '2015_2040')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+
+    helper.call(f'cdo -f nc4c -z zip_5 cat {input_paths} {output_path}')
+
+
+def run_mask_mask():
+    mask_path = constants.DATASETS_PATH / constants.LANDSEAMASK_PATH
+
+    output_paths = []
+    for path in constants.TAS_PATHS:
+        input_path = constants.DATASETS_PATH / path
+
+        output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-mask-cdo_')
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.unlink(missing_ok=True)
+
+        output_paths.append(str(output_path))
+
+        helper.call(f'cdo -f nc4c -z zip_5 -L -ifthen -selname,mask {mask_path} {input_path} {output_path}')
+
+    input_paths = ' '.join(output_paths)
+
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_mask-mask-cdo_') \
+                                                   .replace('2031_2040', '2015_2040')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+
+    helper.call(f'cdo -f nc4c -z zip_5 cat {input_paths} {output_path}')
+
 
 if __name__ == "__main__":
     main()

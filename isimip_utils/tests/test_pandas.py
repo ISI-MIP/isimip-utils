@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from isimip_utils.pandas import (
@@ -19,13 +17,12 @@ from isimip_utils.pandas import (
     group_by_month,
     normalize,
 )
+from isimip_utils.tests import constants
 from isimip_utils.xarray import open_dataset, to_dataframe
 
-extractions_path = Path("testing/extractions")
-
 extractions = {
-    'bbox': "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_bbox_daily.nc", # noqa: E501
-    'point': "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_point_daily.nc" # noqa: E501
+    'bbox': constants.TAS_PATHS[0].replace('_global_', '_select-bbox-cdo_'),
+    'point': constants.TAS_PATHS[0].replace('_global_', '_select-point-cdo_')
 }
 
 @pytest.mark.parametrize('extraction,result', [
@@ -33,7 +30,7 @@ extractions = {
     ('point', ('time', ))
 ])
 def test_get_coords(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_coords(df) == result
 
@@ -42,7 +39,7 @@ def test_get_coords(extraction, result):
     ('point', 'time')
 ])
 def test_get_first_coord(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_coord(df) == result
 
@@ -52,7 +49,7 @@ def test_get_first_coord(extraction, result):
     ('point', ('time', ))
 ])
 def test_get_coord_labels(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_coord_labels(df) == result
 
@@ -61,7 +58,7 @@ def test_get_coord_labels(extraction, result):
     ('point', 'time')
 ])
 def test_get_first_coord_label(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_coord_label(df) == result
 
@@ -71,7 +68,7 @@ def test_get_first_coord_label(extraction, result):
     ('point', ('T', ))
 ])
 def test_get_coord_axes(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_coord_axes(df) == result
 
@@ -80,7 +77,7 @@ def test_get_coord_axes(extraction, result):
     ('point', 'T')
 ])
 def test_get_first_coord_axis(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_coord_axis(df) == result
 
@@ -90,7 +87,7 @@ def test_get_first_coord_axis(extraction, result):
     ('point', ('tas', ))
 ])
 def test_get_data_vars(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_data_vars(df) == result
 
@@ -99,7 +96,7 @@ def test_get_data_vars(extraction, result):
     ('point', 'tas')
 ])
 def test_get_first_data_var(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_data_var(df) == result
 
@@ -109,7 +106,7 @@ def test_get_first_data_var(extraction, result):
     ('point', ('Near-Surface Air Temperature [K]', ))
 ])
 def test_get_data_var_labels(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_data_var_labels(df) == result
 
@@ -118,13 +115,13 @@ def test_get_data_var_labels(extraction, result):
     ('point', 'Near-Surface Air Temperature [K]')
 ])
 def test_get_first_data_var_label(extraction, result):
-    with open_dataset(extractions_path / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_data_var_label(df) == result
 
 
 def test_compute_average():
-    with open_dataset(extractions_path / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = compute_average(df, 'tas')
 
@@ -134,25 +131,25 @@ def test_compute_average():
 
 
 def test_group_by_day():
-    with open_dataset(extractions_path / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = group_by_day(df, 'tas')
 
         assert len(df) == 366
-        assert df['tas'].between(270, 300).all()
+        assert df['tas'].between(260, 300).all()
 
 
 def test_group_by_month():
-    with open_dataset(extractions_path / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = group_by_month(df, 'tas')
 
         assert len(df) == 12
-        assert df['tas'].between(270, 300).all()
+        assert df['tas'].between(260, 300).all()
 
 
 def test_normalize():
-    with open_dataset(extractions_path / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = normalize(df, 'tas')
 
@@ -160,7 +157,7 @@ def test_normalize():
 
 
 def test_create_label():
-    with open_dataset(extractions_path / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = create_label(df, ['x', 'y', 'z'])
 

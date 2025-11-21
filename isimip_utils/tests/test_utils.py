@@ -1,3 +1,6 @@
+import pytest
+
+from isimip_utils.exceptions import ValidationError
 from isimip_utils.utils import (
     Singleton,
     cached_property,
@@ -8,6 +11,8 @@ from isimip_utils.utils import (
     include_path,
     join_parameters,
     update_year,
+    validate_lat,
+    validate_lon,
 )
 
 paths = [
@@ -46,6 +51,28 @@ def test_cached_property():
     assert t.egg == 'spam'
     assert t.egg == 'spam'
     assert t.counter == 1
+
+
+@pytest.mark.parametrize('lat', (-90.0, -45.5, 0, 45, 90))
+def test_validate_lat(lat):
+    validate_lat(lat)
+
+
+@pytest.mark.parametrize('lat', (-91, 91, None, '', 'none'))
+def test_validate_lat_error(lat):
+    with pytest.raises(ValidationError):
+        validate_lat(lat)
+
+
+@pytest.mark.parametrize('lon', (-180.0, -45.5, 0, 45, 180))
+def test_validate_lon(lon):
+    validate_lon(lon)
+
+
+@pytest.mark.parametrize('lon', (-181, 181, None, '', 'none'))
+def test_validate_lon_error(lon):
+    with pytest.raises(ValidationError):
+        validate_lon(lon)
 
 
 def test_exclude_path():

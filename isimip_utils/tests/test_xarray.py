@@ -1,11 +1,10 @@
-from pathlib import Path
-
 import geopandas as gpd
 import numpy as np
 import xarray as xr
 from shapely.geometry import box
 
 from isimip_utils.netcdf import open_dataset_read
+from isimip_utils.tests import constants
 from isimip_utils.xarray import (
     add_fill_value_to_attrs,
     create_mask,
@@ -20,17 +19,6 @@ from isimip_utils.xarray import (
     to_dataframe,
     write_dataset,
 )
-
-datasets_path = Path('testing/datasets')
-
-input_path = datasets_path / "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2015_2020.nc"  # noqa: E501
-
-output_path = datasets_path / "ISIMIP3a/OutputData/agriculture/LPJmL/gswp3-w5e5/historical/lpjml_gswp3-w5e5_obsclim_2015soc_default_yield-mai-noirr_global_annual-gs_1901_2016.nc"  # noqa: E501
-
-landseamask_path = datasets_path / 'ISIMIP3a/InputData/geo_conditions/landseamask/landseamask.nc'
-
-test_path = Path('testing/output') / 'test.nc'
-test_path.parent.mkdir(exist_ok=True)
 
 
 def test_init_dataset():
@@ -72,30 +60,31 @@ def test_init_dataset_args():
 
 
 def test_open_dataset():
-    with open_dataset(input_path) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0]) as ds:
         assert isinstance(ds, xr.Dataset)
         assert ds['time'].dtype.type == np.datetime64
 
 
 def test_open_dataset_decode_cf_false():
-    with open_dataset(input_path, decode_cf=False) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0], decode_cf=False) as ds:
         assert isinstance(ds, xr.Dataset)
         assert ds['time'].dtype.type == np.float64
 
 
 def test_open_dataset_growing_seasons():
-    with open_dataset(output_path) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.YIELD_PATH) as ds:
         assert isinstance(ds, xr.Dataset)
         assert isinstance(ds['time'].dtype, object)
         assert ds['time'].values[0].isoformat() == '1901-01-01T00:00:00'
 
 
 def test_load_dataset():
-    with load_dataset(landseamask_path) as ds:
+    with load_dataset(constants.DATASETS_PATH / constants.LANDSEAMASK_PATH) as ds:
         assert isinstance(ds, xr.Dataset)
 
 
 def test_write_dataset():
+    test_path = constants.OUTPUT_PATH / 'test.nc'
     test_path.unlink(missing_ok=True)
 
     ds = init_dataset()
@@ -103,6 +92,7 @@ def test_write_dataset():
 
 
 def test_order_variables():
+    test_path = constants.OUTPUT_PATH / 'test.nc'
     test_path.unlink(missing_ok=True)
 
     ds = init_dataset(
@@ -124,7 +114,7 @@ def test_order_variables():
 
 
 def test_get_attrs():
-    with open_dataset(input_path) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0]) as ds:
         attrs = get_attrs(ds)
         assert attrs['lon']['long_name'] == 'Longitude'
         assert attrs['lat']['long_name'] == 'Latitude'
@@ -132,7 +122,7 @@ def test_get_attrs():
 
 
 def test_set_attrs():
-    with open_dataset(input_path) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0]) as ds:
         attrs = get_attrs(ds)
         attrs['tas']['egg'] = 'spam'
         set_attrs(ds, attrs)
@@ -167,6 +157,7 @@ def test_set_fill_value_to_nan():
     ds['var'].attrs['_FillValue'] = 1e20
     ds = set_fill_value_to_nan(ds)
     assert np.isnan(ds['var'].values[0])
+
 
 def test_set_nan_to_fill_value():
     ds = xr.Dataset(
