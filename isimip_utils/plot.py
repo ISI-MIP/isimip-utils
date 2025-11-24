@@ -8,23 +8,28 @@ import altair as alt
 import numpy as np
 import pandas as pd
 
-from isimip_utils.pandas import get_coord, get_coord_axis, get_coord_label, get_data_var, get_data_var_label
+from isimip_utils.pandas import (
+    get_first_coord,
+    get_first_coord_axis,
+    get_first_coord_label,
+    get_first_data_var,
+    get_first_data_var_label,
+)
 from isimip_utils.utils import get_permutations
 
 logger = logging.getLogger(__name__)
 
-
-def default_color_theme() -> dict:
-    return {
-        "config": {
-            "mark": {"color": "steelblue"}
-        }
-    }
-
-
 alt.data_transformers.enable('vegafusion')
-alt.themes.register("default_color_theme", default_color_theme)
-alt.themes.enable("default_color_theme")
+
+@alt.theme.register('isimip_utils', enable=True)
+def custom_theme():
+    return alt.theme.ThemeConfig({
+        "config": {
+            "mark": {
+                "color": "steelblue"
+            }
+        }
+    })
 
 
 def save_plot(chart: alt.Chart, path: str | Path, *args: Any, **kwargs: Any) -> None:
@@ -52,7 +57,7 @@ def save_index(index_path: Path) -> None:
         index_path (Path): Path where the index.html file will be saved.
     """
     index_json = json.dumps([
-        str(p.name) for p in index_path.parent.iterdir() if p.suffix in ['.svg', '.png']
+        str(p.name) for p in sorted(index_path.parent.iterdir()) if p.suffix in ['.svg', '.png']
     ], indent=2).replace('\n', '\n    ')
 
     logger.info(f'save {index_path.absolute()}')
@@ -157,16 +162,16 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         Altair Chart object with line plot (and optional area for lower/upper bounds).
     """
 
-    x_field = x_field or get_coord(df)
-    x_label = x_label or get_coord_label(df)
-    x_type = x_type or ('T' if get_coord_axis(df) == 'T' else 'Q')
+    x_field = x_field or get_first_coord(df)
+    x_label = x_label or get_first_coord_label(df)
+    x_type = x_type or ('T' if get_first_coord_axis(df) == 'T' else 'Q')
     x = alt.X(
         f'{x_field}:{x_type}',
         title=x_label
     )
 
-    y_field = y_field or get_data_var(df)
-    y_label = y_label or get_data_var_label(df)
+    y_field = y_field or get_first_data_var(df)
+    y_label = y_label or get_first_data_var_label(df)
     y_type = y_type or 'Q'
     y = alt.Y(
         f'{y_field}:{y_type}',
@@ -175,12 +180,11 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         scale=alt.Scale(zero=False, nice=False)
     )
 
-    if empty:
+    color_field = color_field or 'label'
+    if empty or color_field not in df:
         color = alt.Color()
     else:
-        color_field = color_field or 'label'
         color_type = color_type or 'N'
-
         color_scale_args = {}
         if color_domain:
             color_scale_args['domain'] = color_domain
@@ -273,9 +277,9 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
     if empty:
         color = alt.Color()
     else:
-        color_field = color_field or get_data_var(df)
+        color_field = color_field or get_first_data_var(df)
         color_type = color_type or 'Q'
-        color_label = color_label or get_data_var_label(df)
+        color_label = color_label or get_first_data_var_label(df)
 
         color_scale_args = {}
         if color_domain:

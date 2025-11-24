@@ -135,7 +135,7 @@ def get_first_data_var_label(df: pd.DataFrame) -> str:
     return next(iter(get_data_var_labels(df)))
 
 
-def compute_average(df: pd.DataFrame, data_var: str, area: bool = True) -> pd.DataFrame:
+def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = True) -> pd.DataFrame:
     """Compute yearly average with optional standard deviation bounds.
 
     Args:
@@ -145,6 +145,7 @@ def compute_average(df: pd.DataFrame, data_var: str, area: bool = True) -> pd.Da
     Returns:
         DataFrame with yearly aggregated data.
     """
+    data_var = data_var or get_first_data_var(df)
     data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
     data_var_units = df.attrs['data_vars'][data_var].get('units')
 
