@@ -50,7 +50,7 @@ def open_dataset_write(file_path: str | Path) -> Dataset:
 
 def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool = False, lon: int = 720, lat: int = 360,
                  time: None | np.ndarray = None, time_unit: str = 'days since 1601-1-1 00:00:00',
-                 time_calendar: str = 'proleptic_gregorian', attrs: dict = {}, **variables: Any) -> Dataset:
+                 time_calendar: str = 'proleptic_gregorian', attrs: None | dict = None, **variables: Any) -> Dataset:
     """Initialize a new NetCDF4 dataset with standard dimensions and variables.
 
     Args:
@@ -59,7 +59,7 @@ def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool 
         overwrite (bool): If True, overwrite existing dataset (default: False).
         lon (int): Number of longitude points (default: 720).
         lat (int): Number of latitude points (default: 360).
-        time (None | np.ndarray): Time dimension configuration (default: None).
+        time (np.ndarray): Time dimension configuration (default: None).
         time_unit (str): Units for the time dimension (default: 'days since 1601-1-1 00:00:00').
         time_calendar (str): Calendar type for time dimension (default: 'proleptic_gregorian').
         attrs (dict): Dictionary of attributes for variables and global attributes.
@@ -123,8 +123,9 @@ def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool 
                                 fill_value=FILL_VALUE, compression='zlib')
 
         # set variable attributes
-        for key, value in attrs.get(variable_name, {}).items():
-            setattr(var, key, value)
+        if attrs:
+            for key, value in attrs.get(variable_name, {}).items():
+                setattr(var, key, value)
 
         # set missing value
         var.missing_value = np.float32(FILL_VALUE)
@@ -133,8 +134,9 @@ def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool 
         var[:] = variable
 
     # set global attributes
-    for key, value in attrs.get('global', {}).items():
-        setattr(ds, key, value)
+    if attrs:
+        for key, value in attrs.get('global', {}).items():
+            setattr(ds, key, value)
 
     return ds
 

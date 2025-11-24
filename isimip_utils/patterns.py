@@ -71,7 +71,7 @@ def match_path(pattern: dict, path: Path, dirname_pattern_key: str = 'path',
     # assert that any value in dirname_specifiers at least starts with
     # its corresponding value (same key) in filename_specifiers
     # e.g. 'ewe' and 'ewe_north-sea'
-    for key, value in filename_specifiers.items():
+    for key, _ in filename_specifiers.items():
         if key in dirname_specifiers:
             f, d = filename_specifiers[key], dirname_specifiers[key]
 

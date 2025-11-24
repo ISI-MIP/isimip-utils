@@ -49,4 +49,4 @@ All further steps need to be performed using the windows shell `cmd.exe`. You ca
 
 #### Using the Windows Subsystem for Linux (WSL)
 
-As an alternative for advanced users, you can use the Windows Subsystem for Linux (WSL) to install a Linux distribution whithin Windows 10. The installation is explained in the [Microsoft documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10). When using WSL, please install Python3 as explained in the Linux section.
+As an alternative for advanced users, you can use the Windows Subsystem for Linux (WSL) to install a Linux distribution within Windows 10. The installation is explained in the [Microsoft documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10). When using WSL, please install Python3 as explained in the Linux section.

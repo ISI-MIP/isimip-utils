@@ -11,13 +11,13 @@ __pycache__/
 /build
 /dist
 /*.egg-info
-/.pytest_cache
+
 /.aider*
+/.pytest_cache
+/.ruff_cache
+
 /.coverage
 /htmlcov
 
-/testing/datasets
-/testing/extractions
-/testing/output
-/testing/protocol
-/testing/share
+/testing
+!/testing/setup.py

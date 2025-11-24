@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
                  time_units: str = 'days since 1601-1-1 00:00:00',
                  time_calendar: str = 'proleptic_gregorian',
-                 attrs: dict = {}, **variables: np.ndarray) -> xr.Dataset:
+                 attrs: None | dict = None, **variables: np.ndarray) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
 
     Args:
         lon (int): Number of longitude points (default: 720).
         lat (int): Number of latitude points (default: 360).
-        time (np.ndarray | None): Time coordinate array, or None to omit time dimension (default: None).
+        time (np.ndarray): Time coordinate array, or None to omit time dimension (default: None).
         time_units (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
         time_calendar (str): Calendar type for time coordinate (default: 'proleptic_gregorian').
         attrs (dict): Dictionary of attributes for variables and global attributes.
@@ -83,13 +83,15 @@ def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
 
     # set variable attributes
     for data_var in ds.data_vars:
-        if data_var in attrs:
-            ds.data_vars[data_var].attrs.update(attrs[data_var])
+        if attrs:
+            if data_var in attrs:
+                ds.data_vars[data_var].attrs.update(attrs[data_var])
 
         ds.data_vars[data_var].attrs["_FillValue"] = 1.e+20
 
     # set global attributes
-    ds.attrs = attrs.get('global', {})
+    if attrs:
+        ds.attrs = attrs.get('global', {})
 
     return ds
 
