@@ -100,7 +100,7 @@ def select_bbox(ds: xr.Dataset, west: float, east: float, south: float, north: f
         ValidationError: If coordinates are out of valid range.
         ExtractionError: If no lat or lon axis remains after selection.
     """
-    logger.info(f'cutout bbox west={west} east={east} south={south} east={north}')
+    logger.info(f'select bbox west={west} east={east} south={south} north={north}')
 
     validate_lat(south)
     validate_lat(north)
@@ -136,7 +136,7 @@ def mask_bbox(ds: xr.Dataset, west: float, east: float, south: float, north: flo
     Raises:
         ValidationError: If coordinates are out of valid range.
     """
-    logger.info(f'cutout bbox west={west} east={east} south={south} east={north}')
+    logger.info(f'mask bbox west={west} east={east} south={south} north={north}')
 
     validate_lat(south)
     validate_lat(north)
