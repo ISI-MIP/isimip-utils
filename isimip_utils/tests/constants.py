@@ -10,13 +10,16 @@ SHARE_PATH = Path("testing/share")
 
 LANDSEAMASK_PATH = "ISIMIP3a/InputData/geo_conditions/landseamask/landseamask.nc"
 
-TAS_PATHS = [
-    "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2015_2020.nc",
-    "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2021_2030.nc",
-    "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2031_2040.nc"
+TAS_PATH = "ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/global/daily/" \
+           "ssp585/GFDL-ESM4/gfdl-esm4_r1i1p1f1_w5e5_ssp585_tas_global_daily_2015_2020.nc"
+
+TAS_SPLIT_PATHS = [
+    TAS_PATH.replace('2015_2020', specifiers)
+    for specifiers in ('2015_2016', '2017_2018', '2019_2020')
 ]
 
-YIELD_PATH = "ISIMIP3a/OutputData/agriculture/LPJmL/gswp3-w5e5/historical/lpjml_gswp3-w5e5_obsclim_2015soc_default_yield-mai-noirr_global_annual-gs_1901_2016.nc"  # noqa: E501
+YIELD_PATH = "ISIMIP3a/OutputData/agriculture/LPJmL/gswp3-w5e5/historical/" \
+             "lpjml_gswp3-w5e5_obsclim_2015soc_default_yield-mai-noirr_global_annual-gs_1901_2016.nc"
 
 PROTOCOL_PATHS = [
     "definitions/ISIMIP3a/OutputData/agriculture.json",
@@ -29,7 +32,7 @@ PROTOCOL_LOCATIONS = ['testing/protocol']
 PATTERN_PATH = 'ISIMIP3a/OutputData/agriculture.json'
 
 DATE = '2018-01-01'
-PERIOD = ('2017-01-01', '2018-12-31')
+PERIOD = ('2015-01-01', '2015-12-31')
 
 BBOX = (0, 10, -5, 5)
 

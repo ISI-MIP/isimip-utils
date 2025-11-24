@@ -19,5 +19,9 @@ __pycache__/
 /.coverage
 /htmlcov
 
-/testing
-!/testing/setup.py
+/testing/datasets
+/testing/extractions
+/testing/output
+/testing/plots
+/testing/protocol
+/testing/share

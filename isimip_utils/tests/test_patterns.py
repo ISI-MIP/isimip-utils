@@ -100,7 +100,7 @@ def test_match_path_specifiers_map():
 
 def test_find_files():
     file_path = Path(constants.YIELD_PATH)
-    files = [file_path.name] + [Path(path).name for path in constants.TAS_PATHS]
+    files = [file_path.name] + [file_path.name.replace('_global_', s) for s in ('a', 'b', 'c')]
 
     pattern = fetch_pattern(pattern_path, protocol_locations)
     result = find_files(pattern['file'], files)

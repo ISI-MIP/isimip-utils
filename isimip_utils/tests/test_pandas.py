@@ -21,8 +21,8 @@ from isimip_utils.tests import constants
 from isimip_utils.xarray import open_dataset, to_dataframe
 
 extractions = {
-    'bbox': constants.TAS_PATHS[0].replace('_global_', '_select-bbox-cdo_'),
-    'point': constants.TAS_PATHS[0].replace('_global_', '_select-point-cdo_')
+    'bbox': constants.TAS_PATH.replace('_global_', '_select-bbox-cdo_'),
+    'point': constants.TAS_PATH.replace('_global_', '_select-point-cdo_')
 }
 
 @pytest.mark.parametrize('extraction,result', [

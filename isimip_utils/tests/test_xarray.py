@@ -60,13 +60,13 @@ def test_init_dataset_args():
 
 
 def test_open_dataset():
-    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0]) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATH) as ds:
         assert isinstance(ds, xr.Dataset)
         assert ds['time'].dtype.type == np.datetime64
 
 
 def test_open_dataset_decode_cf_false():
-    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0], decode_cf=False) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATH, decode_cf=False) as ds:
         assert isinstance(ds, xr.Dataset)
         assert ds['time'].dtype.type == np.float64
 
@@ -114,7 +114,7 @@ def test_order_variables():
 
 
 def test_get_attrs():
-    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0]) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATH) as ds:
         attrs = get_attrs(ds)
         assert attrs['lon']['long_name'] == 'Longitude'
         assert attrs['lat']['long_name'] == 'Latitude'
@@ -122,7 +122,7 @@ def test_get_attrs():
 
 
 def test_set_attrs():
-    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATHS[0]) as ds:
+    with open_dataset(constants.DATASETS_PATH / constants.TAS_PATH) as ds:
         attrs = get_attrs(ds)
         attrs['tas']['egg'] = 'spam'
         set_attrs(ds, attrs)

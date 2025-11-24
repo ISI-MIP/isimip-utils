@@ -9,8 +9,7 @@ from isimip_utils.xarray import open_dataset, to_dataframe
 
 
 def test_plot_line():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-point-cdo_')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-point-cdo_')
 
     plot_path = constants.PLOTS_PATH / 'plot_line.png'
     plot_path.unlink(missing_ok=True)
@@ -30,8 +29,7 @@ def test_plot_line():
 
 
 def test_plot_line_nocf():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-point-cdo_')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-point-cdo_')
 
     plot_path = constants.PLOTS_PATH / 'plot_line_nocf.png'
     plot_path.unlink(missing_ok=True)
@@ -51,8 +49,7 @@ def test_plot_line_nocf():
 
 
 def test_plot_line_empty():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-point-cdo_')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-point-cdo_')
 
     plot_path = constants.PLOTS_PATH / 'plot_line_empty.png'
     plot_path.unlink(missing_ok=True)
@@ -73,8 +70,7 @@ def test_plot_line_empty():
 
 
 def test_plot_line_area():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-point-cdo_')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-point-cdo_')
 
     plot_path = constants.PLOTS_PATH / 'plot_line_area.png'
     plot_path.unlink(missing_ok=True)
@@ -102,8 +98,7 @@ def test_plot_line_area():
 
 
 def test_plot_line_color():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-point-cdo_')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-point-cdo_')
 
     plot_path = constants.PLOTS_PATH / 'plot_line_color.png'
     plot_path.unlink(missing_ok=True)
@@ -132,9 +127,8 @@ def test_plot_line_color():
 
 
 def test_plot_map():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-time-cdo_') \
-                                                               .replace('2015_2020', '20180101')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_') \
+                                                                     .replace('2015_2020', '20180101')
 
     plot_path = constants.PLOTS_PATH / 'plot_map.png'
     plot_path.unlink(missing_ok=True)
@@ -154,9 +148,8 @@ def test_plot_map():
 
 
 def test_plot_map_nocf():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-time-cdo_') \
-                                                               .replace('2015_2020', '20180101')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_') \
+                                                                     .replace('2015_2020', '20180101')
 
     plot_path = constants.PLOTS_PATH / 'plot_map_nocf.png'
     plot_path.unlink(missing_ok=True)
@@ -176,9 +169,8 @@ def test_plot_map_nocf():
 
 
 def test_plot_map_empty():
-    dataset_path = constants.TAS_PATHS[0]
-    extraction_path = constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-time-cdo_') \
-                                                               .replace('2015_2020', '20180101')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_') \
+                                                                     .replace('2015_2020', '20180101')
 
     plot_path = constants.PLOTS_PATH / 'plot_map_empty.png'
     plot_path.unlink(missing_ok=True)
@@ -202,10 +194,9 @@ def test_plot_map_empty():
 
 
 def test_plot_grid():
-    dataset_paths = constants.TAS_PATHS
     extraction_paths = [
         constants.EXTRACTIONS_PATH / dataset_path.replace('_global_', '_select-point-cdo_')
-        for dataset_path in dataset_paths
+        for dataset_path in constants.TAS_SPLIT_PATHS
     ]
 
     plot_path = constants.PLOTS_PATH / 'plot_grid.png'
