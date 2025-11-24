@@ -2,6 +2,7 @@ from pathlib import Path
 
 DATASETS_PATH = Path("testing/datasets")
 EXTRACTIONS_PATH = Path("testing/extractions")
+PLOTS_PATH = Path("testing/plots")
 OUTPUT_PATH = Path("testing/output")
 
 PROTOCOL_PATH = Path("testing/protocol/output")
