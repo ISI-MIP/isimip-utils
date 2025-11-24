@@ -140,6 +140,7 @@ def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = 
 
     Args:
         df (pd.DataFrame): DataFrame with time column and data variable.
+        data_var (str): Name of the data variable (default: first data var).
         area (bool): Whether to include lower/upper bounds using std (default: True).
 
     Returns:
@@ -178,15 +179,18 @@ def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = 
     return df
 
 
-def group_by_day(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
+def group_by_day(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFrame:
     """Group data by day of year and compute mean.
 
     Args:
         df (pd.DataFrame): DataFrame with time column and data variable.
+        data_var (str): Name of the data variable (default: first data var).
 
     Returns:
         DataFrame grouped by day of year (1-365/366).
     """
+    data_var = data_var or get_first_data_var(df)
+
     df['day'] = df['time'].dt.dayofyear
     df = df.groupby('day')[data_var].mean().reset_index()
     df.attrs['coords'] = {'day': { 'long_name': 'Day of the year'}}
@@ -194,15 +198,18 @@ def group_by_day(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
     return df
 
 
-def group_by_month(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
+def group_by_month(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFrame:
     """Group data by month and compute mean.
 
     Args:
         df (pd.DataFrame): DataFrame with time column and data variable.
+        data_var (str): Name of the data variable (default: first data var).
 
     Returns:
         DataFrame grouped by month (1-12).
     """
+    data_var = data_var or get_first_data_var(df)
+
     df['month'] = df['time'].dt.month
     df = df.groupby('month')[data_var].mean().reset_index()
     df.attrs['coords'] = {'month': {'long_name': 'Month of the year'}}
@@ -210,15 +217,17 @@ def group_by_month(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
     return df
 
 
-def normalize(df: pd.DataFrame, data_var: str) -> pd.DataFrame:
+def normalize(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFrame:
     """Normalize data variable using z-score normalization.
 
     Args:
         df (pd.DataFrame): DataFrame with data variable to normalize.
+        data_var (str): Name of the data variable (default: first data var).
 
     Returns:
         DataFrame with normalized data variable (mean=0, std=1).
     """
+    data_var = data_var or get_first_data_var(df)
     data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
 
     mean, std =  df[data_var].mean(), df[data_var].std()
