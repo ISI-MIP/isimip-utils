@@ -100,12 +100,17 @@ def test_match_path_specifiers_map():
 
 def test_find_files():
     file_path = Path(constants.YIELD_PATH)
-    files = [file_path.name] + [file_path.name.replace('_global_', s) for s in ('a', 'b', 'c')]
+    files = [
+        file_path.name,
+        file_path.name.replace('_global_', 'a'),
+        file_path.name.replace('_global_', 'b'),
+        file_path.name.replace('_global_', 'c')
+    ]
 
     pattern = fetch_pattern(pattern_path, protocol_locations)
     result = find_files(pattern['file'], files)
     assert len(result)
-    assert result == [(
-        Path(file_path.name),
-        file_specifiers
-    )]
+    assert result == [{
+        'path': file_path.name,
+        **file_specifiers
+    }]

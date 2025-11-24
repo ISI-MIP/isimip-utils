@@ -63,7 +63,7 @@ def match_path(pattern: dict, path: Path, dirname_pattern_key: str = 'path',
     filename_pattern = pattern[filename_pattern_key]
 
     # match the dirname and the filename
-    dirname_path, dirname_specifiers = match_string(dirname_pattern, path.parent.as_posix())
+    dirname_path, dirname_specifiers = match_string(dirname_pattern, str(path.parent))
     filename_path, filename_specifiers = match_string(filename_pattern, path.name)
 
     path = dirname_path / filename_path
@@ -171,7 +171,11 @@ def find_files(pattern: re.Pattern, file_iter: Iterable[Path]) -> list[dict]:
     files = []
     for path in sorted(file_iter):
         try:
-            files.append(match_string(pattern, path))
+            _, specifiers = match_string(pattern, str(path))
+            files.append({
+                'path': path,
+                **specifiers
+            })
         except DidNotMatch:
             pass
 
