@@ -3,9 +3,6 @@ from isimip_utils.tests import constants, helper
 
 
 def main():
-    download_datasets()
-    download_protocol()
-
     run_gridfile()
     run_seldate()
 
