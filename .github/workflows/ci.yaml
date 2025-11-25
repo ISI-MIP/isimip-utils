@@ -1,0 +1,123 @@
+name: isimip-utils CI
+
+on:
+  push:
+    branches:
+      - main
+      - test
+  pull_request:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: 1
+  FORCE_COLOR: 1
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  setup:
+    name: Setup tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Check out repository 💾
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Restore testing cache 📥
+      uses: actions/cache@v4
+      with:
+        path: |
+          testing/datasets
+          testing/extractions
+          testing/protocol
+          testing/share
+        key: testing-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/*.py') }}
+        restore-keys: |
+          testing-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+    - name: Install cdo 🌍
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cdo --no-install-recommends
+
+    - name: Set up Python 🐍
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install package 📦
+      run: pip install -e .[all]
+
+    - name: Run setup scripts 🔧
+      run: |
+        python testing/download.py
+        python testing/setup.py
+
+    - name: Save testing cache 📤
+      if: always()
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          testing/datasets
+          testing/extractions
+          testing/protocol
+          testing/share
+        key: testing-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/*.py') }}
+
+  test:
+    name: Run tests
+    needs: setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Check out repository 💾
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Restore testing cache 📥
+      uses: actions/cache@v4
+      with:
+        path: |
+          testing/datasets
+          testing/extractions
+          testing/protocol
+          testing/share
+        key: testing-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/*.py') }}
+        restore-keys: |
+          testing-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+    - name: Install cdo 🌍
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cdo --no-install-recommends
+
+    - name: Set up Python 🐍
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install package 📦
+      run: pip install -e .[all]
+
+    - name: Run pytest 🧪
+      run: pytest --cov
+
+    - name: Upload testing directory 📤
+      uses: actions/upload-artifact@v5
+      with:
+        name: testing
+        path: |
+          testing/datasets
+          testing/extractions
+          testing/output
+          testing/protocol
+          testing/share
