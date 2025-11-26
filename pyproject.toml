@@ -40,29 +40,29 @@ recommended = [
     "isimip-utils[netcdf,plots,shapes,xarray]"
 ]
 netcdf = [
-    "netCDF4"
+    "netCDF4~=1.7"
 ]
 plots = [
-    "altair[all]",
-    "palettable",
+    "altair[all]~=6.0",
+    "palettable~=3.3",
 ]
 shapes = [
-    "geopandas",
-    "rioxarray",
+    "geopandas~=1.1",
+    "rioxarray~=0.20",
 ]
 xarray = [
-    "cftime",
-    "xarray"
+    "cftime~=1.6",
+    "xarray>=2025.11"
+]
+pytest = [
+    "pytest~=9.0",
+    "pytest-cov~=7.0"
 ]
 dev = [
     "build",
     "pre-commit",
     "ruff",
     "twine",
-]
-pytest = [
-    "pytest",
-    "pytest-cov"
 ]
 docs = [
     "mkdocs",
