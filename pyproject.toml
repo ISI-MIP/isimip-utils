@@ -51,6 +51,7 @@ shapes = [
     "rioxarray",
 ]
 xarray = [
+    "cftime",
     "xarray"
 ]
 dev = [
