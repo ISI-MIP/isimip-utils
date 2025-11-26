@@ -10,87 +10,106 @@ import xarray as xr
 
 logger = logging.getLogger(__name__)
 
+default_attrs = {
+    'lon': {
+        'standard_name': 'longitude',
+        'long_name': 'Longitude',
+        'units': 'degrees_east',
+        'axis': 'X'
+    },
+    'lat': {
+        'standard_name': 'latitude',
+        'long_name': 'Latitude',
+        'units': 'degrees_north',
+        'axis': 'Y'
+    },
+    'time': {
+        'standard_name': 'time',
+        'long_name': 'Time',
+        'calendar': 'proleptic_gregorian',
+        'units': 'days since 1601-1-1 00:00:00',
+        'axis': 'T'
+    }
+}
 
-def init_dataset(lon: int = 720, lat: int = 360, time: np.ndarray | None = None,
-                 time_units: str = 'days since 1601-1-1 00:00:00',
-                 time_calendar: str = 'proleptic_gregorian',
-                 attrs: None | dict = None, **variables: np.ndarray) -> xr.Dataset:
+
+def init_dataset(lon: None | int = 720, lat: None | int = 360, time: np.ndarray | None = None,
+                 attrs: None | dict = None, extra_dims: None | list = None, **variables: np.ndarray) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
 
     Args:
-        lon (int): Number of longitude points (default: 720).
-        lat (int): Number of latitude points (default: 360).
+        lon (int): Number of longitude points, or None to omit (default: 720).
+        lat (int): Number of latitude points, or None to omit (default: 360).
         time (np.ndarray): Time coordinate array, or None to omit time dimension (default: None).
-        time_units (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
-        time_calendar (str): Calendar type for time coordinate (default: 'proleptic_gregorian').
         attrs (dict): Dictionary of attributes for variables and global attributes.
+        extra_dims (list): List of extra dimensions (besides lat, lon, time).
         **variables (np.ndarray): Data variables to include in the dataset.
 
     Returns:
         Initialized xarray Dataset with coordinates and data variables.
     """
+    # combine attrs
+    attrs = {
+        key: {**default_attrs.get(key, {}), **(attrs or {}).get(key, {})}
+        for key in {*default_attrs.keys(), *(attrs or {}).keys()}
+    }
 
-    # create coordinates
-    dims = ('lat', 'lon')
-    coords = {}
+    # create list of dimensions
+    dims = list(extra_dims) if extra_dims else []
     if time is not None:
-        dims = ('time', 'lat', 'lon')
-        coords['time'] = time
+        dims.append('time')
+    if lat:
+        dims.append('lat')
+    if lon:
+        dims.append('lon')
 
-    lon_delta = 360.0 / lon
-    lat_delta = 180.0 / lat
-
-    coords['lon'] = np.arange(-180 + 0.5 * lon_delta, 180, lon_delta)
-    coords['lat'] = np.arange(90 - 0.5 * lat_delta, -90, -lat_delta)
+    # create coords
+    coords = {}
+    if lon is not None:
+        delta = 360.0 / lon
+        coords['lon'] = np.arange(-180 + 0.5 * delta, 180, delta)
+    if lat is not None:
+        delta = 180.0 / lat
+        coords['lat'] = np.arange(90 - 0.5 * delta, -90, -delta)
+    if time is not None:
+        if time.dtype == object:
+            coords['time'] = cftime.date2num(
+                time, calendar=attrs['time']['calendar'], units=attrs['time']['units']
+            ).astype(np.float64)
+        elif np.issubdtype(time.dtype, np.datetime64):
+            coords['time'] = cftime.date2num(
+                time.to_pydatetime(), calendar=attrs['time']['calendar'], units=attrs['time']['units']
+            ).astype(np.float64)
+        else:
+            coords['time'] = time.astype(np.float64)
+    if extra_dims:
+        for extra_dim in extra_dims:
+            coords[extra_dim] = variables[extra_dim]
 
     # create data variables
     data_vars = {
         var_name: (dims, var)
         for var_name, var in variables.items()
+        if extra_dims is None or var_name not in extra_dims
     }
 
     # create dataset
     ds = xr.Dataset(coords=coords, data_vars=data_vars)
 
-    # set time attributes if time is set
-    if time is not None:
-        ds.coords['time'].attrs = {
-            'standard_name': 'time',
-            'long_name': 'Time',
-            'units': time_units,
-            'calendar': time_calendar,
-            'axis': 'T',
-            '_FillValue': 1.e+20
-        }
-
-    # set lon attributes
-    ds.coords['lon'].attrs = {
-        'standard_name': 'longitude',
-        'long_name': 'Longitude',
-        'units': 'degrees_east',
-        'axis': 'X',
-        '_FillValue': 1.e+20
-    }
-
-    # set lon attributes
-    ds.coords['lat'].attrs = {
-        'standard_name': 'latitude',
-        'long_name': 'Latitude',
-        'units': 'degrees_north',
-        'axis': 'Y',
-        '_FillValue': 1.e+20
-    }
-
-    # set variable attributes
-    for data_var in ds.data_vars:
-        if attrs:
-            if data_var in attrs:
-                ds.data_vars[data_var].attrs.update(attrs[data_var])
-
-        ds.data_vars[data_var].attrs["_FillValue"] = 1.e+20
-
-    # set global attributes
+    # set attributes
     if attrs:
+        for coord in ds.coords:
+            if coord in attrs:
+                ds.coords[coord].attrs.update(attrs[coord])
+
+        for data_var in ds.data_vars:
+            if attrs:
+                if data_var in attrs:
+                    ds.data_vars[data_var].attrs.update(attrs[data_var])
+
+            ds.data_vars[data_var].attrs["_FillValue"] = 1.e+20
+
+        # set global attributes
         ds.attrs = attrs.get('global', {})
 
     return ds
@@ -167,7 +186,8 @@ def write_dataset(ds: xr.Dataset, path: str | Path):
 
     logger.info(f'write {path.absolute()}')
 
-    ds = add_fill_value_to_attrs(ds)
+    ds = remove_fill_value_from_coords(ds)
+    ds = add_fill_value_to_data_vars(ds)
     ds = set_nan_to_fill_value(ds)
     ds = order_variables(ds)
 
@@ -225,19 +245,30 @@ def set_attrs(ds: xr.Dataset, attrs: dict) -> xr.Dataset:
     return ds
 
 
-def add_fill_value_to_attrs(ds: xr.Dataset) -> xr.Dataset:
-    """Add _FillValue and missing_value attributes if not present.
+def remove_fill_value_from_coords(ds: xr.Dataset) -> xr.Dataset:
+    """Remove _FillValue and missing_value attributes from the coords.
 
     Args:
         ds (xr.Dataset): Xarray Dataset to modify.
 
     Returns:
-        Dataset with fill value attributes added (default: 1.e+20).
+        Dataset with fill value removed for the coords.
     """
     for coord in ds.coords:
-        if '_FillValue' not in ds.coords[coord].attrs:
-            ds.coords[coord].attrs['_FillValue'] = 1.e+20
+        if '_FillValue' not in ds[coord].encoding:
+            ds[coord].encoding['_FillValue'] = None
+    return ds
 
+
+def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
+    """Add _FillValue and missing_value attributes to data_vars if not present.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to modify.
+
+    Returns:
+        Dataset with fill value attributes added for the data_vars.
+    """
     for data_var in ds.data_vars:
         if '_FillValue' not in ds.data_vars[data_var].attrs:
             ds.data_vars[data_var].attrs['_FillValue'] = 1.e+20
