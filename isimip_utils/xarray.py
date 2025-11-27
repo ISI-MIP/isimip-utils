@@ -1,5 +1,6 @@
 """Functions for working with xarray datasets for ISIMIP data."""
 import logging
+import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -72,16 +73,11 @@ def init_dataset(lon: None | int = 720, lat: None | int = 360, time: np.ndarray 
         delta = 180.0 / lat
         coords['lat'] = np.arange(90 - 0.5 * delta, -90, -delta)
     if time is not None:
-        if time.dtype == object:
-            coords['time'] = cftime.date2num(
-                time, calendar=attrs['time']['calendar'], units=attrs['time']['units']
-            ).astype(np.float64)
-        elif np.issubdtype(time.dtype, np.datetime64):
-            coords['time'] = cftime.date2num(
-                time.to_pydatetime(), calendar=attrs['time']['calendar'], units=attrs['time']['units']
-            ).astype(np.float64)
-        else:
+        if np.issubdtype(time.dtype, np.floating) or np.issubdtype(time.dtype, np.integer):
             coords['time'] = time.astype(np.float64)
+        else:
+            coords['time'] = convert_time(time, calendar=attrs['time']['calendar'], units=attrs['time']['units'])
+
     if extra_dims:
         for extra_dim in extra_dims:
             coords[extra_dim] = variables[extra_dim]
@@ -381,6 +377,30 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
     mask_ds = mask_ds.rio.clip([geometry], drop=False)
     mask_ds = mask_ds.drop_vars('spatial_ref')
     return mask_ds
+
+
+def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calendar='proleptic_gregorian') -> np.ndarray:
+    """Convert an time coordinate array to np.float64 using cftime.date2num.
+
+    Args:
+        time (np.ndarray): Time coordinate array.
+        units (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
+        calendar (str): Calendar type for time coordinate (default: 'proleptic_gregorian').
+
+    Returns:
+        time (np.ndarray): Time coordinate array as np.float64.
+    """
+    if np.issubdtype(time.dtype, np.datetime64):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            time = time.to_pydatetime()
+
+    if time.dtype == 'object' and isinstance(time[0], str):
+        time = np.array([datetime.fromisoformat(t) for t in time], dtype=object)
+
+    return cftime.date2num(
+        time, calendar=calendar, units=units
+    ).astype(np.float64)
 
 
 def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:

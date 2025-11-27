@@ -257,6 +257,68 @@ variables:
 ''')
 
 
+def test_init_dataset_datetime_str():
+    time = pd.date_range(start='2000-01-01', end='2000-12-31', freq='D').astype(str)
+    var = np.random.rand(time.size, 360, 720).astype(np.float64)
+
+    attrs = {
+        'var': {
+            'long_name': 'Variable'
+        },
+        'time': {
+            'units': 'days since 2000-01-01 00:00:00'
+        }
+    }
+
+    ds = init_dataset(time=time, attrs=attrs, var=var)
+
+    assert isinstance(ds, xr.Dataset)
+
+    # assert np.array_equal(ds['time'], time.astype('O'))
+    assert ds['time'].units == attrs['time']['units']
+    assert ds['time'].calendar == "proleptic_gregorian"
+
+    assert np.array_equal(ds['var'].values, var)
+    assert ds['var'].long_name == attrs['var']['long_name']
+
+    test_path = constants.OUTPUT_PATH / 'test.nc'
+    test_path.unlink(missing_ok=True)
+
+    write_dataset(ds, test_path)
+
+    output = helper.call(f'ncdump -h {test_path}')
+
+    helper.assert_multiline_strings_equal(output, '''
+netcdf test {
+dimensions:
+    time = UNLIMITED ; // (366 currently)
+    lon = 720 ;
+    lat = 360 ;
+variables:
+    double lon(lon) ;
+        lon:standard_name = "longitude" ;
+        lon:long_name = "Longitude" ;
+        lon:units = "degrees_east" ;
+        lon:axis = "X" ;
+    double lat(lat) ;
+        lat:standard_name = "latitude" ;
+        lat:long_name = "Latitude" ;
+        lat:units = "degrees_north" ;
+        lat:axis = "Y" ;
+    double time(time) ;
+        time:standard_name = "time" ;
+        time:long_name = "Time" ;
+        time:calendar = "proleptic_gregorian" ;
+        time:units = "days since 2000-01-01 00:00:00" ;
+        time:axis = "T" ;
+    double var(time, lat, lon) ;
+        var:_FillValue = 1.e+20 ;
+        var:long_name = "Variable" ;
+        var:missing_value = 1.e+20 ;
+}
+''')
+
+
 def test_init_dataset_extra_dims():
     a = np.arange(0, 10, dtype=np.float64)
     b = np.arange(0, 10, dtype=np.float64)
