@@ -194,6 +194,10 @@ def write_dataset(ds: xr.Dataset, path: str | Path):
     # time should be an unlimited dimension
     unlimited_dims = ['time'] if 'time' in ds.dims else []
 
+    # data variables should be compressed
+    for data_var in ds.data_vars:
+        ds[data_var].encoding.update({'zlib': True, 'complevel': 5})
+
     ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=unlimited_dims)
 
 
