@@ -393,7 +393,10 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
     if np.issubdtype(time.dtype, np.datetime64):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
-            time = time.to_pydatetime()
+            if isinstance(time, pd.core.indexes.datetimes.DatetimeIndex):
+                time = time.to_pydatetime()
+            else:
+                time = time.dt.to_pydatetime()
 
     if time.dtype == 'object' and isinstance(time[0], str):
         time = np.array([datetime.fromisoformat(t) for t in time], dtype=object)
