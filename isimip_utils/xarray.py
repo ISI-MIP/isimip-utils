@@ -33,80 +33,89 @@ default_attrs = {
     }
 }
 
-
-def init_dataset(lon: None | int = 720, lat: None | int = 360, time: np.ndarray | None = None,
-                 attrs: None | dict = None, extra_dims: None | list = None, **variables: np.ndarray) -> xr.Dataset:
+def init_dataset(lon: None | int | np.ndarray = 720,
+                 lat: None | int | np.ndarray = 360,
+                 time: None | int | np.ndarray = None,
+                 dims: None | list = None,
+                 attrs: None | dict = None,
+                 **variables: np.ndarray) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
 
     Args:
-        lon (int): Number of longitude points, or None to omit (default: 720).
-        lat (int): Number of latitude points, or None to omit (default: 360).
-        time (np.ndarray): Time coordinate array, or None to omit time dimension (default: None).
+        lon (int | np.ndarray): Number of longitude points, or longitude array, or None to omit (default: 720).
+        lat (int | np.ndarray): Number of latitude points, or latitude array, or None to omit (default: 360).
+        time (int | np.ndarray): Number of time steps, or time array, or None to omit time dimension (default: None).
         attrs (dict): Dictionary of attributes for variables and global attributes.
-        extra_dims (list): List of extra dimensions (besides lat, lon, time).
+        dims (list): List of dimensions (default time, lat, lon).
         **variables (np.ndarray): Data variables to include in the dataset.
 
     Returns:
         Initialized xarray Dataset with coordinates and data variables.
     """
+
+    # create dimensions
+    if dims is None:
+        dims = []
+        if time is not None:
+            dims.append('time')
+        if lat is not None:
+            dims.append('lat')
+        if lon is not None:
+            dims.append('lon')
+
+    # create coordinates
+    coords = {}
+    if isinstance(lon, int):
+        lon_delta = 360.0 / lon
+        coords['lon'] = np.arange(-180 + 0.5 * lon_delta, 180, lon_delta)
+    elif isinstance(lon, np.ndarray):
+        coords['lon'] = lon
+
+    if isinstance(lat, int):
+        lat_delta = 180.0 / lat
+        coords['lat'] = np.arange(90 - 0.5 * lat_delta, -90, -lat_delta)
+    elif isinstance(lat, np.ndarray):
+        coords['lat'] = lat
+
+    if isinstance(time, int):
+        coords['time'] = np.arange(time, dtype=np.float64)
+    elif isinstance(time, np.ndarray):
+        coords['time'] = time
+
+    for dim in dims:
+        if dim not in ['lon', 'lat', 'time']:
+            coords[dim] = variables[dim]
+
+    # create data variables
+    data_vars = {
+        var_name: (dims, var)
+        for var_name, var in variables.items()
+        if var_name not in dims
+    }
+
+    # create dataset
+    ds = xr.Dataset(coords=coords, data_vars=data_vars)
+
     # combine attrs
     attrs = {
         key: {**default_attrs.get(key, {}), **(attrs or {}).get(key, {})}
         for key in {*default_attrs.keys(), *(attrs or {}).keys()}
     }
 
-    # create list of dimensions
-    dims = list(extra_dims) if extra_dims else []
-    if time is not None:
-        dims.append('time')
-    if lat:
-        dims.append('lat')
-    if lon:
-        dims.append('lon')
-
-    # create coords
-    coords = {}
-    if lon is not None:
-        delta = 360.0 / lon
-        coords['lon'] = np.arange(-180 + 0.5 * delta, 180, delta)
-    if lat is not None:
-        delta = 180.0 / lat
-        coords['lat'] = np.arange(90 - 0.5 * delta, -90, -delta)
-    if time is not None:
-        if np.issubdtype(time.dtype, np.floating) or np.issubdtype(time.dtype, np.integer):
-            coords['time'] = time.astype(np.float64)
-        else:
-            coords['time'] = convert_time(time, calendar=attrs['time']['calendar'], units=attrs['time']['units'])
-
-    if extra_dims:
-        for extra_dim in extra_dims:
-            coords[extra_dim] = variables[extra_dim]
-
-    # create data variables
-    data_vars = {
-        var_name: (dims, var)
-        for var_name, var in variables.items()
-        if extra_dims is None or var_name not in extra_dims
-    }
-
-    # create dataset
-    ds = xr.Dataset(coords=coords, data_vars=data_vars)
-
     # set attributes
-    if attrs:
-        for coord in ds.coords:
-            if coord in attrs:
-                ds.coords[coord].attrs.update(attrs[coord])
+    for coord in ds.coords:
+        if coord in attrs:
+            ds.coords[coord].attrs.update(attrs[coord])
 
-        for data_var in ds.data_vars:
-            if attrs:
-                if data_var in attrs:
-                    ds.data_vars[data_var].attrs.update(attrs[data_var])
+    for data_var in ds.data_vars:
+        if attrs:
+            if data_var in attrs:
+                ds.data_vars[data_var].attrs.update(attrs[data_var])
 
-            ds.data_vars[data_var].attrs["_FillValue"] = 1.e+20
+        ds.data_vars[data_var].attrs["_FillValue"] = 1.e+20
 
-        # set global attributes
-        ds.attrs = attrs.get('global', {})
+    # set global attributes
+    ds.attrs = attrs.get('global', {})
 
     return ds
 
@@ -390,6 +399,9 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
     Returns:
         time (np.ndarray): Time coordinate array as np.float64.
     """
+    if np.issubdtype(time.dtype, np.floating) or np.issubdtype(time.dtype, np.integer):
+        return time.astype(np.float64)
+
     if np.issubdtype(time.dtype, np.datetime64):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)

@@ -13,4 +13,4 @@ def normalize_whitespace(string):
 
 def assert_multiline_strings_equal(a, b):
     for a_line, b_line in zip(a.strip().splitlines(), b.strip().splitlines(), strict=True):
-        assert normalize_whitespace(a_line) == normalize_whitespace(b_line)
+        assert normalize_whitespace(a_line) == normalize_whitespace(b_line), (a_line, b_line)
