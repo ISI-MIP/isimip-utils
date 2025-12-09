@@ -11,7 +11,7 @@ import xarray as xr
 
 logger = logging.getLogger(__name__)
 
-default_attrs = {
+DEFAULT_ATTRS = {
     'lon': {
         'standard_name': 'longitude',
         'long_name': 'Longitude',
@@ -32,6 +32,8 @@ default_attrs = {
         'axis': 'T'
     }
 }
+
+FILL_VALUE = np.float32(1.e+20)
 
 def init_dataset(lon: None | int | np.ndarray = 720,
                  lat: None | int | np.ndarray = 360,
@@ -98,8 +100,8 @@ def init_dataset(lon: None | int | np.ndarray = 720,
 
     # combine attrs
     attrs = {
-        key: {**default_attrs.get(key, {}), **(attrs or {}).get(key, {})}
-        for key in {*default_attrs.keys(), *(attrs or {}).keys()}
+        key: {**DEFAULT_ATTRS.get(key, {}), **(attrs or {}).get(key, {})}
+        for key in {*DEFAULT_ATTRS.keys(), *(attrs or {}).keys()}
     }
 
     # set attributes
@@ -280,9 +282,9 @@ def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
     """
     for data_var in ds.data_vars:
         if '_FillValue' not in ds.data_vars[data_var].attrs:
-            ds.data_vars[data_var].attrs['_FillValue'] = 1.e+20
+            ds.data_vars[data_var].attrs['_FillValue'] = FILL_VALUE
         if 'missing_value' not in ds.data_vars[data_var].attrs:
-            ds.data_vars[data_var].attrs['missing_value'] = 1.e+20
+            ds.data_vars[data_var].attrs['missing_value'] = FILL_VALUE
     return ds
 
 
@@ -296,7 +298,7 @@ def set_fill_value_to_nan(ds: xr.Dataset) -> xr.Dataset:
         Dataset with fill values replaced by NaN.
     """
     for var in ds.data_vars:
-        fill_value = ds[var].attrs.get('_FillValue', 1e+20)
+        fill_value = ds[var].attrs.get('_FillValue', FILL_VALUE)
         ds[var] = ds[var].where(ds[var] != fill_value)
     return ds
 
@@ -311,7 +313,7 @@ def set_nan_to_fill_value(ds: xr.Dataset) -> xr.Dataset:
         Dataset with NaN values replaced by fill values.
     """
     for var in ds.data_vars:
-        fill_value = ds[var].attrs.get('_FillValue', 1e+20)
+        fill_value = ds[var].attrs.get('_FillValue', FILL_VALUE)
         ds[var] = ds[var].where(~np.isnan(ds[var]), fill_value)
     return ds
 
