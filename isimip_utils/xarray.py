@@ -33,7 +33,8 @@ DEFAULT_ATTRS = {
     }
 }
 
-FILL_VALUE = np.float32(1.e+20)
+FILL_VALUE = np.float64(1e20)
+MISSING_VALUE = np.float32(1e20)
 
 def init_dataset(lon: None | int | np.ndarray = 720,
                  lat: None | int | np.ndarray = 360,
@@ -114,7 +115,7 @@ def init_dataset(lon: None | int | np.ndarray = 720,
             if data_var in attrs:
                 ds.data_vars[data_var].attrs.update(attrs[data_var])
 
-        ds.data_vars[data_var].attrs["_FillValue"] = 1.e+20
+        # ds.data_vars[data_var].attrs["_FillValue"] = FILL_VALUE
 
     # set global attributes
     ds.attrs = attrs.get('global', {})
@@ -284,7 +285,7 @@ def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
         if '_FillValue' not in ds.data_vars[data_var].attrs:
             ds.data_vars[data_var].attrs['_FillValue'] = FILL_VALUE
         if 'missing_value' not in ds.data_vars[data_var].attrs:
-            ds.data_vars[data_var].attrs['missing_value'] = FILL_VALUE
+            ds.data_vars[data_var].attrs['missing_value'] = MISSING_VALUE
     return ds
 
 

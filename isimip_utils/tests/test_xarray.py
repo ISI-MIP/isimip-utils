@@ -122,7 +122,7 @@ variables:
     double var(time, lat, lon) ;
         var:_FillValue = 1.e+20 ;
         var:long_name = "Variable" ;
-        var:missing_value = 1.e+20 ;
+        var:missing_value = 1.e+20f ;
 }
 ''')
 
@@ -185,14 +185,14 @@ variables:
     double var(time, lat, lon) ;
         var:_FillValue = 1.e+20 ;
         var:long_name = "Variable" ;
-        var:missing_value = 1.e+20 ;
+        var:missing_value = 1.e+20f ;
 }
 ''')
 
 
 def test_init_dataset_dims():
-    a = np.arange(0, 10, dtype=np.float64)
-    b = np.arange(0, 10, dtype=np.float64)
+    a = np.arange(0, 2, dtype=np.float64)
+    b = np.arange(0, 3, dtype=np.float64)
     var = np.random.rand(b.size, a.size, 360, 720).astype(np.float64)
 
     attrs = {
@@ -231,8 +231,8 @@ netcdf test {
 dimensions:
     lon = 720 ;
     lat = 360 ;
-    b = 10 ;
-    a = 10 ;
+    b = 3 ;
+    a = 2 ;
 variables:
     double lon(lon) ;
         lon:standard_name = "longitude" ;
@@ -253,7 +253,7 @@ variables:
     double var(b, a, lat, lon) ;
         var:_FillValue = 1.e+20 ;
         var:long_name = "Variable" ;
-        var:missing_value = 1.e+20 ;
+        var:missing_value = 1.e+20f ;
 }
 ''')
 
