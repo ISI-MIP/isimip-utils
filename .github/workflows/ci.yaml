@@ -3,8 +3,8 @@ name: isimip-utils CI
 on:
   push:
     branches:
-      - main
-      - test
+    - main
+    - test
   pull_request:
 
 permissions:
@@ -109,15 +109,4 @@ jobs:
       run: pip install -e .[all]
 
     - name: Run pytest 🧪
-      run: pytest --cov
-
-    - name: Upload testing directory 📤
-      uses: actions/upload-artifact@v5
-      with:
-        name: testing
-        path: |
-          testing/datasets
-          testing/extractions
-          testing/output
-          testing/protocol
-          testing/share
+      run: pytest --cov=isimip_utils --cov-fail-under --cov-report=term-missing
