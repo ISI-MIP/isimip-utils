@@ -98,7 +98,7 @@ jobs:
     - name: Install cdo 🌍
       run: |
         sudo apt-get update
-        sudo apt-get install -y cdo --no-install-recommends
+        sudo apt-get install -y cdo netcdf-bin --no-install-recommends
 
     - name: Set up Python 🐍
       uses: actions/setup-python@v6
