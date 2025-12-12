@@ -5,6 +5,7 @@ import os
 import tomllib
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from rich.logging import RichHandler
@@ -121,6 +122,24 @@ def parse_path(value: str) -> Path:
     return Path(value).expanduser()
 
 
+def parse_locations(value: str) -> Path:
+    """Parse and expand a location string as list of URL or Path objects.
+
+    Args:
+        value (str): Location string to parse.
+
+    Returns:
+        List of URL or Path objects.
+    """
+    if value:
+        return [
+            string if urlparse(string).scheme else Path(string).expanduser()
+            for string in value.split()
+        ]
+    else:
+        return []
+
+
 def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
     """Parse a filelist file into a set of file paths.
 
@@ -138,6 +157,20 @@ def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
         filelist = None
 
     return filelist
+
+
+def parse_parameters(value: str) -> Path:
+    """Parse and expand a parameters string (a=b).
+
+    Args:
+        value (str): Parameter string to parse.
+
+    Returns:
+        Dict of the form {key: values}
+    """
+    key, values_str = value.split('=')
+    values = values_str.split(',')
+    return {key : values}
 
 
 class ArgumentParser(argparse.ArgumentParser):
