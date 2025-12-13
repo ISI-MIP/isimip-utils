@@ -209,17 +209,19 @@ def compute_temporal_average(ds: xr.Dataset) -> xr.Dataset:
     return ds.mean(dim='time', skipna=True).astype(np.float32)
 
 
-def count_values(ds: xr.Dataset) -> xr.Dataset:
+def count_values(ds: xr.Dataset, dim: list | None = None) -> xr.Dataset:
     """Count non-NaN values over lat/lon dimensions.
 
     Args:
         ds (xr.Dataset): Dataset with lat/lon dimensions.
+        dim (list): Dimensions along which to count [default: ('lat', 'lon')]
 
     Returns:
         Dataset with count of non-NaN values per time step.
     """
     logger.info('count values')
-    return ds.count(dim=('lat', 'lon')).astype(np.float32)
+    dim = dim or ('lat', 'lon')
+    return ds.count(dim=dim).astype(np.float32)
 
 
 def concat_extraction(ds1: xr.Dataset | None, ds2: xr.Dataset) -> xr.Dataset:
