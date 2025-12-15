@@ -22,6 +22,8 @@ class Settings(Singleton):
     def __getattr__(self, name: str) -> Any:
         if name in self._settings.keys():
             return self._settings[name]
+        else:
+            raise AttributeError(f"{self.__class__.__name__} object has no attribute '{name}'")
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name.startswith('_'):

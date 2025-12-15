@@ -185,6 +185,25 @@ def copy_placeholders(*placeholder_args: dict, **kwargs: Any) -> dict:
     return placeholders
 
 
+def apply_placeholders(path_template: str | Path, placeholders: dict) -> Path:
+    """Apply placeholders to a string or path, ensuring that the name of the path is lower case
+
+    Args:
+        path_template (str | Path): Path template as string or path.
+        placeholders (dict): Placeholder dictionary.
+
+    Returns:
+        Path with the applied placeholders.
+    """
+    try:
+        path = str(path_template).format(**placeholders)
+    except KeyError as e:
+        raise RuntimeError('Some of the placeholders are missing.') from e
+
+    path = Path(path)
+    return path.with_stem(path.stem.lower())
+
+
 def update_year(placeholders: dict, key: str, year: int | str, operator: str) -> None:
     """Update a year placeholder based on comparison operator.
 

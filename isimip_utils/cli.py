@@ -170,7 +170,7 @@ def parse_parameters(value: str) -> Path:
     """
     key, values_str = value.split('=')
     values = values_str.split(',')
-    return {key : values}
+    return key, values
 
 
 class ArgumentParser(argparse.ArgumentParser):
