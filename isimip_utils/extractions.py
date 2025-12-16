@@ -239,7 +239,7 @@ def concat_extraction(ds1: xr.Dataset | None, ds2: xr.Dataset) -> xr.Dataset:
     elif not ds2.sizes.get('time'):
         return ds1
     else:
-        if not ds1.time.encoding:
+        if not ds1.time.encoding or not ds1.time.encoding.get('units'):
             # apply offset when time units or calendar diverges, but only if times where not decoded
             offset = compute_offset(ds1, ds2)
             if offset is not None:
