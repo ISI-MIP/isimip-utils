@@ -121,3 +121,27 @@ def validate_lon(lon: float) -> None:
             raise ValidationError(f'lon={lon} must be < 180')
     except TypeError as e:
         raise ValidationError(f'lon={lon} is a valid number') from e
+
+
+def get_min_value(values):
+    """Get the minimal value of the input values, excluding None and using None as default.
+
+    Args:
+        values (list): Input values.
+
+    Returns:
+        Minimal value
+    """
+    return min([v for v in values if v is not None], default=None)
+
+
+def get_max_value(values):
+    """Get the maximum value of the input values, excluding None and using None as default.
+
+    Args:
+        values (list): Input values.
+
+    Returns:
+        Maximum value
+    """
+    return max([v for v in values if v is not None], default=None)

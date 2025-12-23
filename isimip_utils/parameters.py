@@ -83,30 +83,3 @@ def apply_placeholders(path_template: str | Path, placeholders: dict) -> Path:
 
     path = Path(path)
     return path.with_stem(path.stem.lower())
-
-
-def update_year(placeholders: dict, key: str, year: int | str, operator: str) -> None:
-    """Update a year placeholder based on comparison operator.
-
-    Args:
-        placeholders (dict): Dictionary of placeholders to update.
-        key (str): Key in placeholders dictionary to update.
-        year (int | str): Year value to compare/set.
-        operator (str): Comparison operator ('<' for minimum, '>' for maximum).
-
-    Raises:
-        RuntimeError: If operator is not '<' or '>'.
-
-    Note:
-        Updates placeholders[key] in-place if condition is met.
-    """
-    if operator not in ('<', '>'):
-        raise RuntimeError(f'operator "{operator}" not supported')
-
-    current = placeholders.get(key)
-    if (
-        (current is None) or
-        (operator == '>' and int(current) < int(year)) or
-        (operator == '<' and int(current) > int(year))
-    ):
-        placeholders[key] = year

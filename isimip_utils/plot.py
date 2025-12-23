@@ -114,7 +114,7 @@ def save_index(index_path: Path) -> None:
 </html>'''.replace(r'{{ index_json }}', index_json).strip())
 
 
-def get_plot_title(permutation: tuple) -> dict:
+def format_title(permutation: tuple) -> dict:
     """Create a plot title from a permutation tuple.
 
     Args:
