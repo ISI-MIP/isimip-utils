@@ -8,14 +8,13 @@ import altair as alt
 import numpy as np
 import pandas as pd
 
-from isimip_utils.pandas import (
+from .pandas import (
     get_first_coord,
     get_first_coord_axis,
     get_first_coord_label,
     get_first_data_var,
     get_first_data_var_label,
 )
-from isimip_utils.utils import get_permutations
 
 logger = logging.getLogger(__name__)
 
@@ -312,12 +311,12 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
     )
 
 
-def plot_grid(parameters: dict, plots: dict, empty_plot: alt.Chart, layer: bool = True,
+def plot_grid(permutations: list[tuple], plots: dict, empty_plot: alt.Chart, layer: bool = True,
               x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
     """Create a grid of plots organized by parameter permutations.
 
     Args:
-        parameters (dict): Dictionary of parameters with lists of values.
+        permutations (list): List of permutations with tuples of parameters.
         plots (dict): Dictionary mapping permutation tuples to Chart objects.
         empty_plot (alt.Chart): Chart to use when a permutation has no data.
         layer (bool): Whether to layer plots or concatenate vertically (default: True).
@@ -331,7 +330,7 @@ def plot_grid(parameters: dict, plots: dict, empty_plot: alt.Chart, layer: bool 
     rows = []
     prev_permutation = None
 
-    for permutation in get_permutations(parameters):
+    for permutation in permutations:
         row_title = permutation[0] if len(permutation) > 0 else ''
         column_title = permutation[1] if len(permutation) > 1 else ''
 

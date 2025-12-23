@@ -5,9 +5,9 @@ from datetime import datetime
 import numpy as np
 import xarray as xr
 
-from isimip_utils.exceptions import ExtractionError
-from isimip_utils.utils import validate_lat, validate_lon
-from isimip_utils.xarray import compute_offset, compute_time
+from .exceptions import ExtractionError
+from .utils import validate_lat, validate_lon
+from .xarray import compute_offset, compute_time
 
 logger = logging.getLogger(__name__)
 
