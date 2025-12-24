@@ -1,5 +1,8 @@
+import json
 import re
 import subprocess
+from pathlib import Path
+from unittest.mock import MagicMock
 
 
 def call(cmd):
@@ -14,3 +17,17 @@ def normalize_whitespace(string):
 def assert_multiline_strings_equal(a, b):
     for a_line, b_line in zip(a.strip().splitlines(), b.strip().splitlines(), strict=True):
         assert normalize_whitespace(a_line) == normalize_whitespace(b_line), (a_line, b_line)
+
+def mock_side_effect(url, *args, **kwargs):
+    mock_response = MagicMock()
+    mock_path = Path(url.replace('https://protocol.isimip.org', 'testing/protocol/output'))
+
+    if mock_path.exists():
+        with mock_path.open() as fp:
+            mock_response.status_code = 200
+            mock_response.json.return_value = json.load(fp)
+    else:
+        mock_response.status_code = 404
+        mock_response.json.return_value = None
+
+    return mock_response

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from isimip_utils.fetch import fetch_pattern
-from isimip_utils.patterns import find_files, match_dataset, match_dataset_path, match_file, match_file_path, match_path
+from isimip_utils.patterns import match_dataset, match_dataset_path, match_file, match_file_path, match_path
+from isimip_utils.protocol import fetch_pattern
 from isimip_utils.tests import constants
 
 protocol_locations = ['testing/protocol']
@@ -96,21 +96,3 @@ def test_match_path_specifiers_map():
 
     assert str(path) == str(file_path)
     assert specifiers == {**path_specifiers, **file_specifiers, 'region': 'spam'}
-
-
-def test_find_files():
-    file_path = Path(constants.YIELD_PATH)
-    files = [
-        file_path.name,
-        file_path.name.replace('_global_', 'a'),
-        file_path.name.replace('_global_', 'b'),
-        file_path.name.replace('_global_', 'c')
-    ]
-
-    pattern = fetch_pattern(pattern_path, protocol_locations)
-    result = find_files(pattern['file'], files)
-    assert len(result)
-    assert result == [{
-        'path': file_path.name,
-        **file_specifiers
-    }]

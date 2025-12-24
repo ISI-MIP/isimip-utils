@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from isimip_utils.pandas import compute_average, create_label
-from isimip_utils.plot import get_plot_title, plot_grid, plot_line, plot_map, save_index, save_plot
+from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_index, save_plot
 from isimip_utils.tests import constants
 from isimip_utils.xarray import open_dataset, to_dataframe
 
@@ -209,16 +209,11 @@ def test_plot_grid():
 
     df_empty = pd.DataFrame({ 'time': dataframes[2]['time'], 'tas': np.nan })
 
-    parameters = {
-        'ab': ('a', 'b'),
-        'xy': ('x', 'y'),
-    }
-
-    permutations = (
+    permutations = [
         ('a', 'x'),
         ('a', 'y'),
         ('b', 'x')
-    )
+    ]
 
     plots = {}
     for permutation, df in zip(permutations, dataframes, strict=True):
@@ -226,7 +221,9 @@ def test_plot_grid():
 
     empty_plot = plot_line(df, empty=True)
 
-    chart = plot_grid(parameters, plots, x='independent', empty_plot=empty_plot, layer=False)
+    permutations.append(('b', 'y'))
+
+    chart = plot_grid(permutations, plots, x='independent', empty_plot=empty_plot, layer=False)
 
     top, bottom = chart.vconcat
     top_left, top_right = top.hconcat
@@ -255,10 +252,10 @@ def test_save_index():
     assert index_path.is_file
 
 
-def test_get_plot_title():
+def test_format_title():
     permutation = ('a', 'b', 'c')
 
-    assert get_plot_title(permutation) == {
+    assert format_title(permutation) == {
         "text": 'a · b · c',
         "fontSize": 16,
         "dy": -10
