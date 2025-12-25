@@ -1,7 +1,7 @@
 """Functions for working with xarray datasets for ISIMIP data."""
 import logging
 import warnings
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import cftime
@@ -324,11 +324,14 @@ def compute_time(ds: xr.Dataset, timestamp: datetime | None) -> float | None:
 
     Args:
         ds (xr.Dataset): Dataset with time coordinate containing units and calendar.
-        timestamp (datetime | None): Timestamp to convert, or None.
+        timestamp (datetime | date | None): Timestamp to convert, or None.
 
     Returns:
         Numeric time value in dataset's units, or None if timestamp is None.
     """
+    if type(timestamp) is date:
+        timestamp = datetime.combine(timestamp, datetime.min.time())
+
     units = ds.time.encoding.get('units') or ds.coords['time'].attrs.get('units')
     calendar = ds.time.encoding.get('calendar') or ds.coords['time'].attrs.get('calendar')
     return cftime.date2num(timestamp, units=units, calendar=calendar) if timestamp else None
