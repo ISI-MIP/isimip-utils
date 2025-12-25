@@ -1,4 +1,6 @@
 """Pandas DataFrame utilities for ISIMIP data."""
+from typing import Literal
+
 import pandas as pd
 
 
@@ -135,14 +137,15 @@ def get_first_data_var_label(df: pd.DataFrame) -> str:
     return next(iter(get_data_var_labels(df)))
 
 
-def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = True) -> pd.DataFrame:
-    """Compute yearly average with optional standard deviation bounds.
+def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = True,
+                    type: Literal['annual', 'monthly'] = 'annual') -> pd.DataFrame:
+    """Compute yearly or monthly average with optional standard deviation bounds.
 
     Args:
         df (pd.DataFrame): DataFrame with time column and data variable.
         data_var (str): Name of the data variable (default: first data var).
         area (bool): Whether to include lower/upper bounds using std (default: True).
-
+        type ('annual' | 'monthly'): Compute annual or monthly averages
     Returns:
         DataFrame with yearly aggregated data.
     """
@@ -152,14 +155,21 @@ def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = 
 
     attrs = df.attrs
 
-    df['year'] = df['time'].dt.year
+    if type == 'annual':
+        column_name = 'year'
+        df[column_name] = df['time'].dt.year
+    elif type == 'monthly':
+        column_name = 'month'
+        df[column_name] = df['time'].values.astype('datetime64[M]')
+    else:
+        raise RuntimeError(f'unknown type "{type}" must be "annual" or "monthly"')
 
     kwargs = {'mean': (data_var, 'mean')}
     if area:
         kwargs['lower'] = (data_var, lambda y: y.mean() - y.std())
         kwargs['upper'] = (data_var, lambda y: y.mean() + y.std())
 
-    df = df.groupby('year').agg(**kwargs).reset_index()
+    df = df.groupby(column_name).agg(**kwargs).reset_index()
 
     # cast to double
     df['mean'] = df['mean'].astype('float64')
@@ -169,10 +179,10 @@ def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = 
 
     # update attrs
     df.attrs = attrs
-    df.attrs['coords'] = {'year': {'long_name': 'Year', 'axis': 'T'}}
+    df.attrs['coords'] = {column_name: {'long_name': column_name.capitalize(), 'axis': 'T'}}
     df.attrs['data_vars'] = { 'mean': {} }
     if data_var_long_name:
-        df.attrs['data_vars']['mean']['long_name'] = f'Average {data_var_long_name.lower()}'
+        df.attrs['data_vars']['mean']['long_name'] = f'Average {type} {data_var_long_name.lower()}'
     if data_var_units:
         df.attrs['data_vars']['mean']['units'] = data_var_units
 
