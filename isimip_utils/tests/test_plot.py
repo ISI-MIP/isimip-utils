@@ -77,7 +77,7 @@ def test_plot_line_area():
 
     with open_dataset(extraction_path) as ds:
         df = to_dataframe(ds)
-        df = compute_average(df, 'tas')
+        df = compute_average(df, 'tas', type='monthly')
 
         chart = plot_line(df)
 
@@ -85,10 +85,10 @@ def test_plot_line_area():
 
     mean, area = chart.layer
 
-    assert mean.encoding.x.shorthand == 'year:T'
+    assert mean.encoding.x.shorthand == 'month:T'
     assert mean.encoding.y.shorthand == 'mean:Q'
 
-    assert area.encoding.x.shorthand == 'year:T'
+    assert area.encoding.x.shorthand == 'month:T'
     assert area.encoding.y.shorthand == 'lower:Q'
     assert area.encoding.y2.shorthand == 'upper:Q'
 
@@ -105,7 +105,7 @@ def test_plot_line_color():
 
     with open_dataset(extraction_path) as ds:
         df = to_dataframe(ds)
-        df = compute_average(df, 'tas')
+        df = compute_average(df, 'tas', type='monthly')
         df = create_label(df, ('a', 'b', 'c'))
 
         chart = plot_line(df, color_scheme='viridis')
@@ -114,10 +114,10 @@ def test_plot_line_color():
 
     mean, area = chart.layer
 
-    assert mean.encoding.x.shorthand == 'year:T'
+    assert mean.encoding.x.shorthand == 'month:T'
     assert mean.encoding.y.shorthand == 'mean:Q'
 
-    assert area.encoding.x.shorthand == 'year:T'
+    assert area.encoding.x.shorthand == 'month:T'
     assert area.encoding.y.shorthand == 'lower:Q'
     assert area.encoding.y2.shorthand == 'upper:Q'
 
@@ -127,8 +127,12 @@ def test_plot_line_color():
 
 
 def test_plot_map():
-    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_') \
-                                                                     .replace('2015_2020', '20180101')
+    date = constants.DATE
+    date_specifiers = date.strftime('%Y%m%d')
+    extraction_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
 
     plot_path = constants.PLOTS_PATH / 'plot_map.png'
     plot_path.unlink(missing_ok=True)
@@ -148,8 +152,12 @@ def test_plot_map():
 
 
 def test_plot_map_nocf():
-    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_') \
-                                                                     .replace('2015_2020', '20180101')
+    date = constants.DATE
+    date_specifiers = date.strftime('%Y%m%d')
+    extraction_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
 
     plot_path = constants.PLOTS_PATH / 'plot_map_nocf.png'
     plot_path.unlink(missing_ok=True)
@@ -169,8 +177,12 @@ def test_plot_map_nocf():
 
 
 def test_plot_map_empty():
-    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_') \
-                                                                     .replace('2015_2020', '20180101')
+    date = constants.DATE
+    date_specifiers = date.strftime('%Y%m%d')
+    extraction_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
 
     plot_path = constants.PLOTS_PATH / 'plot_map_empty.png'
     plot_path.unlink(missing_ok=True)

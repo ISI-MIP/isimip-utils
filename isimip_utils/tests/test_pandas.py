@@ -45,8 +45,8 @@ def test_get_first_coord(extraction, result):
 
 
 @pytest.mark.parametrize('extraction,result', [
-    ('bbox', ('Longitude [degrees_east]', 'Latitude [degrees_north]', 'time')),
-    ('point', ('time', ))
+    ('bbox', ('Longitude [degrees_east]', 'Latitude [degrees_north]', 'Time')),
+    ('point', ('Time', ))
 ])
 def test_get_coord_labels(extraction, result):
     with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
@@ -55,7 +55,7 @@ def test_get_coord_labels(extraction, result):
 
 
 @pytest.mark.parametrize('extraction,result', [
-    ('point', 'time')
+    ('point', 'Time')
 ])
 def test_get_first_coord_label(extraction, result):
     with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
@@ -135,8 +135,8 @@ def test_group_by_day():
         df = to_dataframe(ds)
         df = group_by_day(df, 'tas')
 
-        assert len(df) == 366
-        assert df['tas'].between(260, 300).all()
+        assert len(df) == 365
+        assert df['tas'].between(260, 305).all()
 
 
 def test_group_by_month():

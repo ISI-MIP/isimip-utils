@@ -1,4 +1,3 @@
-from datetime import datetime
 
 import pytest
 
@@ -21,36 +20,46 @@ from isimip_utils.xarray import get_attrs, open_dataset, set_attrs, write_datase
 @pytest.mark.parametrize('decode_cf', (True, False))
 def test_select_time(decode_cf):
     date = constants.DATE
+    date_specifiers = date.strftime('%Y%m%d')
 
     dataset_path = constants.DATASETS_PATH / constants.TAS_PATH
-    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time_') \
-                                                                     .replace('2015_2020', '20180101')
+    extraction_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
     extraction_path.unlink(missing_ok=True)
 
     with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
-        ds = select_time(file_ds, datetime.strptime(date, "%Y-%m-%d"))
+        ds = select_time(file_ds, date)
         write_dataset(ds, extraction_path)
 
-    cdo_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_') \
-                                                              .replace('2015_2020', '20180101')
+    cdo_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
     helper.call(f'cdo diff {extraction_path} {cdo_path}')
 
 
 @pytest.mark.parametrize('decode_cf', (True, False))
 def test_select_period(decode_cf):
     start_date, end_date = constants.PERIOD
+    date_specifiers = f'{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}'
 
     dataset_path = constants.DATASETS_PATH / constants.TAS_PATH
-    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-period_') \
-                                                                     .replace('2015_2020', '2015')
+    extraction_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-period_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
     extraction_path.unlink(missing_ok=True)
 
     with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
-        ds = select_period(file_ds, datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+        ds = select_period(file_ds, start_date, end_date)
         write_dataset(ds, extraction_path)
 
-    cdo_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-period-cdo_') \
-                                                              .replace('2015_2020', '2015')
+    cdo_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-period-cdo_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
     helper.call(f'cdo diff {extraction_path} {cdo_path}')
 
 
