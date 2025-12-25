@@ -22,7 +22,7 @@ TAS_SPLIT_PERIOD =  (
     (date(2021, 9, 1), date(2021, 12, 31))
 )
 TAS_SPLIT_PATHS = [
-    TAS_PATH.replace(TAS_DATE_SPECIFIERS, f'{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}')
+    TAS_PATH.replace(TAS_DATE_SPECIFIERS, f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}")
     for start_date, end_date in TAS_SPLIT_PERIOD
 ]
 
