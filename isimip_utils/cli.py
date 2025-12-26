@@ -137,7 +137,7 @@ def parse_locations(value: str) -> Path:
             for string in value.split()
         ]
     else:
-        return []
+        return None
 
 
 def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
@@ -168,9 +168,12 @@ def parse_parameters(value: str) -> Path:
     Returns:
         Dict of the form {key: values}
     """
-    key, values_str = value.split('=')
-    values = values_str.split(',')
-    return {key: values}
+    if value:
+        key, values_str = value.split('=')
+        values = values_str.split(',')
+        return {key: values}
+    else:
+        return None
 
 
 class ArgumentParser(argparse.ArgumentParser):

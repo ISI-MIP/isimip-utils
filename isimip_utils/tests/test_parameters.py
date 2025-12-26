@@ -1,4 +1,14 @@
-from isimip_utils.parameters import copy_placeholders, get_permutations, get_placeholders, join_parameters
+from pathlib import Path
+
+import pytest
+
+from isimip_utils.parameters import (
+    apply_placeholders,
+    copy_placeholders,
+    get_permutations,
+    get_placeholders,
+    join_parameters,
+)
 
 parameters = {
     'model': ['model_a', 'model_b'],
@@ -50,3 +60,12 @@ def test_copy_placeholders():
         'foo': 'bar',
         'egg': 'spam'
     }
+
+
+def test_apply_placeholders():
+    assert apply_placeholders('{foo}_{egg}', {'foo': 'bar', 'egg': 'spam'}) == Path('bar_spam')
+
+
+def test_apply_placeholders_error():
+    with pytest.raises(RuntimeError):
+        apply_placeholders('{foo}_{egg}', {'foo': 'bar'})

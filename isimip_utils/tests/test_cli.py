@@ -5,7 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from isimip_utils.cli import ArgumentParser, parse_dict, parse_filelist, parse_list, parse_path, parse_version
+from isimip_utils.cli import (
+    ArgumentParser,
+    parse_dict,
+    parse_filelist,
+    parse_list,
+    parse_locations,
+    parse_parameters,
+    parse_path,
+    parse_version,
+)
 
 
 def test_parse_dict():
@@ -33,6 +42,16 @@ def test_parse_path():
     assert isinstance(result, Path)
 
 
+def test_parse_locations():
+    result = parse_locations('https://example.com /opt/test ~/test')
+    assert result == ['https://example.com', Path('/opt/test'), Path('~/test').expanduser()]
+
+
+def test_parse_locations_none():
+    result = parse_locations('')
+    assert result is None
+
+
 def test_parse_filelist():
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
         f.write("/path/to/file1\n")
@@ -51,6 +70,16 @@ def test_parse_filelist():
 
 def test_parse_filelist_none():
     result = parse_filelist(None)
+    assert result is None
+
+
+def test_parse_parameters():
+    result = parse_parameters('egg=spam,foo,bar')
+    assert result == {'egg': ['spam', 'foo', 'bar']}
+
+
+def test_parse_parameters_none():
+    result = parse_parameters('')
     assert result is None
 
 

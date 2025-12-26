@@ -5,6 +5,8 @@ from isimip_utils.utils import (
     Singleton,
     cached_property,
     exclude_path,
+    get_max_value,
+    get_min_value,
     include_path,
     validate_lat,
     validate_lon,
@@ -77,3 +79,23 @@ def test_include_path():
     assert include_path(paths, 'a/b/c') is True
     assert include_path(paths, 'a/b/cc') is True
     assert include_path(paths, 'a/b/f') is False
+
+
+@pytest.mark.parametrize('values,result', [
+    ([1, 2, 3], 1),
+    ([None, 2, 3], 2),
+    ([None, None, None], None),
+    ([], None)
+])
+def test_get_min_value(values, result):
+    assert get_min_value(values) == result
+
+
+@pytest.mark.parametrize('values,result', [
+    ([1, 2, 3], 3),
+    ([1, 2, None], 2),
+    ([None, None, None], None),
+    ([], None)
+])
+def test_get_max_value(values, result):
+    assert get_max_value(values) == result

@@ -130,6 +130,16 @@ def test_compute_average():
         assert df['upper'].between(290, 300).all()
 
 
+def test_compute_average_monthly():
+    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
+        df = to_dataframe(ds)
+        df = compute_average(df, 'tas', type='monthly')
+
+        assert df['lower'].between(260, 300).all()
+        assert df['mean'].between(270, 300).all()
+        assert df['upper'].between(270, 305).all()
+
+
 def test_group_by_day():
     with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
         df = to_dataframe(ds)

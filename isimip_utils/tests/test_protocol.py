@@ -9,8 +9,7 @@ from isimip_utils.protocol import (
     fetch_tree,
     find_json,
 )
-
-from .helper import mock_side_effect
+from isimip_utils.tests import helper
 
 paths = [
     'ISIMIP3a/OutputData/agriculture/ACEA/gswp3-w5e5.json',
@@ -27,7 +26,7 @@ def test_fetch_definitions_local(path):
 
 @pytest.mark.parametrize('path', paths)
 def test_fetch_pattern(path):
-    with patch('isimip_utils.fetch.requests.get', side_effect=mock_side_effect):
+    with patch('isimip_utils.fetch.requests.get', side_effect=helper.mock_json):
         data = fetch_pattern(path)
         assert data and isinstance(data, dict)
 
@@ -40,7 +39,7 @@ def test_fetch_pattern_local(path):
 
 @pytest.mark.parametrize('path', paths)
 def test_fetch_schema(path):
-    with patch('isimip_utils.fetch.requests.get', side_effect=mock_side_effect):
+    with patch('isimip_utils.fetch.requests.get', side_effect=helper.mock_json):
         data = fetch_schema(path)
         assert data and isinstance(data, dict)
 
@@ -53,7 +52,7 @@ def test_fetch_schema_local(path):
 
 @pytest.mark.parametrize('path', paths)
 def test_fetch_tree(path):
-    with patch('isimip_utils.fetch.requests.get', side_effect=mock_side_effect):
+    with patch('isimip_utils.fetch.requests.get', side_effect=helper.mock_json):
         data = fetch_tree(path)
         assert data and isinstance(data, dict)
 
@@ -66,7 +65,7 @@ def test_fetch_tree_local(path):
 
 @pytest.mark.parametrize('path', paths)
 def test_find_json_fetch(path):
-    with patch('isimip_utils.fetch.requests.get', side_effect=mock_side_effect):
+    with patch('isimip_utils.fetch.requests.get', side_effect=helper.mock_json):
         data = find_json('https://protocol.isimip.org', 'definitions', path)
         assert data is not None
 

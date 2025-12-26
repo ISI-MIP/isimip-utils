@@ -114,3 +114,13 @@ pytest = ["pytest"]
 
 [tool.typos.default.extend-words]
 iy = "iy"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "except PackageNotFoundError:",
+    "except requests.exceptions.ConnectionError",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "raise RuntimeError"
+]

@@ -47,7 +47,12 @@ def test_init_dataset():
     test_path.parent.mkdir(exist_ok=True)
     test_path.unlink(missing_ok=True)
 
-    dataset = init_dataset(test_path)
+    dataset = init_dataset(
+        test_path,
+        time=np.arange(0, 10, dtype=np.float64),
+        var=np.random.rand(10, 360, 720).astype(np.float64),
+        attrs={'var': {'long_name': 'Variable'}}
+    )
     assert isinstance(dataset, Dataset)
 
 
