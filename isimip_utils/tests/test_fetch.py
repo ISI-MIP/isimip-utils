@@ -25,6 +25,7 @@ def test_fetch_json_not_found():
 def test_fetch_file():
     with patch('isimip_utils.fetch.requests.get', side_effect=helper.mock_content):
         output_path = constants.OUTPUT_PATH / 'test.json'
+        output_path.parent.mkdir(exist_ok=True, parents=True)
         output_path.unlink(missing_ok=True)
 
         fetch_file("https://protocol.isimip.org/definitions/ISIMIP3a/OutputData/agriculture.json", output_path)
@@ -43,6 +44,7 @@ def test_load_json_not_found():
 
 def test_load_file():
     output_path = constants.OUTPUT_PATH / 'test.json'
+    output_path.parent.mkdir(exist_ok=True, parents=True)
     output_path.unlink(missing_ok=True)
 
     load_file('testing/protocol/output/definitions/ISIMIP3a/OutputData/agriculture.json', output_path)
