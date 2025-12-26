@@ -75,12 +75,12 @@ def run_select_time():
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not output_path.exists():
-        helper.call(f'cdo -f nc4c -z zip_5 -L seldate,{date.strftime('%Y-%m-%d')} {input_path} {output_path}')
+        helper.call(f"cdo -f nc4c -z zip_5 -L seldate,{date.strftime('%Y-%m-%d')} {input_path} {output_path}")
 
 
 def run_select_period():
     start_date, end_date = constants.PERIOD
-    date_specifiers = f'{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}'
+    date_specifiers = f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}"
 
     path = constants.TAS_PATH
 

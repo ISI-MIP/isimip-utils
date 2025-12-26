@@ -43,7 +43,7 @@ def test_select_time(decode_cf):
 @pytest.mark.parametrize('decode_cf', (True, False))
 def test_select_period(decode_cf):
     start_date, end_date = constants.PERIOD
-    date_specifiers = f'{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}'
+    date_specifiers = f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}"
 
     dataset_path = constants.DATASETS_PATH / constants.TAS_PATH
     extraction_path = (
