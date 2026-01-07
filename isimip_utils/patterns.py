@@ -138,8 +138,8 @@ def match_string(pattern: re.Pattern, string: str) -> tuple[Path, dict]:
     Raises:
         DidNotMatch: If the string doesn't match the pattern.
     """
-    logger.debug(pattern.pattern)
-    logger.debug(string)
+    logger.debug('pattern = "%s"', pattern.pattern)
+    logger.debug('string = "%s"', string)
 
     # try to match the string
     match = pattern.search(string)
@@ -154,4 +154,17 @@ def match_string(pattern: re.Pattern, string: str) -> tuple[Path, dict]:
 
         return Path(match.group(0)), specifiers
     else:
+        # try to find a matching fragment
+        split_pattern = pattern.pattern.split('_')
+        for i in range(len(split_pattern), 0, -1):
+            try:
+                sub_pattern = re.compile('_'.join(split_pattern[:i]))
+                sub_match = sub_pattern.search(string)
+                if sub_match:
+                    fragment = sub_match.group(0)
+                    raise DidNotMatch(f'No match for "{string}", last matching fragment was "{fragment}"')
+            except re.error:
+                pass
+
+        # just raise the exception if no fragment was found
         raise DidNotMatch(f'No match for {string} ("{pattern.pattern}")')
