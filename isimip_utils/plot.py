@@ -311,12 +311,13 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
     )
 
 
-def plot_grid(permutations: list[tuple], plots: dict, empty_plot: alt.Chart, layer: bool = True,
-              x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
+def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], plots: dict, empty_plot: alt.Chart,
+              layer: bool = True, x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
     """Create a grid of plots organized by parameter permutations.
 
     Args:
-        permutations (list): List of permutations with tuples of parameters.
+        grid_permutations (list): List the permutations (with tuples of parameters) which span the grid.
+        plot_permutations (list): List the permutations (with tuples of parameters) for each plot.
         plots (dict): Dictionary mapping permutation tuples to Chart objects.
         empty_plot (alt.Chart): Chart to use when a permutation has no data.
         layer (bool): Whether to layer plots or concatenate vertically (default: True).
@@ -328,29 +329,30 @@ def plot_grid(permutations: list[tuple], plots: dict, empty_plot: alt.Chart, lay
         Altair Chart object with grid layout.
     """
     rows = []
-    prev_permutation = None
+    prev = None
 
-    for permutation in permutations:
-        row_title = permutation[0] if len(permutation) > 0 else ''
-        column_title = permutation[1] if len(permutation) > 1 else ''
+    for grid_permutation in grid_permutations:
+        row_title = grid_permutation[0] if len(grid_permutation) > 0 else ''
+        column_title = grid_permutation[1] if len(grid_permutation) > 1 else ''
 
-        if prev_permutation is None or (len(permutation) > 0 and permutation[0] != prev_permutation[0]):
+        if prev is None or (len(grid_permutation) > 0 and grid_permutation[0] != prev[0]):
             # start a new row
             column = []
             row = [(column_title, column)]
             rows.append((row_title, row))
-        elif prev_permutation is None or (len(permutation) > 1 and permutation[1] != prev_permutation[1]):
+        elif prev is None or (len(grid_permutation) > 1 and grid_permutation[1] != prev[1]):
             # start a new column
             column = []
             row.append((column_title, column))
 
-        plot = plots.get(permutation, empty_plot)
-        if not layer:
-            plot = plot.properties(title=' '.join(permutation[2:]))
+        for plot_permutation in plot_permutations:
+            plot = plots.get(grid_permutation + plot_permutation, empty_plot)
+            if not layer:
+                plot = plot.properties(title=' '.join(plot_permutation))
 
-        column.append(plot)
+            column.append(plot)
 
-        prev_permutation = permutation
+        prev = grid_permutation
 
     chart = alt.vconcat(*[
         alt.hconcat(*[
