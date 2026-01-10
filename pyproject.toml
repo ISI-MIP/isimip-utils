@@ -33,19 +33,19 @@ Repository = "https://github.com/ISI-MIP/isimip-utils"
 
 [project.optional-dependencies]
 all = [
-    "isimip-utils[netcdf,plots,shapes,xarray,dev,pytest,docs]"
+    "isimip-utils[netcdf,altair,geopandas,xarray,dev,pytest,docs]"
 ]
 recommended = [
-    "isimip-utils[netcdf,plots,shapes,xarray]"
+    "isimip-utils[netcdf,altair,geopandas,xarray]"
 ]
 netcdf = [
     "netCDF4~=1.7"
 ]
-plots = [
+altair = [
     "altair[all]~=6.0",
     "palettable~=3.3",
 ]
-shapes = [
+geopandas = [
     "geopandas~=1.1",
     "rioxarray>=0.19",
 ]
