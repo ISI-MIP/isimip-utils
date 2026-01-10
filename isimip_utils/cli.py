@@ -133,7 +133,7 @@ def parse_locations(value: str) -> Path:
     """
     if value:
         return [
-            string if urlparse(string).scheme else Path(string).expanduser()
+            string.rstrip('/') if urlparse(string).scheme else Path(string).expanduser()
             for string in value.split()
         ]
     else:
