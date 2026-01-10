@@ -88,7 +88,10 @@ def parse_list(string: str) -> list[str]:
     Returns:
         List of stripped values.
     """
-    return [value.strip() for value in string.split(',')]
+    if string:
+        return [value.strip() for value in string.split(',')]
+    else:
+        return []
 
 
 def parse_version(value: str) -> str:
@@ -122,7 +125,7 @@ def parse_path(value: str) -> Path:
     return Path(value).expanduser()
 
 
-def parse_locations(value: str) -> Path:
+def parse_locations(value: str) -> list[str | Path]:
     """Parse and expand a location string as list of URL or Path objects.
 
     Args:
@@ -137,10 +140,10 @@ def parse_locations(value: str) -> Path:
             for string in value.split()
         ]
     else:
-        return None
+        return []
 
 
-def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
+def parse_filelist(filelist_file: str | Path | None) -> set[str]:
     """Parse a filelist file into a set of file paths.
 
     Args:
@@ -148,18 +151,18 @@ def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
             Lines starting with '#' are treated as comments.
 
     Returns:
-        Set of file paths, or None if filelist_file is None/empty.
+        Set of file paths.
     """
     if filelist_file:
         with open(filelist_file) as f:
             filelist = {line for line in f.read().splitlines() if (line and not line.startswith('#'))}
     else:
-        filelist = None
+        filelist = {}
 
     return filelist
 
 
-def parse_parameters(value: str) -> Path:
+def parse_parameters(value: str) -> Path | None:
     """Parse and expand a parameters string (a=b).
 
     Args:
