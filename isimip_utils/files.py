@@ -7,12 +7,11 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def find_files(base_path: str | Path, file_iter: Iterable[Path],
+def find_files(file_iter: Iterable[Path],
                pattern: str = r'_(?P<start_year>\d{4})_(?P<end_year>\d{4})?\.nc\d*$') -> tuple[list[tuple], int, int]:
     """Find files for a given (dataset) path, matching a regex pattern for start and end year.
 
     Args:
-        base_path (str | Path): Base path for file discovery.
         file_iter (Iterable[Path]): Iterator over file paths to search through.
         pattern (str): Regular expression for start and end year matching.
 
