@@ -64,7 +64,7 @@ def setup_logs(log_level: str = 'WARN', log_file: str | None = None,
         root_logger.addHandler(file_handler)
 
 
-def parse_dict(string: str) -> dict[str, list[str]]:
+def parse_dict(string: str) -> dict[str, list[str]] | None:
     """Parse a string in format 'key=value1,value2' into a dictionary.
 
     Args:
@@ -73,13 +73,14 @@ def parse_dict(string: str) -> dict[str, list[str]]:
     Returns:
         Dictionary with single key mapping to list of values.
     """
-    key, values = string.split('=')
-    return {
-        key.strip(): [value.strip() for value in values.split(',')]
-    }
+    if string:
+        key, values = string.split('=')
+        return {
+            key.strip(): [value.strip() for value in values.split(',')]
+        }
 
 
-def parse_list(string: str) -> list[str]:
+def parse_list(string: str) -> list[str] | None:
     """Parse a comma-separated string into a list.
 
     Args:
@@ -90,8 +91,6 @@ def parse_list(string: str) -> list[str]:
     """
     if string:
         return [value.strip() for value in string.split(',')]
-    else:
-        return []
 
 
 def parse_version(value: str) -> str:
@@ -125,7 +124,7 @@ def parse_path(value: str) -> Path:
     return Path(value).expanduser()
 
 
-def parse_locations(value: str) -> list[str | Path]:
+def parse_locations(value: str) -> list[str | Path] | None:
     """Parse and expand a location string as list of URL or Path objects.
 
     Args:
@@ -139,11 +138,9 @@ def parse_locations(value: str) -> list[str | Path]:
             string.rstrip('/') if urlparse(string).scheme else Path(string).expanduser()
             for string in value.split()
         ]
-    else:
-        return []
 
 
-def parse_filelist(filelist_file: str | Path | None) -> set[str]:
+def parse_filelist(filelist_file: str | Path | None) -> set[str] | None:
     """Parse a filelist file into a set of file paths.
 
     Args:
@@ -155,11 +152,7 @@ def parse_filelist(filelist_file: str | Path | None) -> set[str]:
     """
     if filelist_file:
         with open(filelist_file) as f:
-            filelist = {line for line in f.read().splitlines() if (line and not line.startswith('#'))}
-    else:
-        filelist = {}
-
-    return filelist
+            return {line for line in f.read().splitlines() if (line and not line.startswith('#'))}
 
 
 def parse_parameters(value: str) -> Path | None:
@@ -175,8 +168,6 @@ def parse_parameters(value: str) -> Path | None:
         key, values_str = value.split('=')
         values = values_str.split(',')
         return {key: values}
-    else:
-        return None
 
 
 class ArgumentParser(argparse.ArgumentParser):

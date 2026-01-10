@@ -221,21 +221,22 @@ def test_plot_grid():
 
     df_empty = pd.DataFrame({ 'time': dataframes[2]['time'], 'tas': np.nan })
 
-    permutations = [
+    grid_permutations = [
         ('a', 'x'),
         ('a', 'y'),
-        ('b', 'x')
+        ('b', 'x'),
     ]
+    plot_permutations = [()]
 
     plots = {}
-    for permutation, df in zip(permutations, dataframes, strict=True):
+    for permutation, df in zip(grid_permutations, dataframes, strict=True):
         plots[permutation] = plot_line(df)
 
     empty_plot = plot_line(df, empty=True)
 
-    permutations.append(('b', 'y'))
+    grid_permutations.append(('b', 'y'))
 
-    chart = plot_grid(permutations, plots, x='independent', empty_plot=empty_plot, layer=False)
+    chart = plot_grid(grid_permutations, plot_permutations, plots, x='independent', empty_plot=empty_plot, layer=False)
 
     top, bottom = chart.vconcat
     top_left, top_right = top.hconcat

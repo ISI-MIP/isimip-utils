@@ -102,8 +102,8 @@ def test_get_first_data_var(extraction, result):
 
 
 @pytest.mark.parametrize('extraction,result', [
-    ('bbox', ('Near-Surface Air Temperature [K]', )),
-    ('point', ('Near-Surface Air Temperature [K]', ))
+    ('bbox', ('tas [K]', )),
+    ('point', ('tas [K]', ))
 ])
 def test_get_data_var_labels(extraction, result):
     with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
@@ -112,7 +112,7 @@ def test_get_data_var_labels(extraction, result):
 
 
 @pytest.mark.parametrize('extraction,result', [
-    ('point', 'Near-Surface Air Temperature [K]')
+    ('point', 'tas [K]')
 ])
 def test_get_first_data_var_label(extraction, result):
     with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:

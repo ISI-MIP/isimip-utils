@@ -12,7 +12,7 @@ def test_find_files():
         fake_path.name
     ]
 
-    result = find_files(file_path.parent, files)
+    result = find_files(files)
     assert len(result)
     assert result == [
         (file_path.name, 1901, 2016)
@@ -31,7 +31,7 @@ def test_find_files_with_pattern():
 
     pattern = r'(_(?P<start_year>\d{4}))?(_(?P<end_year>\d{4}))?(_\w+)?\.nc\d*$'
 
-    result = find_files(file_path.parent, files, pattern=pattern)
+    result = find_files(files, pattern=pattern)
     assert len(result)
     assert result == [
         (none_path.name, None, None),  # result is sorted
