@@ -119,7 +119,7 @@ def get_data_var_labels(df: pd.DataFrame) -> str:
     """
     labels = []
     for data_var in get_data_vars(df):
-        data_var_name = df.attrs['data_vars'][data_var].get('long_name', data_var)
+        data_var_name = df.attrs['data_vars'][data_var].get('name', data_var)
         data_var_units = df.attrs['data_vars'][data_var].get('units')
         labels.append(f'{data_var_name} [{data_var_units}]' if data_var_units else data_var_name)
     return tuple(labels)
@@ -180,7 +180,11 @@ def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = 
     # update attrs
     df.attrs = attrs
     df.attrs['coords'] = {column_name: {'long_name': column_name.capitalize(), 'axis': 'T'}}
-    df.attrs['data_vars'] = { 'mean': {} }
+    df.attrs['data_vars'] = {
+        'mean': {
+            'name': f'avg {type} {data_var}'
+        }
+    }
     if data_var_long_name:
         df.attrs['data_vars']['mean']['long_name'] = f'Average {type} {data_var_long_name.lower()}'
     if data_var_units:
