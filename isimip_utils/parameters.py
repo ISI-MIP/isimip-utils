@@ -79,7 +79,7 @@ def apply_placeholders(path_template: str | Path, placeholders: dict) -> Path:
     try:
         path = str(path_template).format(**placeholders)
     except KeyError as e:
-        raise RuntimeError('Some of the placeholders are missing.') from e
+        raise RuntimeError(f'Some of the placeholders are missing ({e}).') from e
 
     path = Path(path)
     return path.with_stem(path.stem.lower())
