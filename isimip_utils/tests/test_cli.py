@@ -49,7 +49,7 @@ def test_parse_locations():
 
 def test_parse_locations_none():
     result = parse_locations('')
-    assert result is None
+    assert result == []
 
 
 def test_parse_filelist():
@@ -70,7 +70,7 @@ def test_parse_filelist():
 
 def test_parse_filelist_none():
     result = parse_filelist(None)
-    assert result is None
+    assert result == []
 
 
 def test_parse_parameters():
@@ -80,7 +80,7 @@ def test_parse_parameters():
 
 def test_parse_parameters_none():
     result = parse_parameters('')
-    assert result is None
+    assert result == {}
 
 
 def test_argument_parser():
