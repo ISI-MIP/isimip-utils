@@ -166,7 +166,7 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
     x_type = x_type or ('T' if get_first_coord_axis(df) == 'T' else 'Q')
     x = alt.X(
         f'{x_field}:{x_type}',
-        title=x_label
+        title=x_label if not empty else ""
     )
 
     y_field = y_field or get_first_data_var(df)
@@ -174,7 +174,7 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
     y_type = y_type or 'Q'
     y = alt.Y(
         f'{y_field}:{y_type}',
-        title=y_label,
+        title=y_label if not empty else "",
         axis=alt.Axis(format=y_format) if y_format else alt.Axis(),
         scale=alt.Scale(zero=False, nice=False)
     )
