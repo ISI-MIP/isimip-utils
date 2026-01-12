@@ -1,7 +1,7 @@
 """Additional utility functions for ISIMIP tools."""
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from .exceptions import ValidationError
 
@@ -49,40 +49,47 @@ class cached_property:
         return value
 
 
-def exclude_path(exclude: list[str] | None, path: Path | str) -> bool:
+def exclude_path(exclude: list[str] | None, path: Path | str, match: Literal['any', 'all'] = 'any') -> bool:
     """Check if a path should be excluded based on exclude patterns.
 
     Args:
-        exclude (list[str] | None): List of exclude patterns (strings). Path is excluded if it
-            starts with any pattern.
+        exclude (list[str] | None): List of include patterns (strings). Path is excluded if it
+            contains any or all patterns, depending on the match argument or if include list is None/empty.
         path (Path | str): Path to check for exclusion.
+        match ('any', 'all'): Match all or any of the lines in exclude.
 
     Returns:
         True if path should be excluded, False otherwise.
     """
     if exclude:
-        for exclude_string in exclude:
-            if str(path).startswith(exclude_string):
-                return True
+        if match == 'any':
+            return any(string in str(path) for string in exclude)
+        elif match == 'all':
+            return all(string in str(path) for string in exclude)
+        else:
+            raise ValidationError(f'match={match} needs to be "any" or "all"')
     return False
 
 
-def include_path(include: list[str] | None, path: Path | str) -> bool:
+def include_path(include: list[str] | None, path: Path | str, match: Literal['any', 'all'] = 'any') -> bool:
     """Check if a path should be included based on include patterns.
 
     Args:
         include (list[str] | None): List of include patterns (strings). Path is included if it
-            starts with any pattern, or if include list is None/empty.
+            contains any or all patterns, depending on the match argument or if include list is None/empty.
         path (Path | str): Path to check for inclusion.
+        match ('any', 'all'): Match all or any of the lines in exclude.
 
     Returns:
         True if path should be included, False otherwise.
     """
     if include:
-        for include_string in include:
-            if str(path).startswith(include_string):
-                return True
-        return False
+        if match == 'any':
+            return any(string in str(path) for string in include)
+        elif match == 'all':
+            return all(string in str(path) for string in include)
+        else:
+            raise ValidationError(f'match={match} needs to be "any" or "all"')
     else:
         return True
 

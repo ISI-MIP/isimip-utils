@@ -12,12 +12,6 @@ from isimip_utils.utils import (
     validate_lon,
 )
 
-paths = [
-    'a/b/c',
-    'a/b/d',
-    'a/b/e'
-]
-
 
 def test_singleton():
     a = Singleton()
@@ -67,18 +61,37 @@ def test_validate_lon_error(lon):
         validate_lon(lon)
 
 
-def test_exclude_path():
-    assert exclude_path([], 'a/b/c') is False
-    assert exclude_path(paths, 'a/b/c') is True
-    assert exclude_path(paths, 'a/b/cc') is True
-    assert exclude_path(paths, 'a/b/f') is False
+@pytest.mark.parametrize('exclude,path,match,result', (
+    ([], 'a/b/c', 'any', False),
+    (['a/b/c', 'a/b/d', 'a/b/e'], 'a/b/c', 'any', True),
+    (['a/b/c', 'a/b/d', 'a/b/e'], 'a/b/cc', 'any', True),
+    (['a/b/c', 'a/b/d', 'a/b/e'], 'a/b/f', 'any', False),
+    (['a_b', 'c_d'], 'a_b_c_d', 'any', True),
+    (['a_b', 'c_d'], 'a_b_c_d', 'all', True),
+    (['a_b', 'c_e'], 'a_b_c_d', 'any', True),
+    (['a_b', 'c_e'], 'a_b_c_d', 'all', False),
+    (['a_e', 'c_d'], 'a_b_c_d', 'any', True),
+    (['a_e', 'c_d'], 'a_b_c_e', 'all', False),
+))
+def test_exclude_path(exclude, path, match, result):
+    assert exclude_path(exclude, path, match) is result
 
 
-def test_include_path():
-    assert include_path([], 'a/b/c') is True
-    assert include_path(paths, 'a/b/c') is True
-    assert include_path(paths, 'a/b/cc') is True
-    assert include_path(paths, 'a/b/f') is False
+
+@pytest.mark.parametrize('include,path,match,result', (
+    ([], 'a/b/c', 'any', True),
+    (['a/b/c', 'a/b/d', 'a/b/e'], 'a/b/c', 'any', True),
+    (['a/b/c', 'a/b/d', 'a/b/e'], 'a/b/cc', 'any', True),
+    (['a/b/c', 'a/b/d', 'a/b/e'], 'a/b/f', 'any', False),
+    (['a_b', 'c_d'], 'a_b_c_d', 'any', True),
+    (['a_b', 'c_d'], 'a_b_c_d', 'all', True),
+    (['a_b', 'c_e'], 'a_b_c_d', 'any', True),
+    (['a_b', 'c_e'], 'a_b_c_d', 'all', False),
+    (['a_e', 'c_d'], 'a_b_c_d', 'any', True),
+    (['a_e', 'c_d'], 'a_b_c_e', 'all', False),
+))
+def test_include_path(include, path, match, result):
+    assert include_path(include, path, match) is result
 
 
 @pytest.mark.parametrize('values,result', [
