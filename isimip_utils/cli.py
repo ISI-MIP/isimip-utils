@@ -196,6 +196,8 @@ class ArgumentParser(argparse.ArgumentParser):
         '/etc/isimip.toml',
     ]
 
+    env_prefix = 'ISIMIP_'
+
     def parse_args(self, *args) -> argparse.Namespace:
         return super().parse_args(*args, namespace=self.build_default_args())
 
@@ -229,12 +231,13 @@ class ArgumentParser(argparse.ArgumentParser):
             if not action.required and action.dest != 'help':
                 key = action.dest
                 key_upper = key.upper()
+                key_env = self.env_prefix + key_upper
 
                 value = None
 
-                if os.getenv(key_upper):
+                if os.getenv(key_env):
                     # if the attribute is in the environment, take the value
-                    value = os.getenv(key_upper)
+                    value = os.getenv(key_env)
                     if value.lower() == 'true':
                         value = True
                     elif value.lower() == 'false':

@@ -110,7 +110,7 @@ def test_argument_parser_with_config(tmp_path):
 
 
 def test_argument_parser_with_env():
-    os.environ["TEST"] = "env_value"
+    os.environ["ISIMIP_TEST"] = "env_value"
 
     try:
         parser = ArgumentParser()
@@ -119,4 +119,4 @@ def test_argument_parser_with_env():
         args = parser.parse_args([])
         assert args.test == "env_value"
     finally:
-        del os.environ["TEST"]
+        del os.environ["ISIMIP_TEST"]
