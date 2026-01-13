@@ -150,8 +150,20 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
 
         if ds['time'].units.startswith('growing seasons'):
             units = ds['time'].units.replace('growing seasons', 'common_years')
-            times = cftime.num2date(ds['time'], units, calendar='365_day')
-            ds['time'] = times
+
+            ds['time'].attrs['long_name'] = 'Growing season'
+            ds['time'].attrs['units'] = ''
+
+            time_array = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
+            time = xr.DataArray(
+                time_array,
+                dims=['time'],
+                coords={'time': time_array},
+                name='time',
+                attrs=ds['time'].attrs
+            )
+
+            ds = ds.assign_coords(time=time)
 
     if load:
         ds.load()
