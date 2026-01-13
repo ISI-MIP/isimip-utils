@@ -56,15 +56,13 @@ class Settings(Singleton):
             if not hasattr(self, name):
                 raise ValueError(f'unknown key "{key}"')
 
-            if isinstance(current_value, list):
-                current_value.extend(value if isinstance(value, list) else [value])
-            elif isinstance(current_value, dict):
-                if not isinstance(value, dict):
-                    raise ValueError(f'key "{key}" is not a dict')
-                self._settings[name].update(value)
-            else:
-                self._settings[name] = value
+            if isinstance(current_value, list) and not isinstance(value, list):
+                raise ValueError(f'key "{key}" is not a list')
 
+            if isinstance(current_value, dict) and not isinstance(value, dict):
+                raise ValueError(f'key "{key}" is not a dict')
+
+            self._settings[name] = value
 
     def update_from_toml(self, path):
         """Update the settings from a toml file..
