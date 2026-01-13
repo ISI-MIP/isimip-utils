@@ -126,7 +126,7 @@ def parse_path(value: str) -> Path:
     return Path(value).expanduser()
 
 
-def parse_locations(value: str) -> list[str | Path]:
+def parse_locations(value: str | list) -> list[str | Path]:
     """Parse and expand a location string as list of URL or Path objects.
 
     Args:
@@ -138,7 +138,7 @@ def parse_locations(value: str) -> list[str | Path]:
     if value:
         return [
             string.rstrip('/') if urlparse(string).scheme else Path(string).expanduser()
-            for string in value.split()
+            for string in (value.split() if isinstance(value, str) else value)
         ]
     else:
         return []
@@ -198,8 +198,8 @@ class ArgumentParser(argparse.ArgumentParser):
 
     env_prefix = 'ISIMIP_'
 
-    def parse_args(self, *args) -> argparse.Namespace:
-        return super().parse_args(*args, namespace=self.build_default_args())
+    def parse_args(self, *args, config_path=None) -> argparse.Namespace:
+        return super().parse_args(*args, namespace=self.build_default_args(config_path))
 
     def get_defaults(self) -> dict:
         defaults = {}
@@ -210,7 +210,7 @@ class ArgumentParser(argparse.ArgumentParser):
         defaults.update(vars(self.build_default_args()))
         return defaults
 
-    def read_config(self) -> dict:
+    def read_global_config(self) -> dict:
         for config_file in self.config_files:
             config_path = Path(config_file).expanduser()
             if config_path.is_file():
@@ -220,9 +220,18 @@ class ArgumentParser(argparse.ArgumentParser):
                         return data[self.prog]
         return {}
 
-    def build_default_args(self) -> argparse.Namespace:
-        # read config file
-        config = self.read_config()
+    def read_local_config(self, config_path) -> dict:
+        if config_path and config_path.is_file():
+            with open(config_path, 'rb') as fp:
+                return tomllib.load(fp)
+        return {}
+
+    def build_default_args(self, config_path=None) -> argparse.Namespace:
+        # read config file(s)
+        config = dict(
+            **self.read_global_config(),
+            **self.read_local_config(config_path)
+        )
 
         # init the default namespace
         default_args = argparse.Namespace()
@@ -245,18 +254,25 @@ class ArgumentParser(argparse.ArgumentParser):
                     elif value.lower() == 'none':
                         value = None
 
-                elif config and key in config:
-                    # if the attribute is in the config file, take it from there
-                    value = config.get(key)
-
-                if value is not None:
-                    # apply action.type
-                    if action.type is not None:
+                    # apply action type
+                    if value and action.type is not None:
                         try:
                             value = action.type(value)
                         except argparse.ArgumentTypeError as e:
                             raise ConfigError(f'argument "{key}": {e}') from e
 
+                elif config and key in config:
+                    # if the attribute is in the config file, take it from there
+                    value = config.get(key)
+
+                    # apply certain action types
+                    if value and action.type in [parse_filelist, parse_locations, parse_path, parse_version]:
+                        try:
+                            value = action.type(value)
+                        except argparse.ArgumentTypeError as e:
+                            raise ConfigError(f'argument "{key}": {e}') from e
+
+                if value is not None:
                     # check action.action
                     if action.const and value not in [True, False]:
                         raise ConfigError(f'argument "{key}": invalid choice "{value}" (choose true or false)')
@@ -264,6 +280,16 @@ class ArgumentParser(argparse.ArgumentParser):
                     # check action.choices
                     if action.choices and value not in action.choices:
                         raise ConfigError(f'argument "{key}": invalid choice "{value}" (choose from {action.choices})')
+
+                    # check list
+                    if action.type in (list, parse_list, parse_locations):
+                        if not isinstance(value, list):
+                            raise ConfigError(f'argument "{key}": needs to be a list')
+
+                    # check dict
+                    if action.type in (dict, parse_dict):
+                        if not isinstance(value, list):
+                            raise ConfigError(f'argument "{key}": needs to be a dict')
 
                     # add the key and value to the default_args
                     setattr(default_args, key, value)
