@@ -1,6 +1,5 @@
 """Configuration management for ISIMIP tools."""
 import logging
-import tomllib
 from typing import Any
 
 from .utils import Singleton
@@ -42,38 +41,6 @@ class Settings(Singleton):
             Dictionary of all settings.
         """
         return self._settings
-
-    def update(self, values: dict[str, Any]) -> dict[str, Any]:
-        """Update the settings from a dictionary.
-
-        Args:
-            values (dict[str, Any]): Dictionary of setting key-value pairs.
-        """
-        for key, value in values.items():
-            name = key.upper()
-            current_value = self._settings[name]
-
-            if not hasattr(self, name):
-                raise ValueError(f'unknown key "{key}"')
-
-            if isinstance(current_value, list) and not isinstance(value, list):
-                raise ValueError(f'key "{key}" is not a list')
-
-            if isinstance(current_value, dict) and not isinstance(value, dict):
-                raise ValueError(f'key "{key}" is not a dict')
-
-            self._settings[name] = value
-
-    def update_from_toml(self, path):
-        """Update the settings from a toml file..
-
-        Args:
-            path (Path): Path to the toml file/.
-        """
-        if path and path.exists():
-            config = tomllib.loads(path.read_text())
-            self.update(config)
-
 
     @classmethod
     def from_dict(cls, values: dict[str, Any]) -> 'Settings':
