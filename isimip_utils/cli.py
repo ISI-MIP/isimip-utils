@@ -237,7 +237,7 @@ class ArgumentParser(argparse.ArgumentParser):
         default_args = argparse.Namespace()
 
         for action in self._actions:
-            if not action.required and action.dest != 'help':
+            if action.dest not in ['config', 'help']:
                 key = action.dest
                 key_upper = key.upper()
                 key_env = self.env_prefix + key_upper
