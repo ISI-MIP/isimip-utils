@@ -33,8 +33,7 @@ DEFAULT_ATTRS = {
     }
 }
 
-FILL_VALUE = np.float64(1e20)
-MISSING_VALUE = np.float32(1e20)
+FILL_VALUE = 1e20
 
 def init_dataset(lon: None | int | np.ndarray = 720,
                  lat: None | int | np.ndarray = 360,
@@ -114,8 +113,6 @@ def init_dataset(lon: None | int | np.ndarray = 720,
         if attrs:
             if data_var in attrs:
                 ds.data_vars[data_var].attrs.update(attrs[data_var])
-
-        # ds.data_vars[data_var].attrs["_FillValue"] = FILL_VALUE
 
     # set global attributes
     ds.attrs = attrs.get('global', {})
@@ -297,7 +294,8 @@ def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
         if '_FillValue' not in ds.data_vars[data_var].attrs:
             ds.data_vars[data_var].attrs['_FillValue'] = FILL_VALUE
         if 'missing_value' not in ds.data_vars[data_var].attrs:
-            ds.data_vars[data_var].attrs['missing_value'] = MISSING_VALUE
+            missing_value = np.array(FILL_VALUE, dtype=ds[data_var].dtype)
+            ds.data_vars[data_var].attrs['missing_value'] = missing_value
     return ds
 
 
@@ -310,9 +308,10 @@ def set_fill_value_to_nan(ds: xr.Dataset) -> xr.Dataset:
     Returns:
         Dataset with fill values replaced by NaN.
     """
-    for var in ds.data_vars:
-        fill_value = ds[var].attrs.get('_FillValue', FILL_VALUE)
-        ds[var] = ds[var].where(ds[var] != fill_value)
+    for data_var in ds.data_vars:
+        fill_value = ds[data_var].attrs.get('_FillValue', FILL_VALUE)
+        missing_value = np.array(fill_value, dtype=ds[data_var].dtype)
+        ds[data_var] = ds[data_var].where(ds[data_var] != missing_value)
     return ds
 
 
@@ -325,9 +324,10 @@ def set_nan_to_fill_value(ds: xr.Dataset) -> xr.Dataset:
     Returns:
         Dataset with NaN values replaced by fill values.
     """
-    for var in ds.data_vars:
-        fill_value = ds[var].attrs.get('_FillValue', FILL_VALUE)
-        ds[var] = ds[var].where(~np.isnan(ds[var]), fill_value)
+    for data_var in ds.data_vars:
+        fill_value = ds[data_var].attrs.get('_FillValue', FILL_VALUE)
+        missing_value = np.array(fill_value, dtype=ds[data_var].dtype)
+        ds[data_var] = ds[data_var].fillna(missing_value)
     return ds
 
 

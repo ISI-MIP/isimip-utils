@@ -61,11 +61,105 @@ variables:
 ''')
 
 
+def test_init_dataset_float():
+    lon_size, lat_size = 18, 9
+
+    var = np.random.rand(lat_size, lon_size).astype(np.float32)
+
+    attrs = {
+        'var': {
+            'long_name': 'Variable'
+        }
+    }
+
+    ds = init_dataset(lon=lon_size, lat=lat_size, var=var, attrs=attrs)
+
+    assert isinstance(ds, xr.Dataset)
+    assert ds.sizes['lon'] == lon_size
+    assert ds.sizes['lat'] == lat_size
+
+    test_path = constants.OUTPUT_PATH / 'test.nc'
+    test_path.unlink(missing_ok=True)
+
+    write_dataset(ds, test_path)
+
+    output = helper.call(f'ncdump -h {test_path}')
+
+    helper.assert_multiline_strings_equal(output, '''
+netcdf test {
+dimensions:
+    lon = 18 ;
+    lat = 9 ;
+variables:
+    double lon(lon) ;
+        lon:standard_name = "longitude" ;
+        lon:long_name = "Longitude" ;
+        lon:units = "degrees_east" ;
+        lon:axis = "X" ;
+    double lat(lat) ;
+        lat:standard_name = "latitude" ;
+        lat:long_name = "Latitude" ;
+        lat:units = "degrees_north" ;
+        lat:axis = "Y" ;
+    float var(lat, lon) ;
+        var:_FillValue = 1.e+20f ;
+        var:long_name = "Variable" ;
+        var:missing_value = 1.e+20f ;
+}
+''')
+
+def test_init_dataset_double():
+    lon_size, lat_size = 18, 9
+
+    var = np.random.rand(lat_size, lon_size).astype(np.float64)
+
+    attrs = {
+        'var': {
+            'long_name': 'Variable'
+        }
+    }
+
+    ds = init_dataset(lon=lon_size, lat=lat_size, var=var, attrs=attrs)
+
+    assert isinstance(ds, xr.Dataset)
+    assert ds.sizes['lon'] == lon_size
+    assert ds.sizes['lat'] == lat_size
+
+    test_path = constants.OUTPUT_PATH / 'test.nc'
+    test_path.unlink(missing_ok=True)
+
+    write_dataset(ds, test_path)
+
+    output = helper.call(f'ncdump -h {test_path}')
+
+    helper.assert_multiline_strings_equal(output, '''
+netcdf test {
+dimensions:
+    lon = 18 ;
+    lat = 9 ;
+variables:
+    double lon(lon) ;
+        lon:standard_name = "longitude" ;
+        lon:long_name = "Longitude" ;
+        lon:units = "degrees_east" ;
+        lon:axis = "X" ;
+    double lat(lat) ;
+        lat:standard_name = "latitude" ;
+        lat:long_name = "Latitude" ;
+        lat:units = "degrees_north" ;
+        lat:axis = "Y" ;
+    double var(lat, lon) ;
+        var:_FillValue = 1.e+20 ;
+        var:long_name = "Variable" ;
+        var:missing_value = 1.e+20 ;
+}
+''')
+
 def test_init_dataset_args():
     lon_size, lat_size, time_size = 180, 90, 10
 
     time = np.arange(time_size, dtype=np.float64)
-    var = np.random.rand(time_size, lat_size, lon_size).astype(np.float64)
+    var = np.random.rand(time_size, lat_size, lon_size).astype(np.float32)
 
     attrs = {
         'var': {
@@ -119,8 +213,8 @@ variables:
         time:calendar = "365_day" ;
         time:units = "days since 2000-01-01 00:00:00" ;
         time:axis = "T" ;
-    double var(time, lat, lon) ;
-        var:_FillValue = 1.e+20 ;
+    float var(time, lat, lon) ;
+        var:_FillValue = 1.e+20f ;
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20f ;
 }
@@ -128,7 +222,7 @@ variables:
 
 
 def test_init_dataset_latlon():
-    var = np.random.rand(10, 1, 1).astype(np.float64)
+    var = np.random.rand(10, 1, 1).astype(np.float32)
 
     attrs = {
         'var': {
@@ -182,8 +276,8 @@ variables:
         time:calendar = "proleptic_gregorian" ;
         time:units = "days since 1601-1-1 00:00:00" ;
         time:axis = "T" ;
-    double var(time, lat, lon) ;
-        var:_FillValue = 1.e+20 ;
+    float var(time, lat, lon) ;
+        var:_FillValue = 1.e+20f ;
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20f ;
 }
@@ -193,7 +287,7 @@ variables:
 def test_init_dataset_dims():
     a = np.arange(0, 2, dtype=np.float64)
     b = np.arange(0, 3, dtype=np.float64)
-    var = np.random.rand(b.size, a.size, 360, 720).astype(np.float64)
+    var = np.random.rand(b.size, a.size, 360, 720).astype(np.float32)
 
     attrs = {
         'var': {
@@ -250,8 +344,8 @@ variables:
     double a(a) ;
         a:long_name = "A Axis" ;
         a:axis = "A" ;
-    double var(b, a, lat, lon) ;
-        var:_FillValue = 1.e+20 ;
+    float var(b, a, lat, lon) ;
+        var:_FillValue = 1.e+20f ;
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20f ;
 }
