@@ -1,5 +1,7 @@
 """Configuration management for ISIMIP tools."""
 import logging
+import tomllib
+from pathlib import Path
 from typing import Any
 
 from .utils import Singleton
@@ -57,3 +59,26 @@ class Settings(Singleton):
         instance._settings = {key.upper(): value for key, value in values.items() if key not in cls.ignore_keys}
         logger.debug('settings = %s', instance)
         return instance
+
+    @classmethod
+    def from_toml(cls, path: Path, section: str | None = None) -> 'Settings':
+        """Create a Settings instance from a TOML file.
+
+        Args:
+            path (Path): Path to the TOML file.
+            section (str): Section to use.
+
+        Returns:
+            A Settings instance populated with the content of the TOML file.
+            All keys are converted to uppercase.
+        """
+        values = {}
+        with open(path, 'rb') as fp:
+            data = tomllib.load(fp)
+            if section:
+                if section in data:
+                    values = data[section]
+            else:
+                values = data
+
+        return cls.from_dict(values)
