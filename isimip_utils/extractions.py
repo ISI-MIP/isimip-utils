@@ -7,7 +7,7 @@ import xarray as xr
 
 from .exceptions import ExtractionError
 from .utils import validate_lat, validate_lon
-from .xarray import compute_offset, compute_time
+from .xarray import compute_offset, compute_time, get_attrs, set_attrs, set_fill_value_to_nan
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,7 @@ def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask',
 
 
 def compute_spatial_average(ds: xr.Dataset, weights: xr.DataArray | None = None) -> xr.Dataset:
-    """Compute spatial average over lat/lon dimensions.
+    """Compute the spatial average over lat/lon dimensions for each timestep.
 
     Args:
         ds (xr.Dataset): Dataset with lat/lon dimensions.
@@ -193,11 +193,17 @@ def compute_spatial_average(ds: xr.Dataset, weights: xr.DataArray | None = None)
         logger.warn('no weights provided, using latitude-dependent weights')
         weights = np.sin(np.deg2rad(ds.lat + 0.25)) - np.sin(np.deg2rad(ds.lat - 0.25))
 
-    return ds.weighted(weights).mean(dim=('lat', 'lon'), skipna=True).astype(np.float32)
+    attrs = get_attrs(ds)
+
+    ds = set_fill_value_to_nan(ds)
+    ds = ds.weighted(weights).mean(dim=('lat', 'lon'), skipna=True).astype(np.float32)
+    ds = set_attrs(ds, attrs)
+
+    return ds
 
 
 def compute_temporal_average(ds: xr.Dataset) -> xr.Dataset:
-    """Compute temporal average over time dimension.
+    """Compute the temporal average over time dimension.
 
     Args:
         ds (xr.Dataset): Dataset with time dimension.
@@ -206,7 +212,73 @@ def compute_temporal_average(ds: xr.Dataset) -> xr.Dataset:
         Dataset with time dimension averaged out.
     """
     logger.info('compute temporal average')
-    return ds.mean(dim='time', skipna=True).astype(np.float32)
+
+    attrs = get_attrs(ds)
+
+    ds = set_fill_value_to_nan(ds)
+    ds = ds.mean(dim='time', skipna=True).astype(np.float32)
+    ds = set_attrs(ds, attrs)
+
+    return ds
+
+
+def compute_min(ds: xr.Dataset):
+    """Compute the minimum value for each timestep.
+
+    Args:
+        ds (xr.Dataset): Dataset with (time, lat, lon) dimensions.
+
+    Returns:
+        Dataset with the minimum value for each timestep.
+    """
+    logger.info('compute min')
+
+    attrs = get_attrs(ds)
+
+    ds = set_fill_value_to_nan(ds)
+    ds = ds.min(dim=('lat', 'lon'), skipna=True).astype(np.float32)
+    ds = set_attrs(ds, attrs)
+
+    return ds
+
+def compute_max(ds: xr.Dataset):
+    """Compute the minimum value for each timestep.
+
+    Args:
+        ds (xr.Dataset): Dataset with (time, lat, lon) dimensions.
+
+    Returns:
+        Dataset with the minimum value for each timestep.
+    """
+    logger.info('compute max')
+
+    attrs = get_attrs(ds)
+
+    ds = set_fill_value_to_nan(ds)
+    ds = ds.max(dim=('lat', 'lon'), skipna=True).astype(np.float32)
+    ds = set_attrs(ds, attrs)
+
+    return ds
+
+
+def compute_sum(ds: xr.Dataset):
+    """Compute the sum over lat/lon for each timestep.
+
+    Args:
+        ds (xr.Dataset): Dataset with (time, lat, lon) dimensions.
+
+    Returns:
+        Dataset with the sum over lat/lon for each timestep.
+    """
+    logger.info('compute sum')
+
+    attrs = get_attrs(ds)
+
+    ds = set_fill_value_to_nan(ds)
+    ds = ds.sum(dim=('lat', 'lon'), skipna=True).astype(np.float32)
+    ds = set_attrs(ds, attrs)
+
+    return ds
 
 
 def count_values(ds: xr.Dataset, dim: list | None = None) -> xr.Dataset:
