@@ -1,6 +1,8 @@
 """Data extraction and manipulation utilities for xarray datasets."""
 import logging
+from collections.abc import Iterable
 from datetime import datetime
+from typing import Literal
 
 import numpy as np
 import xarray as xr
@@ -177,123 +179,148 @@ def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask',
     return ds.where(np.isclose(mask_ds[mask_var], 0 if inverse else 1))
 
 
-def compute_spatial_average(ds: xr.Dataset, weights: xr.DataArray | None = None) -> xr.Dataset:
-    """Compute the spatial average over lat/lon dimensions for each timestep.
+def compute_aggregation(ds: xr.Dataset, type: Literal['mean', 'min', 'max', 'sum', 'std'],
+                        dim: str | Iterable | None = None, weights: xr.DataArray | None = None) -> xr.Dataset:
+    """Compute aggregated values over selected dimensions and add dummy dimensions like CDO.
 
     Args:
-        ds (xr.Dataset): Dataset with lat/lon dimensions.
-        weights (xr.DataArray | None): Weights for averaging. If None, uses latitude-dependent weights.
+        ds (xr.Dataset): Dataset to process.
+        type (str): Type of aggregation.
+        dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
+        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
 
     Returns:
-        Dataset with lat/lon dimensions averaged out.
+        Dataset with aggregated values over selected dimensions.
     """
-    logger.info('compute spatial average')
+    dim = dim or ('lat', 'lon')
+    dim_expand = {d: [0] for d in ([dim] if isinstance(dim, str) else dim)}
+    dim_transpose = list(ds.dims)
 
-    if weights is None:
-        logger.warn('no weights provided, using latitude-dependent weights')
-        weights = np.sin(np.deg2rad(ds.lat + 0.25)) - np.sin(np.deg2rad(ds.lat - 0.25))
+    logger.info('compute %s %s', type, dim)
 
     attrs = get_attrs(ds)
 
     ds = set_fill_value_to_nan(ds)
-    ds = ds.weighted(weights).mean(dim=('lat', 'lon'), skipna=True).astype(np.float32)
+
+    if type in ('mean', 'std', 'sum') and dim == ('lat', 'lon'):
+        if weights is None:
+            logger.warn('no weights provided, using latitude-dependent weights')
+            weights = np.sin(np.deg2rad(ds.lat + 0.25)) - np.sin(np.deg2rad(ds.lat - 0.25))
+
+        ds = ds.weighted(weights)
+
+    if type == 'mean':
+        ds = ds.mean(dim=dim, skipna=True)
+    elif type == 'std':
+        ds = ds.std(dim=dim, skipna=True)
+    elif type == 'sum':
+        ds = ds.sum(dim=dim, skipna=True)
+    elif type == 'min':
+        ds = ds.min(dim=dim, skipna=True)
+    elif type == 'max':
+        ds = ds.max(dim=dim, skipna=True)
+    else:
+        raise RuntimeError(f'unknown type "{type}" in compute_aggregation')
+
+    ds = ds.expand_dims(**dim_expand).transpose(*dim_transpose).astype(np.float32)
     ds = set_attrs(ds, attrs)
 
     return ds
 
 
-def compute_temporal_average(ds: xr.Dataset) -> xr.Dataset:
-    """Compute the temporal average over time dimension.
+def compute_mean(ds: xr.Dataset, dim: str | Iterable | None = None, weights: xr.DataArray | None = None) -> xr.Dataset:
+    """
+    Compute mean values over selected dimensions and add dummy dimensions like CDO. Wrapper for compute_aggregation.
 
     Args:
-        ds (xr.Dataset): Dataset with time dimension.
+        ds (xr.Dataset): Dataset to process.
+        dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
+        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
 
     Returns:
-        Dataset with time dimension averaged out.
+        Dataset with mean values over selected dimensions.
     """
-    logger.info('compute temporal average')
-
-    attrs = get_attrs(ds)
-
-    ds = set_fill_value_to_nan(ds)
-    ds = ds.mean(dim='time', skipna=True).astype(np.float32)
-    ds = set_attrs(ds, attrs)
-
-    return ds
+    return compute_aggregation(ds, 'mean', dim, weights)
 
 
-def compute_min(ds: xr.Dataset):
-    """Compute the minimum value for each timestep.
+def compute_std(ds: xr.Dataset, dim: str | Iterable | None = None, weights: xr.DataArray | None = None) -> xr.Dataset:
+    """
+    Compute the standard deviation over selected dimensions and add dummy dimensions like CDO.
+    Wrapper for compute_aggregation.
 
     Args:
-        ds (xr.Dataset): Dataset with (time, lat, lon) dimensions.
+        ds (xr.Dataset): Dataset to process.
+        dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
+        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
 
     Returns:
-        Dataset with the minimum value for each timestep.
+        Dataset with the standard deviation over selected dimensions.
     """
-    logger.info('compute min')
+    return compute_aggregation(ds, 'std', dim, weights)
 
-    attrs = get_attrs(ds)
 
-    ds = set_fill_value_to_nan(ds)
-    ds = ds.min(dim=('lat', 'lon'), skipna=True).astype(np.float32)
-    ds = set_attrs(ds, attrs)
-
-    return ds
-
-def compute_max(ds: xr.Dataset):
-    """Compute the minimum value for each timestep.
+def compute_sum(ds: xr.Dataset, dim: str | Iterable | None = None, weights: xr.DataArray | None = None) -> xr.Dataset:
+    """
+    Compute the sum over selected dimensions and add dummy dimensions like CDO. Wrapper for compute_aggregation.
 
     Args:
-        ds (xr.Dataset): Dataset with (time, lat, lon) dimensions.
+        ds (xr.Dataset): Dataset to process.
+        dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
+        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
 
     Returns:
-        Dataset with the minimum value for each timestep.
+        Dataset with the sum over selected dimensions.
     """
-    logger.info('compute max')
-
-    attrs = get_attrs(ds)
-
-    ds = set_fill_value_to_nan(ds)
-    ds = ds.max(dim=('lat', 'lon'), skipna=True).astype(np.float32)
-    ds = set_attrs(ds, attrs)
-
-    return ds
+    return compute_aggregation(ds, 'sum', dim, weights)
 
 
-def compute_sum(ds: xr.Dataset):
-    """Compute the sum over lat/lon for each timestep.
+def compute_min(ds: xr.Dataset, dim: str | Iterable | None = None) -> xr.Dataset:
+    """
+    Compute minimum values over selected dimensions and add dummy dimensions like CDO. Wrapper for compute_aggregation.
 
     Args:
-        ds (xr.Dataset): Dataset with (time, lat, lon) dimensions.
+        ds (xr.Dataset): Dataset to process.
+        dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
+        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
 
     Returns:
-        Dataset with the sum over lat/lon for each timestep.
+        Dataset with minimum values over selected dimensions.
     """
-    logger.info('compute sum')
-
-    attrs = get_attrs(ds)
-
-    ds = set_fill_value_to_nan(ds)
-    ds = ds.sum(dim=('lat', 'lon'), skipna=True).astype(np.float32)
-    ds = set_attrs(ds, attrs)
-
-    return ds
+    return compute_aggregation(ds, 'min', dim)
 
 
-def count_values(ds: xr.Dataset, dim: list | None = None) -> xr.Dataset:
+def compute_max(ds: xr.Dataset, dim: str | Iterable | None = None) -> xr.Dataset:
+    """
+    Compute maximum values over selected dimensions and add dummy dimensions like CDO. Wrapper for compute_aggregation.
+
+    Args:
+        ds (xr.Dataset): Dataset to process.
+        dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
+        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
+
+    Returns:
+        Dataset with maximum values over selected dimensions.
+    """
+    return compute_aggregation(ds, 'max', dim)
+
+
+def count_values(ds: xr.Dataset, dim: str | Iterable | None = None) -> xr.Dataset:
     """Count non-NaN values over lat/lon dimensions.
 
     Args:
         ds (xr.Dataset): Dataset with lat/lon dimensions.
-        dim (list): Dimensions along which to count [default: ('lat', 'lon')]
+        dim (str|Iterable): Dimensions along which to count [default: ('lat', 'lon')]
 
     Returns:
         Dataset with count of non-NaN values per time step.
     """
-    logger.info('count values')
     dim = dim or ('lat', 'lon')
-    return ds.count(dim=dim).astype(np.float32)
+    logger.info('count values over %s', dim)
+
+    ds = set_fill_value_to_nan(ds)
+    ds = ds.count(dim=dim).astype(np.float32)
+
+    return ds
 
 
 def concat_extraction(ds1: xr.Dataset | None, ds2: xr.Dataset) -> xr.Dataset:

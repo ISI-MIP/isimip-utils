@@ -42,7 +42,7 @@ PATTERN_PATH = 'ISIMIP3a/OutputData/agriculture.json'
 DATE = date(2021, 1, 1)
 PERIOD = date(2021, 4, 1), date(2021, 9, 30)
 
-BBOX = (0, 10, -5, 5)
+BBOX = (70, 80, -5, 5)
 
 POINT = (52.395833, 13.061389)
 POINT_INDEX = (386, 75)

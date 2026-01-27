@@ -2,8 +2,12 @@
 import pytest
 
 from isimip_utils.extractions import (
-    compute_spatial_average,
-    compute_temporal_average,
+    compute_aggregation,
+    compute_max,
+    compute_mean,
+    compute_min,
+    compute_std,
+    compute_sum,
     concat_extraction,
     count_values,
     mask_bbox,
@@ -14,7 +18,7 @@ from isimip_utils.extractions import (
     select_time,
 )
 from isimip_utils.tests import constants, helper
-from isimip_utils.xarray import get_attrs, open_dataset, set_attrs, write_dataset
+from isimip_utils.xarray import open_dataset, write_dataset
 
 
 @pytest.mark.parametrize('decode_cf', (True, False))
@@ -213,57 +217,48 @@ def test_mask_mask_concat(decode_cf):
     helper.call(f'cdo diff {extraction_path} {cdo_path}')
 
 
+@pytest.mark.parametrize('type', ('mean', 'min', 'max', 'sum', 'std'))
 @pytest.mark.parametrize('decode_cf', (True, False))
-def test_compute_spatial_average(decode_cf):
+def test_compute_aggregation(type, decode_cf):
     gridarea_path = constants.SHARE_PATH / 'gridarea.nc'
     gridarea_ds = open_dataset(gridarea_path)
 
     west, east, south, north = constants.BBOX
 
     dataset_path = constants.DATASETS_PATH / constants.TAS_PATH
-    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-bbox-mean_')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', f'_select-bbox-{type}_')
     extraction_path.unlink(missing_ok=True)
 
     with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
-        attrs = get_attrs(file_ds)
         ds = select_bbox(file_ds, west, east, south, north)
-        ds = compute_spatial_average(ds, weights=gridarea_ds["cell_area"])
-        ds = set_attrs(ds, attrs)
+
+        if type == 'mean':
+            ds = compute_mean(ds, weights=gridarea_ds['cell_area'])
+        elif type == 'std':
+            ds = compute_std(ds, weights=gridarea_ds['cell_area'])
+        elif type == 'sum':
+            ds = compute_sum(ds, weights=gridarea_ds['cell_area'])
+        elif type == 'max':
+            ds = compute_max(ds)
+        elif type == 'min':
+            ds = compute_min(ds)
+
         write_dataset(ds, extraction_path)
 
-    cdo_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-bbox-mean-cdo_')
-    helper.call(f'cdo diff {extraction_path} {cdo_path}')
+    # allow for a small relative difference, translated into an absolute difference
+    if type == 'sum':
+        abslim = 3.36e+07
+    elif type == 'std':
+        abslim = 1e-7
+    else:
+        abslim = 0.0
+
+    cdo_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', f'_select-bbox-{type}-cdo_')
+    helper.call(f'cdo diff,abslim={abslim} {extraction_path} {cdo_path}')
 
 
 @pytest.mark.parametrize('decode_cf', (True, False))
-def test_compute_spatial_average_concat(decode_cf):
-    gridarea_path = constants.SHARE_PATH / 'gridarea.nc'
-    gridarea_ds = open_dataset(gridarea_path)
-
-    west, east, south, north = constants.BBOX
-
-    extraction_ds = None
-    for path in constants.TAS_SPLIT_PATHS:
-        dataset_path = constants.DATASETS_PATH / path
-
-        with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
-            attrs = get_attrs(file_ds)
-            ds = select_bbox(file_ds, west, east, south, north)
-            ds = compute_spatial_average(ds, weights=gridarea_ds["cell_area"])
-            ds = set_attrs(ds, attrs)
-            extraction_ds = concat_extraction(extraction_ds, ds)
-
-    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-bbox-mean_')
-    extraction_path.unlink(missing_ok=True)
-
-    write_dataset(extraction_ds, extraction_path)
-
-    cdo_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-bbox-mean-cdo_')
-    helper.call(f'cdo diff {extraction_path} {cdo_path}')
-
-
-@pytest.mark.parametrize('decode_cf', (True, False))
-def test_compute_temporal_average(decode_cf):
+def test_compute_mean_time(decode_cf):
     west, east, south, north = constants.BBOX
 
     dataset_path = constants.DATASETS_PATH / constants.TAS_PATH
@@ -271,14 +266,15 @@ def test_compute_temporal_average(decode_cf):
     extraction_path.unlink(missing_ok=True)
 
     with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
-        attrs = get_attrs(file_ds)
         ds = select_bbox(file_ds, west, east, south, north)
-        ds = compute_temporal_average(ds)
-        ds = set_attrs(ds, attrs)
+        ds = compute_aggregation(ds, 'mean', dim='time')
         write_dataset(ds, extraction_path)
 
+    # allow for a small relative difference, translated into an absolute difference
+    abslim = 2.45e-4
+
     cdo_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-bbox-map-cdo_')
-    helper.call(f'cdo diff,abslim=0.001 {extraction_path} {cdo_path}')
+    helper.call(f'cdo diff,abslim={abslim} {extraction_path} {cdo_path}')
 
 
 @pytest.mark.parametrize('decode_cf', (True, False))

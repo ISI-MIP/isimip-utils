@@ -9,7 +9,7 @@ def main():
     run_select_period()
     run_select_point()
     run_select_bbox()
-    run_select_bbox_mean()
+    run_select_bbox_aggregations()
     run_select_bbox_map()
     run_mask_bbox()
     run_mask_mask()
@@ -126,18 +126,26 @@ def run_select_bbox():
                         f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
 
 
-def run_select_bbox_mean():
+def run_select_bbox_aggregations():
     west, east, south, north = constants.BBOX
 
     for path in [constants.TAS_PATH, *constants.TAS_SPLIT_PATHS]:
         input_path = constants.DATASETS_PATH / path
 
-        output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-bbox-mean-cdo_')
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        for aggregation in ['mean', 'min', 'max', 'sum', 'std']:
+            output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', f'_select-bbox-{aggregation}-cdo_')
+            output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if not output_path.exists():
-            helper.call('cdo -f nc4c -z zip_5 -L -fldmean '
-                        f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+            gridarea_path = constants.SHARE_PATH / 'gridarea.nc'
+
+            if not output_path.exists():
+                if aggregation == 'sum':
+                    helper.call(f'cdo -f nc4c -z zip_5 -L -fld{aggregation} '
+                                f'-sellonlatbox,{west},{east},{south},{north} '
+                                f'-mul {input_path} {gridarea_path} {output_path}')
+                else:
+                    helper.call(f'cdo -f nc4c -z zip_5 -L -fld{aggregation} '
+                                f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
 
 
 def run_select_bbox_map():
