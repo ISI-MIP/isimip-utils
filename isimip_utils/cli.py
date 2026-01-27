@@ -228,10 +228,8 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def build_default_args(self, config_path=None) -> argparse.Namespace:
         # read config file(s)
-        config = dict(
-            **self.read_global_config(),
-            **self.read_local_config(config_path)
-        )
+        config = self.read_global_config()
+        config.update(self.read_local_config(config_path))
 
         # init the default namespace
         default_args = argparse.Namespace()
