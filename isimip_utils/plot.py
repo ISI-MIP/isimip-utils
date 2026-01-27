@@ -312,7 +312,7 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
 
 
 def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], plots: dict, empty_plot: alt.Chart,
-              layer: bool = True, x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
+              x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
     """Create a grid of plots organized by parameter permutations.
 
     Args:
@@ -320,7 +320,6 @@ def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], pl
         plot_permutations (list): List the permutations (with tuples of parameters) for each plot.
         plots (dict): Dictionary mapping permutation tuples to Chart objects.
         empty_plot (alt.Chart): Chart to use when a permutation has no data.
-        layer (bool): Whether to layer plots or concatenate vertically (default: True).
         x (str): Scale resolution for x-axis ('shared', 'independent', default: 'shared').
         y (str): Scale resolution for y-axis ('shared', 'independent', default: 'shared').
         color (str): Scale resolution for color ('shared', 'independent', default: 'shared').
@@ -347,9 +346,6 @@ def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], pl
 
         for plot_permutation in plot_permutations:
             plot = plots.get(grid_permutation + plot_permutation, empty_plot)
-            if not layer:
-                plot = plot.properties(title=' '.join(plot_permutation))
-
             column.append(plot)
 
         prev = grid_permutation
@@ -357,8 +353,6 @@ def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], pl
     chart = alt.vconcat(*[
         alt.hconcat(*[
             alt.layer(*column, title=column_title)
-            if layer else
-            alt.vconcat(*column, title=column_title).resolve_scale(x=x, y=y, color=color)
             for column_title, column in row
         ], title=row_title).resolve_scale(x=x, y=y)
         for row_title, row in rows

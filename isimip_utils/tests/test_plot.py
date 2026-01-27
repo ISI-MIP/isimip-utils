@@ -236,7 +236,7 @@ def test_plot_grid():
 
     grid_permutations.append(('b', 'y'))
 
-    chart = plot_grid(grid_permutations, plot_permutations, plots, x='independent', empty_plot=empty_plot, layer=False)
+    chart = plot_grid(grid_permutations, plot_permutations, plots, x='independent', empty_plot=empty_plot)
 
     top, bottom = chart.vconcat
     top_left, top_right = top.hconcat
@@ -247,9 +247,9 @@ def test_plot_grid():
     assert bottom_left.data.equals(dataframes[2])
     assert bottom_right.data.equals(df_empty)
 
-    for sub_chart in [top_left, top_right, bottom_left, bottom_right]:
-        assert sub_chart.resolve.scale.x == 'independent'
-        assert sub_chart.resolve.scale.y == 'shared'
+    for compound_chart in [chart, top, bottom]:
+        assert compound_chart.resolve.scale.x == 'independent'
+        assert compound_chart.resolve.scale.y == 'shared'
 
     save_plot(chart, plot_path)
 
