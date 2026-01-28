@@ -13,14 +13,12 @@ plugins:
           members_order: source
 
 nav:
-  - README: index.md
-  - Prerequisites: prerequisites.md
-  - Releases: releases.md
+  - Getting started: index.md
+  - Examples: examples.md
   - API reference:
     - isimip_utils.checksum: api/checksum.md
     - isimip_utils.cli: api/cli.md
     - isimip_utils.config: api/config.md
-    - isimip_utils.decorators: api/decorators.md
     - isimip_utils.exceptions: api/exceptions.md
     - isimip_utils.extractions: api/extractions.md
     - isimip_utils.fetch: api/fetch.md
@@ -28,6 +26,8 @@ nav:
     - isimip_utils.netcdf: api/netcdf.md
     - isimip_utils.pandas: api/pandas.md
     - isimip_utils.patterns: api/patterns.md
+    - isimip_utils.parameters: api/parameters.md
     - isimip_utils.plot: api/plot.md
     - isimip_utils.utils: api/utils.md
     - isimip_utils.xarray: api/xarray.md
+  - Python installation: prerequisites.md

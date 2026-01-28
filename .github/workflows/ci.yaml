@@ -1,4 +1,4 @@
-name: isimip-utils CI
+name: CI
 
 on:
   push:

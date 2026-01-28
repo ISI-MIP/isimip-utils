@@ -114,6 +114,7 @@ pytest = ["pytest"]
 
 [tool.typos.default.extend-words]
 iy = "iy"
+arange = "arange"
 
 [tool.coverage.report]
 exclude_lines = [

@@ -1,4 +1,4 @@
-"""Functions to fetch files from machine-actionable ISIMIP protocols."""
+"""Functions to fetch information from machine-actionable ISIMIP protocols."""
 import logging
 import os
 import re
