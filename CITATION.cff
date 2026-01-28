@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+
+title: ISIMIP utils
+authors:
+- family-names: Klar
+  given-names: Jochen
+  orcid: https://orcid.org/0000-0002-5883-4273
+- family-names: Büchner
+  given-names: Matthias
+  orcid: https://orcid.org/0000-0002-1382-7424
+- family-names: Inga
+  given-names: Sauer
+  orcid: https://orcid.org/0000-0002-9302-2131
+license: MIT
+repository-code: https://github.com/ISI-MIP/isimip-utils
