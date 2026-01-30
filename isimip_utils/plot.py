@@ -161,17 +161,17 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         Altair Chart object with line plot (and optional area for lower/upper bounds).
     """
 
-    x_field = x_field or get_first_coord(df)
-    x_label = x_label or get_first_coord_label(df)
-    x_type = x_type or ('T' if get_first_coord_axis(df) == 'T' else 'Q')
+    x_field = get_first_coord(df) if x_field is None else x_field
+    x_label = get_first_coord_label(df) if x_label is None else x_label
+    x_type = ('T' if get_first_coord_axis(df) == 'T' else 'Q') if x_type is None else x_type
     x = alt.X(
         f'{x_field}:{x_type}',
         title=x_label
     )
 
-    y_field = y_field or get_first_data_var(df)
-    y_label = y_label or get_first_data_var_label(df)
-    y_type = y_type or 'Q'
+    y_field = get_first_data_var(df) if y_field is None else y_field
+    y_label = get_first_data_var_label(df) if y_label is None else y_label
+    y_type = 'Q' if y_type is None else y_type
     y = alt.Y(
         f'{y_field}:{y_type}',
         title=y_label,
@@ -179,11 +179,11 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         scale=alt.Scale(zero=False, nice=False)
     )
 
-    color_field = color_field or 'label'
+    color_field =  'label' if color_field is None else color_field
     if empty or color_field not in df:
         color = alt.Color()
     else:
-        color_type = color_type or 'N'
+        color_type = 'N' if color_type is None else color_type
         color_scale_args = {}
         if color_domain:
             color_scale_args['domain'] = color_domain
@@ -276,9 +276,9 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
     if empty:
         color = alt.Color()
     else:
-        color_field = color_field or get_first_data_var(df)
-        color_type = color_type or 'Q'
-        color_label = color_label or get_first_data_var_label(df)
+        color_field = get_first_data_var(df) if color_field is None else color_field
+        color_type = 'Q' if color_type is None else color_type
+        color_label = get_first_data_var_label(df) if color_label is None else color_label
 
         color_scale_args = {}
         if color_domain:
