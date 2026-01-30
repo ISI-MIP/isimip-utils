@@ -345,14 +345,15 @@ def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], pl
             row.append((column_title, column))
 
         for plot_permutation in plot_permutations:
-            plot = plots.get(grid_permutation + plot_permutation, empty_plot)
-            column.append(plot)
+            plot = plots.get(grid_permutation + plot_permutation)
+            if plot:
+                column.append(plot)
 
         prev = grid_permutation
 
     chart = alt.vconcat(*[
         alt.hconcat(*[
-            alt.layer(*column, title=column_title)
+            alt.layer(*column, title=column_title) if column else empty_plot
             for column_title, column in row
         ], title=row_title).resolve_scale(x=x, y=y)
         for row_title, row in rows
