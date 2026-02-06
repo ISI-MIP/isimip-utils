@@ -145,15 +145,6 @@ def fetch_tree(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_
     raise NotFound(f'No tree found for {path}.')
 
 
-def fetch_resource(resource_location: str | Path) -> dict:
-    resource = fetch_json(resource_location)
-
-    if resource is None:
-        return resource
-
-    raise NotFound(f'No resource found at {resource_location}.')
-
-
 def find_json(protocol_location: str, sub_location: str, path: str | Path) -> Generator[tuple[Path, Any], None, None]:
     """Find JSON files in protocol locations by traversing path components.
 
