@@ -504,12 +504,6 @@ def test_create_mask():
         assert np.all(np.isnan(outside_region['mask'].values))
 
 
-def test_convert_time():
-    time = np.arange(0, 100, dtype=np.int8)
-    time_converted = convert_time(time)
-    assert np.array_equal(time_converted, np.arange(0, 100, dtype=np.float64))
-
-
 def test_convert_time_datetime():
     calendar = 'proleptic_gregorian'
     units = 'days since 2000-01-01 00:00:00'
@@ -524,7 +518,15 @@ def test_convert_time_datetime():
     assert np.array_equal(time_converted, np.arange(start, start + 366, dtype=np.float64))
 
 
-def test_init_dataset_datetime64_index():
+def test_convert_time_datetime64():
+    time = np.array(pd.date_range(start='2000-01-01', end='2000-12-31', freq='D'))
+    time_converted = convert_time(time)
+
+    start = 145731
+    assert np.array_equal(time_converted, np.arange(start, start + 366, dtype=np.float64))
+
+
+def test_convert_time_datetime64_index():
     time = pd.date_range(start='2000-01-01', end='2000-12-31', freq='D')
     time_converted = convert_time(time)
 
@@ -532,7 +534,7 @@ def test_init_dataset_datetime64_index():
     assert np.array_equal(time_converted, np.arange(start, start + 366, dtype=np.float64))
 
 
-def test_init_dataset_datetime64_series():
+def test_convert_time_datetime64_series():
     time = pd.Series(pd.date_range(start='2000-01-01', end='2000-12-31', freq='D'))
     time_converted = convert_time(time)
 

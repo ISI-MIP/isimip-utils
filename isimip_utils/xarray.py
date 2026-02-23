@@ -419,16 +419,16 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
     """
     if isinstance(time.dtype, pd.StringDtype):
         time = np.array([datetime.fromisoformat(t) for t in time], dtype=object)
-    else:
-        if np.issubdtype(time.dtype, np.floating) or np.issubdtype(time.dtype, np.integer):
-            return time.astype(np.float64)
-        elif np.issubdtype(time.dtype, np.datetime64):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", FutureWarning)
-                if isinstance(time, pd.core.indexes.datetimes.DatetimeIndex):
-                    time = time.to_pydatetime()
-                else:
-                    time = time.dt.to_pydatetime()
+    elif np.issubdtype(time.dtype, np.datetime64):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+
+            if isinstance(time, pd.DatetimeIndex):
+                time = time.to_pydatetime()
+            elif isinstance(time, pd.Series):
+                time = time.dt.to_pydatetime()
+            else:
+                time = pd.to_datetime(time).to_pydatetime()
 
     return cftime.date2num(
         time, calendar=calendar, units=units
