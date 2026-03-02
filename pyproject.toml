@@ -13,13 +13,14 @@ maintainers = [
 description = "This package contains common functionality for different ISIMIP tools."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
-    'Operating System :: OS Independent',
-    'License :: OSI Approved :: MIT License',
-    'Programming Language :: Python :: 3.11',
-    'Programming Language :: Python :: 3.12',
-    'Programming Language :: Python :: 3.13',
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "python-dotenv",
@@ -70,7 +71,10 @@ docs = [
 ]
 
 [tool.setuptools]
-packages = ["isimip_utils"]
+packages = [
+    "isimip_utils",
+    "isimip_utils.tests"
+]
 
 [tool.setuptools_scm]
 version_scheme = "release-branch-semver"
