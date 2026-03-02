@@ -1,7 +1,8 @@
 cff-version: 1.2.0
-message: If you use this software, please cite it as below.
 
 title: ISIMIP utils
+abstract: Common functionality for different ISIMIP tools.
+
 authors:
 - family-names: Klar
   given-names: Jochen
@@ -12,5 +13,6 @@ authors:
 - family-names: Inga
   given-names: Sauer
   orcid: https://orcid.org/0000-0002-9302-2131
+
 license: MIT
 repository-code: https://github.com/ISI-MIP/isimip-utils
