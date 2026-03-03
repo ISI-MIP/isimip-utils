@@ -141,26 +141,20 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
 
     try:
         ds = xr.open_dataset(path, decode_cf=decode_cf)
-    except ValueError:
+    except ValueError as e:
         # workaround for non standard times (e.g. growing seasons)
         ds = xr.open_dataset(path, decode_cf=decode_cf, decode_times=False)
 
-        if ds['time'].units.startswith('growing seasons'):
-            units = ds['time'].units.replace('growing seasons', 'common_years')
+        units = ds['time'].units
+        calendar = ds['time'].calendar
 
-            ds['time'].attrs['long_name'] = 'Growing season'
-            ds['time'].attrs['units'] = ''
-
-            time_array = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
-            time = xr.DataArray(
-                time_array,
-                dims=['time'],
-                coords={'time': time_array},
-                name='time',
-                attrs=ds['time'].attrs
-            )
-
-            ds = ds.assign_coords(time=time)
+        if units.startswith('months'):
+            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='360_day')
+        elif units.startswith('growing seasons'):
+            units = units.replace('growing seasons', 'common_years')
+            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
+        else:
+            raise ValueError(f'unable to decode time units "{units}" with calendar "{calendar}"') from e
 
     if load:
         ds.load()
