@@ -205,16 +205,13 @@ def write_dataset(ds: xr.Dataset, path: str | Path):
 
     ds = remove_fill_value_from_coords(ds)
     ds = add_fill_value_to_data_vars(ds)
-    ds = set_nan_to_fill_value(ds)
+    ds = add_compression_to_data_vars(ds)
     ds = order_variables(ds)
 
     # time should be an unlimited dimension
     unlimited_dims = ['time'] if 'time' in ds.dims else []
 
-    # data variables should be compressed
-    for data_var in ds.data_vars:
-        ds[data_var].encoding.update({'zlib': True, 'complevel': 5})
-
+    # write dataset as netcdf
     ds.to_netcdf(path, format='NETCDF4_CLASSIC', unlimited_dims=unlimited_dims)
 
 
@@ -227,7 +224,12 @@ def order_variables(ds: xr.Dataset) -> xr.Dataset:
     Returns:
         Dataset with reordered variables.
     """
-    return ds[[*ds.coords, *ds.data_vars]]
+    preferred_coords = ['lon', 'lat', 'time']
+
+    ordered_coords = [coord for coord in preferred_coords if coord in ds.coords]
+    remaining_coords = [coord for coord in ds.coords if coord not in preferred_coords]
+
+    return ds[[*ordered_coords, *remaining_coords, *ds.data_vars]]
 
 
 def get_attrs(ds: xr.Dataset) -> dict:
@@ -266,6 +268,38 @@ def set_attrs(ds: xr.Dataset, attrs: dict) -> xr.Dataset:
     return ds
 
 
+def set_fill_value_to_nan(ds: xr.Dataset) -> xr.Dataset:
+    """Replace fill values with NaN in data variables. This is only needed for datasets
+    which are read with decode_cf=False and _FillValue is not in encoding.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to modify.
+
+    Returns:
+        Dataset with fill values replaced by NaN.
+    """
+    for data_var in ds.data_vars:
+        if '_FillValue' not in ds[data_var].encoding:
+            ds[data_var] = ds[data_var].where(ds[data_var] != FILL_VALUE)
+    return ds
+
+
+def set_nan_to_fill_value(ds: xr.Dataset) -> xr.Dataset:
+    """Replace NaN values with fill values in data variables. This is only needed for datasets
+    which are read with decode_cf=False and _FillValue is not in encoding.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to modify.
+
+    Returns:
+        Dataset with NaN values replaced by fill values.
+    """
+    for data_var in ds.data_vars:
+        if '_FillValue' not in ds[data_var].encoding:
+            ds[data_var] = ds[data_var].fillna(FILL_VALUE)
+    return ds
+
+
 def remove_fill_value_from_coords(ds: xr.Dataset) -> xr.Dataset:
     """Remove _FillValue and missing_value attributes from the coords.
 
@@ -282,52 +316,43 @@ def remove_fill_value_from_coords(ds: xr.Dataset) -> xr.Dataset:
 
 
 def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
-    """Add _FillValue and missing_value attributes to data_vars if not present.
+    """Add _FillValue and missing_value to data_vars if no encoding is present. This
+    is the case for a newly created Dataset.
 
     Args:
         ds (xr.Dataset): Xarray Dataset to modify.
 
     Returns:
-        Dataset with fill value attributes added for the data_vars.
+        Dataset with encoding added for the data_vars.
     """
     for data_var in ds.data_vars:
-        if '_FillValue' not in ds.data_vars[data_var].attrs:
-            ds.data_vars[data_var].attrs['_FillValue'] = FILL_VALUE
-        if 'missing_value' not in ds.data_vars[data_var].attrs:
-            missing_value = np.array(FILL_VALUE, dtype=ds[data_var].dtype)
-            ds.data_vars[data_var].attrs['missing_value'] = missing_value
+        encoding = ds[data_var].encoding
+        if not encoding:
+            ds[data_var].attrs.pop('_FillValue', None)
+            ds[data_var].attrs.pop('missing_value', None)
+            ds[data_var].encoding.update({
+                '_FillValue': FILL_VALUE,
+                'missing_value': ds[data_var].dtype.type(FILL_VALUE)
+            })
+
     return ds
 
 
-def set_fill_value_to_nan(ds: xr.Dataset) -> xr.Dataset:
-    """Replace fill values with NaN in data variables.
+def add_compression_to_data_vars(ds, complevel=5) -> xr.Dataset:
+    """Add compression to data variables.
 
     Args:
-        ds (xr.Dataset): Xarray Dataset to modify.
+        ds (xr.Dataset): Xarray Dataset to reorder.
+        complevel (int): Compression level
 
     Returns:
-        Dataset with fill values replaced by NaN.
+        Dataset with updated encoding.
     """
     for data_var in ds.data_vars:
-        fill_value = ds[data_var].attrs.get('_FillValue', FILL_VALUE)
-        missing_value = np.array(fill_value, dtype=ds[data_var].dtype)
-        ds[data_var] = ds[data_var].where(ds[data_var] != missing_value)
-    return ds
-
-
-def set_nan_to_fill_value(ds: xr.Dataset) -> xr.Dataset:
-    """Replace NaN values with fill values in data variables.
-
-    Args:
-        ds (xr.Dataset): Xarray Dataset to modify.
-
-    Returns:
-        Dataset with NaN values replaced by fill values.
-    """
-    for data_var in ds.data_vars:
-        fill_value = ds[data_var].attrs.get('_FillValue', FILL_VALUE)
-        missing_value = np.array(fill_value, dtype=ds[data_var].dtype)
-        ds[data_var] = ds[data_var].fillna(missing_value)
+        ds[data_var].encoding.update({
+            'zlib': True,
+            'complevel': complevel
+        })
     return ds
 
 

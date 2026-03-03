@@ -1,5 +1,6 @@
-
 import pytest
+
+import numpy as np
 
 from isimip_utils.extractions import (
     compute_aggregation,
@@ -258,6 +259,17 @@ def test_compute_aggregation(type, decode_cf):
 
 
 @pytest.mark.parametrize('decode_cf', (True, False))
+def test_compute_aggregation_nan(decode_cf):
+    dataset_path = constants.DATASETS_PATH / constants.YIELD_PATH
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = compute_max(file_ds)
+
+        # check that the max is not FILL_VALUE
+        assert (ds['yield-mai-noirr'] < 20).all()
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
 def test_compute_mean_time(decode_cf):
     west, east, south, north = constants.BBOX
 
@@ -284,6 +296,20 @@ def test_count_values(decode_cf):
     with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
         ds = count_values(file_ds)
         assert (ds['tas'] == 720*360).all()
+
+
+@pytest.mark.parametrize('decode_cf', (True, False))
+def test_count_values_nan(decode_cf):
+    dataset_path = constants.DATASETS_PATH / constants.YIELD_PATH
+
+    cdo_counts = np.array([
+        int(line.split()[5]) - int(line.split()[6])
+        for line in helper.call(f'cdo info {dataset_path}').splitlines()[1:-1]
+    ])
+
+    with open_dataset(dataset_path, decode_cf=decode_cf) as file_ds:
+        ds = count_values(file_ds)
+        assert (ds['yield-mai-noirr'].values == cdo_counts).all()
 
 
 @pytest.mark.parametrize('decode_cf', (True, False))

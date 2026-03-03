@@ -10,6 +10,7 @@ from shapely.geometry import box
 from isimip_utils.netcdf import open_dataset_read
 from isimip_utils.tests import constants, helper
 from isimip_utils.xarray import (
+    add_compression_to_data_vars,
     add_fill_value_to_data_vars,
     convert_time,
     create_mask,
@@ -20,8 +21,6 @@ from isimip_utils.xarray import (
     order_variables,
     remove_fill_value_from_coords,
     set_attrs,
-    set_fill_value_to_nan,
-    set_nan_to_fill_value,
     to_dataframe,
     write_dataset,
 )
@@ -436,12 +435,16 @@ def test_add_fill_value_to_data_vars():
             'var': (['time'], np.ones(10))
         }
     )
+
+    assert not ds['var'].encoding
+
     add_fill_value_to_data_vars(ds)
-    assert ds['var'].attrs['_FillValue'] == 1e20
-    assert ds['var'].attrs['missing_value'] == 1e20
+
+    assert ds['var'].encoding.get('_FillValue') == 1e20
+    assert ds['var'].encoding.get('missing_value') == 1e20
 
 
-def test_set_fill_value_to_nan():
+def test_add_compression_to_data_vars():
     ds = xr.Dataset(
         coords={
             'time': np.arange(10, dtype=np.float64)
@@ -450,25 +453,13 @@ def test_set_fill_value_to_nan():
             'var': (['time'], np.ones(10))
         }
     )
-    ds['var'].values[0] = 1e20
-    ds['var'].attrs['_FillValue'] = 1e20
-    ds = set_fill_value_to_nan(ds)
-    assert np.isnan(ds['var'].values[0])
 
+    assert not ds['var'].encoding
 
-def test_set_nan_to_fill_value():
-    ds = xr.Dataset(
-        coords={
-            'time': np.arange(10, dtype=np.float64)
-        },
-        data_vars={
-            'var': (['time'], np.ones(10))
-        }
-    )
-    ds['var'].values[0] = np.nan
-    ds['var'].attrs['_FillValue'] = 1e20
-    ds = set_nan_to_fill_value(ds)
-    assert ds['var'].values[0] == 1e20
+    add_compression_to_data_vars(ds, 9)
+
+    assert ds['var'].encoding.get('zlib') is True
+    assert ds['var'].encoding.get('complevel') == 9
 
 
 def test_create_mask():
