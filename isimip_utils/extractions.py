@@ -31,7 +31,7 @@ def select_time(ds: xr.Dataset, timestamp: datetime) -> xr.Dataset | None:
         time = compute_time(ds, timestamp)
 
     if time < ds['time'].min() or time > ds['time'].max():
-        logger.warn(f'Selected time={time} is outside the dataset.')
+        logger.warning(f'Selected time={time} is outside the dataset.')
         return None
 
     return ds.sel(time=time, method='nearest')
@@ -204,7 +204,7 @@ def compute_aggregation(ds: xr.Dataset, type: Literal['mean', 'min', 'max', 'sum
 
     if type in ('mean', 'std', 'sum') and dim == ('lat', 'lon'):
         if weights is None:
-            logger.warn('no weights provided, using latitude-dependent weights')
+            logger.warning('no weights provided, using latitude-dependent weights')
             weights = np.sin(np.deg2rad(ds.lat + 0.25)) - np.sin(np.deg2rad(ds.lat - 0.25))
 
         ds = ds.weighted(weights)

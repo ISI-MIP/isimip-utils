@@ -18,13 +18,13 @@ def setup_env() -> None:
     load_dotenv(Path().cwd() / '.env')
 
 
-def setup_logs(log_level: str = 'WARN', log_file: str | None = None,
+def setup_logs(log_level: str = 'WARNING', log_file: str | None = None,
                log_console: bool = True, log_rich: bool = True,
                show_time: bool = False, show_path: bool = False) -> None:
     """Configure logging with console and/or file handlers.
 
     Args:
-        log_level (str): Logging level (default: 'WARN').
+        log_level (str): Logging level (default: 'WARNING').
         log_file (str | None): Path to log file, or None for no file logging (default: None).
         log_console (bool): Whether to log to console (default: True).
         log_rich (bool): Whether to use RichHandler for console logging (default: True).
