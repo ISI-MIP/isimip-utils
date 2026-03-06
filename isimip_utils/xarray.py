@@ -150,6 +150,9 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
 
         if units.startswith('months'):
             ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='360_day')
+        elif units.startswith('years'):
+            units = units.replace('years', 'common_years')
+            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
         elif units.startswith('growing seasons'):
             units = units.replace('growing seasons', 'common_years')
             ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
