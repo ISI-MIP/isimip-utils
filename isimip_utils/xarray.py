@@ -28,7 +28,7 @@ DEFAULT_ATTRS = {
         'standard_name': 'time',
         'long_name': 'Time',
         'calendar': 'proleptic_gregorian',
-        'units': 'days since 1661-01-01 00:00:00',
+        'units': 'days since 1601-01-01 00:00:00',
         'axis': 'T'
     }
 }

@@ -239,7 +239,7 @@ def test_init_dataset_latlon():
     assert ds.sizes['lon'] == 1
     assert ds.sizes['lat'] == 1
 
-    assert ds['time'].units == 'days since 1601-1-1 00:00:00'
+    assert ds['time'].units == 'days since 1601-01-01 00:00:00'
     assert ds['time'].calendar == 'proleptic_gregorian'
 
     assert np.array_equal(ds['var'].values, var)
@@ -273,7 +273,7 @@ variables:
         time:standard_name = "time" ;
         time:long_name = "Time" ;
         time:calendar = "proleptic_gregorian" ;
-        time:units = "days since 1601-1-1 00:00:00" ;
+        time:units = "days since 1601-01-01 00:00:00" ;
         time:axis = "T" ;
     float var(time, lat, lon) ;
         var:_FillValue = 1.e+20f ;
