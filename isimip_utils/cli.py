@@ -253,7 +253,7 @@ class ArgumentParser(argparse.ArgumentParser):
                         value = None
 
                     # apply action type
-                    if value and action.type is not None:
+                    if value and action.type is not None and value not in [True, False]:
                         try:
                             value = action.type(value)
                         except argparse.ArgumentTypeError as e:
@@ -272,8 +272,11 @@ class ArgumentParser(argparse.ArgumentParser):
 
                 if value is not None:
                     # check action.action
-                    if action.const and value not in [True, False]:
-                        raise ConfigError(f'argument "{key}": invalid choice "{value}" (choose true or false)')
+                    if action.const:
+                        if value is True:
+                            value = action.const
+                        elif value is False:
+                            value = None
 
                     # check action.choices
                     if action.choices and value not in action.choices:
