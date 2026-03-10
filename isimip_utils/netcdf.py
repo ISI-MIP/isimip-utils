@@ -1,4 +1,7 @@
+"""Functions to open and read NetCDF files using netCDF4."""
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 from netCDF4 import Dataset
@@ -9,28 +12,78 @@ FLOAT_TYPES = [np.float32, np.float64]
 INT_TYPES = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64]
 
 
-def open_dataset_read(file_path):
-    return Dataset(file_path, 'r')
+def open_dataset(file_path: str | Path, mode: str = 'r') -> Dataset:
+    """Open a NetCDF dataset (just a wrapper for netcdf.Dataset).
+
+    Args:
+        file_path (str | Path): Path to the NetCDF file.
+        mode (str):
+    Returns:
+        NetCDF4 Dataset object opened in the selected mode.
+    """
+    return Dataset(file_path, mode)
 
 
-def open_dataset_write(file_path):
+def open_dataset_read(file_path: str | Path) -> Dataset:
+    """Open a NetCDF dataset in read-only mode.
+
+    Args:
+        file_path (str | Path): Path to the NetCDF file.
+
+    Returns:
+        NetCDF4 Dataset object opened in read mode.
+    """
+    return open_dataset(file_path)
+
+
+def open_dataset_write(file_path: str | Path) -> Dataset:
+    """Open a NetCDF dataset in read/write mode.
+
+    Args:
+        file_path (str | Path): Path to the NetCDF file.
+
+    Returns:
+        NetCDF4 Dataset object opened in read/write mode.
+    """
     return Dataset(file_path, 'r+')
 
 
-def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
-                 time_unit='days since 1601-1-1 00:00:00',
-                 time_calendar='proleptic_gregorian', **variables):
+def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool = False, lon: int = 720, lat: int = 360,
+                 time: None | np.ndarray = None, time_unit: str = 'days since 1601-1-1 00:00:00',
+                 time_calendar: str = 'proleptic_gregorian', attrs: None | dict = None, **variables: Any) -> Dataset:
+    """Initialize a new NetCDF4 dataset with standard dimensions and variables.
+
+    Args:
+        file_path (str | Path): Path where the NetCDF file will be created.
+        diskless (bool): If True, create dataset in memory (default: False).
+        overwrite (bool): If True, overwrite existing dataset (default: False).
+        lon (int): Number of longitude points (default: 720).
+        lat (int): Number of latitude points (default: 360).
+        time (np.ndarray): Time dimension configuration (default: None).
+        time_unit (str): Units for the time dimension (default: 'days since 1601-1-1 00:00:00').
+        time_calendar (str): Calendar type for time dimension (default: 'proleptic_gregorian').
+        attrs (dict): Dictionary of attributes for variables and global attributes.
+        **variables (Any): Data variables to create in the dataset.
+
+    Returns:
+        Initialized NetCDF4 Dataset object.
+    """
+    # overwrite existing file
+    if overwrite and file_path.exists():
+        file_path.unlink()
+
+    # create NetCDF dataset
     ds = Dataset(file_path, 'w', format='NETCDF4_CLASSIC', diskless=diskless)
 
+    # create time dimension if time is set
     if time is not None and time is not False:
         ds.createDimension('time', None)
 
-    d_lon = 360.0 / lon
-    d_lat = 180.0 / lat
-
+    # create lon and lat dimensions
     ds.createDimension('lon', lon)
     ds.createDimension('lat', lat)
 
+    # create time variable if time is set
     if time is not None:
         time_variable = ds.createVariable('time', 'f8', ('time',), fill_value=FILL_VALUE)
         time_variable.missing_value = FILL_VALUE
@@ -42,46 +95,73 @@ def init_dataset(file_path, diskless=False, lon=720, lat=360, time=True,
         if isinstance(time, np.ndarray):
             time_variable[:] = time
 
+    # create lon variable
+    lon_delta = 360.0 / lon
     lon_variable = ds.createVariable('lon', 'f8', ('lon',), fill_value=FILL_VALUE)
     lon_variable.missing_value = FILL_VALUE
     lon_variable.standard_name = 'longitude'
     lon_variable.long_name = 'Longitude'
     lon_variable.units = 'degrees_east'
     lon_variable.axis = 'X'
-    lon_variable[:] = np.arange(-180 + 0.5 * d_lon, 180, d_lon)
+    lon_variable[:] = np.arange(-180 + 0.5 * lon_delta, 180, lon_delta)
 
+    # create lat variable
+    lat_delta = 180.0 / lat
     lat_variable = ds.createVariable('lat', 'f8', ('lat',), fill_value=FILL_VALUE)
     lat_variable.missing_value = FILL_VALUE
     lat_variable.standard_name = 'latitude'
     lat_variable.long_name = 'Latitude'
     lat_variable.units = 'degrees_north'
     lat_variable.axis = 'Y'
-    lat_variable[:] = np.arange(90 - 0.5 * d_lat, -90, -d_lat)
+    lat_variable[:] = np.arange(90 - 0.5 * lat_delta, -90, -lat_delta)
 
-    for variable_name, variable_dict in variables.items():
-        long_name = variable_dict.get('long_name')
-        dtype = variable_dict.get('dtype', 'f8')
-        dimensions = variable_dict.get('dimensions', ('time', 'lat', 'lon'))
-        units = variable_dict.get('units')
+    # create a data variable for each provided variable
+    for variable_name, variable in variables.items():
 
-        if variable_name:
-            variable = ds.createVariable(variable_name, dtype, dimensions,
-                                         fill_value=FILL_VALUE, compression='zlib')
-            variable.missing_value = FILL_VALUE
-            variable.standard_name = variable_name
-            if long_name:
-                variable.long_name = long_name
-            if units:
-                variable.units = units
+        dimensions = ('time', 'lat', 'lon') if time is not None else ('lat', 'lon')
+        var = ds.createVariable(variable_name, variable.dtype, dimensions,
+                                fill_value=FILL_VALUE, compression='zlib')
+
+        # set variable attributes
+        if attrs:
+            for key, value in attrs.get(variable_name, {}).items():
+                setattr(var, key, value)
+
+        # set missing value
+        var.missing_value = np.float32(FILL_VALUE)
+
+        # set variable data
+        var[:] = variable
+
+    # set global attributes
+    if attrs:
+        for key, value in attrs.get('global', {}).items():
+            setattr(ds, key, value)
 
     return ds
 
 
-def get_data_model(dataset):
+def get_data_model(dataset: Dataset) -> str:
+    """Get the data model of a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+
+    Returns:
+        String representing the data model (e.g., 'NETCDF4', 'NETCDF4_CLASSIC').
+    """
     return dataset.data_model
 
 
-def get_dimensions(dataset):
+def get_dimensions(dataset: Dataset) -> dict[str, int]:
+    """Get dimensions from a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+
+    Returns:
+        Dictionary mapping dimension names to their sizes.
+    """
     dimensions = {}
     for dimension_name, dimension in dataset.dimensions.items():
         dimensions[dimension_name] = dimension.size
@@ -89,7 +169,16 @@ def get_dimensions(dataset):
     return dimensions
 
 
-def get_variables(dataset, convert=False):
+def get_variables(dataset: Dataset, convert: bool = False) -> dict[str, Any]:
+    """Get variables and their attributes from a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+        convert (bool): If True, convert numpy types to Python types (default: False).
+
+    Returns:
+        Dictionary mapping variable names to their attributes and dimensions.
+    """
     variables = {}
     for variable_name, variable in dataset.variables.items():
 
@@ -105,7 +194,16 @@ def get_variables(dataset, convert=False):
     return variables
 
 
-def get_global_attributes(dataset, convert=False):
+def get_global_attributes(dataset: Dataset, convert: bool = False) -> dict[str, Any]:
+    """Get global attributes from a NetCDF dataset.
+
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+        convert (bool): If True, convert numpy types to Python types (default: False).
+
+    Returns:
+        Dictionary of global attributes.
+    """
     if convert:
         global_attributes = {}
         for key, value in dataset.__dict__.items():
@@ -116,7 +214,25 @@ def get_global_attributes(dataset, convert=False):
     return global_attributes
 
 
-def convert_attribute(value):
+def get_index(dataset: Dataset, lat: float, lon: float) -> tuple[int, int]:
+    dx = dataset.variables['lon'][1] - dataset.variables['lon'][0]
+    dy = dataset.variables['lat'][1] - dataset.variables['lat'][0]
+
+    ix = round(float((lon - dataset.variables['lon'][0]) / dx))
+    iy = round(float((lat - dataset.variables['lat'][0]) / dy))
+
+    return ix, iy
+
+
+def convert_attribute(value: Any) -> Any:
+    """Convert numpy types to Python native types.
+
+    Args:
+        value (Any): Value to convert (may be numpy array, float, int, or other type).
+
+    Returns:
+        Converted value with Python native types.
+    """
     if type(value) in LIST_TYPES:
         value = [convert_attribute(v) for v in value]
     elif type(value) in FLOAT_TYPES:
@@ -126,17 +242,35 @@ def convert_attribute(value):
     return value
 
 
-def update_global_attributes(dataset, set_attributes={}, delete_attributes=[]):
-    for attr in dataset.__dict__:
-        if attr in delete_attributes:
-            dataset.delncattr(attr)
+def update_global_attributes(dataset: Dataset, set_attributes: dict | None = None,
+                             delete_attributes: list | None = None) -> None:
+    """Update global attributes of a NetCDF dataset.
 
-    for attr, value in set_attributes.items():
-        dataset.setncattr(attr, value2string(value))
+    Args:
+        dataset (Dataset): NetCDF4 Dataset object.
+        set_attributes (dict): Dictionary of attributes to set or update.
+        delete_attributes (list): List of attribute names to delete.
+    """
+    if delete_attributes is not None:
+        for attr in dataset.__dict__:
+            if attr in delete_attributes:
+                dataset.delncattr(attr)
+
+    if set_attributes is not None:
+        for attr, value in set_attributes.items():
+            dataset.setncattr(attr, value2string(value))
 
 
-def value2string(value):
+def value2string(value: Any) -> str:
+    """Convert a value to string representation.
+
+    Args:
+        value (Any): Value to convert. Datetime objects get ISO format with 'Z' suffix.
+
+    Returns:
+        String representation of the value.
+    """
     if isinstance(value, datetime):
-        return value.isoformat() + 'Z',
+        return value.isoformat() + 'Z'
     else:
         return str(value)

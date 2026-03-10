@@ -1,3 +1,4 @@
+"""Functions to match file names and extract ISIMIP specifiers."""
 import logging
 import re
 from pathlib import Path
@@ -9,20 +10,59 @@ logger = logging.getLogger(__name__)
 year_pattern = re.compile(r'^\d{4}$')
 
 
-def match_dataset_path(pattern, dataset_path):
+def match_dataset_path(pattern: dict, dataset_path: Path) -> tuple[Path, dict]:
+    """Match a dataset path against a pattern.
+
+    Args:
+        pattern (dict): Pattern dictionary containing regex patterns.
+        dataset_path (Path): Path to the dataset to match.
+
+    Returns:
+        Tuple of (matched_path, specifiers_dict).
+
+    Raises:
+        DidNotMatch: If the path doesn't match the pattern.
+    """
     return match_path(pattern, dataset_path, filename_pattern_key='dataset')
 
 
-def match_file_path(pattern, file_path):
+def match_file_path(pattern: dict, file_path: Path) -> tuple[Path, dict]:
+    """Match a file path against a pattern.
+
+    Args:
+        pattern (dict): Pattern dictionary containing regex patterns.
+        file_path (Path): Path to the file to match.
+
+    Returns:
+        Tuple of (matched_path, specifiers_dict).
+
+    Raises:
+        DidNotMatch: If the path doesn't match the pattern.
+    """
     return match_path(pattern, file_path)
 
 
-def match_path(pattern, path, dirname_pattern_key='path', filename_pattern_key='file'):
+def match_path(pattern: dict, path: Path, dirname_pattern_key: str = 'path',
+               filename_pattern_key: str = 'file') -> tuple[Path, dict]:
+    """Match both directory and filename components of a path against patterns.
+
+    Args:
+        pattern (dict): Pattern dictionary containing regex patterns and specifiers.
+        path (Path): Path object to match.
+        dirname_pattern_key (str): Key in pattern dict for directory pattern (default: 'path').
+        filename_pattern_key (str): Key in pattern dict for filename pattern (default: 'file').
+
+    Returns:
+        Tuple of (matched_path, specifiers_dict) containing extracted specifiers.
+
+    Raises:
+        DidNotMatch: If dirname and filename specifiers conflict.
+    """
     dirname_pattern = pattern[dirname_pattern_key]
     filename_pattern = pattern[filename_pattern_key]
 
     # match the dirname and the filename
-    dirname_path, dirname_specifiers = match_string(dirname_pattern, path.parent.as_posix())
+    dirname_path, dirname_specifiers = match_string(dirname_pattern, str(path.parent))
     filename_path, filename_specifiers = match_string(filename_pattern, path.name)
 
     path = dirname_path / filename_path
@@ -30,7 +70,7 @@ def match_path(pattern, path, dirname_pattern_key='path', filename_pattern_key='
     # assert that any value in dirname_specifiers at least starts with
     # its corresponding value (same key) in filename_specifiers
     # e.g. 'ewe' and 'ewe_north-sea'
-    for key, value in filename_specifiers.items():
+    for key, _ in filename_specifiers.items():
         if key in dirname_specifiers:
             f, d = filename_specifiers[key], dirname_specifiers[key]
 
@@ -52,17 +92,54 @@ def match_path(pattern, path, dirname_pattern_key='path', filename_pattern_key='
     return path, specifiers
 
 
-def match_dataset(pattern, path):
+def match_dataset(pattern: dict, path: Path) -> tuple[Path, dict]:
+    """Match a dataset name against a pattern.
+
+    Args:
+        pattern (dict): Pattern dictionary containing regex patterns.
+        path (Path): Path object with dataset name.
+
+    Returns:
+        Tuple of (matched_path, specifiers_dict).
+
+    Raises:
+        DidNotMatch: If the dataset name doesn't match the pattern.
+    """
     return match_string(pattern['dataset'], path.name)
 
 
-def match_file(pattern, path):
+def match_file(pattern: dict, path: Path) -> tuple[Path, dict]:
+    """Match a file name against a pattern.
+
+    Args:
+        pattern (dict): Pattern dictionary containing regex patterns.
+        path (Path): Path object with file name.
+
+    Returns:
+        Tuple of (matched_path, specifiers_dict).
+
+    Raises:
+        DidNotMatch: If the file name doesn't match the pattern.
+    """
     return match_string(pattern['file'], path.name)
 
 
-def match_string(pattern, string):
-    logger.debug(pattern.pattern)
-    logger.debug(string)
+def match_string(pattern: re.Pattern, string: str) -> tuple[Path, dict]:
+    """Match a string against a regex pattern and extract specifiers.
+
+    Args:
+        pattern (re.Pattern): Compiled regex pattern with named groups.
+        string (str): String to match against the pattern.
+
+    Returns:
+        Tuple of (Path of matched portion, specifiers_dict).
+        Year values (4-digit numbers) are converted to integers.
+
+    Raises:
+        DidNotMatch: If the string doesn't match the pattern.
+    """
+    logger.debug('pattern = "%s"', pattern.pattern)
+    logger.debug('string = "%s"', string)
 
     # try to match the string
     match = pattern.search(string)
@@ -77,4 +154,17 @@ def match_string(pattern, string):
 
         return Path(match.group(0)), specifiers
     else:
+        # try to find a matching fragment
+        split_pattern = pattern.pattern.split('_')
+        for i in range(len(split_pattern), 0, -1):
+            try:
+                sub_pattern = re.compile('_'.join(split_pattern[:i]))
+                sub_match = sub_pattern.search(string)
+                if sub_match:
+                    fragment = sub_match.group(0)
+                    raise DidNotMatch(f'No match for "{string}", last matching fragment was "{fragment}"')
+            except re.error:
+                pass
+
+        # just raise the exception if no fragment was found
         raise DidNotMatch(f'No match for {string} ("{pattern.pattern}")')

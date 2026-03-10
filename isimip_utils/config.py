@@ -1,47 +1,84 @@
+"""Configuration management for ISIMIP tools."""
 import logging
+import tomllib
 from pathlib import Path
+from typing import Any
 
-from colorlog import ColoredFormatter, StreamHandler
+from .utils import Singleton
+
+logger = logging.getLogger(__name__)
 
 
-class Settings:
+class Settings(Singleton):
+    """Singleton settings class for managing application configuration.
 
-    _shared_state = {}
+    This class provides a centralized settings store that combines input from
+    argparse, environment variables, and config files. Settings are stored as
+    uppercase keys and can be accessed as attributes.
+    """
+    _settings: dict[str, Any] = {}
 
-    def __init__(self):
-        self.__dict__ = self._shared_state
+    ignore_keys = ('config', )
 
-    def __str__(self):
-        return str(self.args)
+    def __repr__(self) -> str:
+        return str(self._settings)
 
-    def setup(self, args):
-        # reset the shared state
-        self.__dict__ = self._shared_state = {}
+    def __getattr__(self, name: str) -> Any:
+        if name in self._settings.keys():
+            return self._settings[name]
+        else:
+            raise AttributeError(f"{self.__class__.__name__} object has no attribute '{name}'")
 
-        # assign args to settings object
-        self.args = {key.upper(): value for key, value in args.items()}
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name.startswith('_'):
+            # allow normal attribute for internal data
+            super().__setattr__(name, value)
+        else:
+            self._settings[name] = value
 
-        # setup logs
-        try:
-            self.LOG_LEVEL = self.LOG_LEVEL.upper()
-            self.LOG_FILE = Path(self.LOG_FILE).expanduser() if self.LOG_FILE else None
+    def to_dict(self) -> dict[str, Any]:
+        """Return the settings as a dictionary.
 
-            if self.LOG_FILE:
-                logging.basicConfig(level=self.LOG_LEVEL, filename=self.LOG_FILE,
-                                    format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+        Returns:
+            Dictionary of all settings.
+        """
+        return self._settings
+
+    @classmethod
+    def from_dict(cls, values: dict[str, Any]) -> 'Settings':
+        """Create a Settings instance from a dictionary.
+
+        Args:
+            values (dict[str, Any]): Dictionary of setting key-value pairs.
+
+        Returns:
+            A Settings instance populated with the provided values.
+            All keys are converted to uppercase.
+        """
+        instance = cls()
+        instance._settings = {key.upper(): value for key, value in values.items() if key not in cls.ignore_keys}
+        logger.debug('settings = %s', instance)
+        return instance
+
+    @classmethod
+    def from_toml(cls, path: Path, section: str | None = None) -> 'Settings':
+        """Create a Settings instance from a TOML file.
+
+        Args:
+            path (Path): Path to the TOML file.
+            section (str): Section to use.
+
+        Returns:
+            A Settings instance populated with the content of the TOML file.
+            All keys are converted to uppercase.
+        """
+        values = {}
+        with open(path, 'rb') as fp:
+            data = tomllib.load(fp)
+            if section:
+                if section in data:
+                    values = data[section]
             else:
-                formatter = ColoredFormatter('%(log_color)s[%(asctime)s] %(levelname)s %(name)s: %(message)s')
-                handler = StreamHandler()
-                handler.setFormatter(formatter)
-                logging.basicConfig(level=self.LOG_LEVEL, handlers=[handler])
+                values = data
 
-        except AttributeError:
-            pass
-
-    def __getattr__(self, name):
-        # this function catches all properties and returns the values in the self.args dict, e.g.
-        # settings.FOO -> settings.args['FOO']
-        try:
-            return self.args[name]
-        except KeyError as e:
-            raise AttributeError from e
+        return cls.from_dict(values)
