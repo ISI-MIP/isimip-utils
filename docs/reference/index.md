@@ -2,62 +2,47 @@
 
 The `isimip_utils` package contains the following modules:
 
-`isimip_utils.checksum`
+[`isimip_utils.checksum`](checksum.md)
 :   Checksum computation utilities for file integrity verification.
-    [Reference](checksum.md)
 
-`isimip_utils.cli`
+[`isimip_utils.cli`](cli.md)
 :   Command-line interface utilities for ISIMIP tools.
-    [Reference](cli.md)
 
-`isimip_utils.config`
+[`isimip_utils.config`](config.md)
 :   Configuration management for ISIMIP tools.
-    [Reference](config.md)
 
-`isimip_utils.exceptions`
+[`isimip_utils.exceptions`](exceptions.md)
 :   Custom exceptions for ISIMIP tools.
-    [Reference](exceptions.md)
 
-`isimip_utils.extractions`
+[`isimip_utils.extractions`](extractions.md)
 :   Data extraction and manipulation utilities for xarray datasets.
-    [Reference](extractions.md)
 
-`isimip_utils.fetch`
+[`isimip_utils.fetch`](fetch.md)
 :   Functions to fetch files from urls or local paths.
-    [Reference](fetch.md)
 
-`isimip_utils.files`
+[`isimip_utils.files`](files.md)
 :   Functions to find files for specific datasets.
-    [Reference](files.md)
 
-`isimip_utils.netcdf`
+[`isimip_utils.netcdf`](netcdf.md)
 :   Functions to open and read NetCDF files using netCDF4.
-    [Reference](netcdf.md)
 
-`isimip_utils.pandas`
+[`isimip_utils.pandas`](pandas.md)
 :   Pandas DataFrame utilities for ISIMIP data.
-    [Reference](pandas.md)
 
-`isimip_utils.parameters`
+[`isimip_utils.parameters`](parameters.md)
 :   Utility functions for the work with parameters and placeholders.
-    [Reference](parameters.md)
 
-`isimip_utils.patterns`
+[`isimip_utils.patterns`](patterns.md)
 :   Functions to match file names and extract ISIMIP specifiers.
-    [Reference](patterns.md)
 
-`isimip_utils.plot`
+[`isimip_utils.plot`](plot.md)
 :   Plotting utilities using Altair for ISIMIP data visualization.
-    [Reference](plot.md)
 
-`isimip_utils.protocol`
+[`isimip_utils.protocol`](protocol.md)
 :   Functions to fetch information from machine-actionable ISIMIP protocols.
-    [Reference](protocol.md)
 
-`isimip_utils.utils`
+[`isimip_utils.utils`](utils.md)
 :   Additional utility functions for ISIMIP tools.
-    [Reference](utils.md)
 
-`isimip_utils.xarray`
+[`isimip_utils.xarray`](xarray.md)
 :   Functions for working with xarray datasets for ISIMIP data.
-    [Reference](xarray.md)
