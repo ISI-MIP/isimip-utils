@@ -4,7 +4,6 @@ ISIMIP utils
 [![Python Version](https://img.shields.io/badge/python->=3.11-blue)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/ISI-MIP/isimip-utils?style=flat)](https://github.com/rdmorganiser/isimip-utils/blob/main/LICENSE)
 [![CI status](https://github.com/ISI-MIP/isimip-utils/actions/workflows/ci.yaml/badge.svg)](https://github.com/ISI-MIP/isimip-utils/actions/workflows/ci.yaml)
-[![Coverage status](https://coveralls.io/repos/ISI-MIP/isimip-utils/badge.svg?branch=main&service=github)](https://coveralls.io/github/ISI-MIP/isimip-utils?branch=main)
 [![Latest release](https://img.shields.io/pypi/v/isimip-utils.svg?style=flat)](https://pypi.python.org/pypi/isimip-utils/)
 
 
