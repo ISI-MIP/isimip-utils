@@ -130,7 +130,7 @@ def validate_lon(lon: float) -> None:
         raise ValidationError(f'lon={lon} is a valid number') from e
 
 
-def get_min_value(values):
+def get_min_value(values) -> Any:
     """Get the minimal value of the input values, excluding None and using None as default.
 
     Args:
@@ -142,7 +142,7 @@ def get_min_value(values):
     return min([v for v in values if v is not None], default=None)
 
 
-def get_max_value(values):
+def get_max_value(values) -> Any:
     """Get the maximum value of the input values, excluding None and using None as default.
 
     Args:

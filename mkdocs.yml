@@ -2,6 +2,8 @@ site_name: ISIMIP utils
 
 theme:
   name: material
+  logo: assets/isimip.png
+  favicon: assets/isimip.png
 
 plugins:
 - mkdocstrings:
@@ -12,22 +14,40 @@ plugins:
           show_bases: false
           members_order: source
 
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+copyright: >
+  <a href="https://www.isimip.org">ISIMIP webpage</a> | <a href="https://www.isimip.org/impressum/">Imprint & Privacy</a>
+
+extra:
+  social:
+  - icon: fontawesome/brands/github
+    link: https://github.com/ISI-MIP/isimip-utils
+  generator: false
+
+extra_css:
+  - assets/extra.css
+
 nav:
   - Getting started: index.md
   - Examples: examples.md
-  - API reference:
-    - isimip_utils.checksum: api/checksum.md
-    - isimip_utils.cli: api/cli.md
-    - isimip_utils.config: api/config.md
-    - isimip_utils.exceptions: api/exceptions.md
-    - isimip_utils.extractions: api/extractions.md
-    - isimip_utils.fetch: api/fetch.md
-    - isimip_utils.files: api/files.md
-    - isimip_utils.netcdf: api/netcdf.md
-    - isimip_utils.pandas: api/pandas.md
-    - isimip_utils.patterns: api/patterns.md
-    - isimip_utils.parameters: api/parameters.md
-    - isimip_utils.plot: api/plot.md
-    - isimip_utils.utils: api/utils.md
-    - isimip_utils.xarray: api/xarray.md
+  - API:
+    - Reference: reference/index.md
+    - isimip_utils.checksum: reference/checksum.md
+    - isimip_utils.cli: reference/cli.md
+    - isimip_utils.config: reference/config.md
+    - isimip_utils.exceptions: reference/exceptions.md
+    - isimip_utils.extractions: reference/extractions.md
+    - isimip_utils.fetch: reference/fetch.md
+    - isimip_utils.files: reference/files.md
+    - isimip_utils.netcdf: reference/netcdf.md
+    - isimip_utils.pandas: reference/pandas.md
+    - isimip_utils.parameters: reference/parameters.md
+    - isimip_utils.patterns: reference/patterns.md
+    - isimip_utils.plot: reference/plot.md
+    - isimip_utils.protocol: reference/protocol.md
+    - isimip_utils.utils: reference/utils.md
+    - isimip_utils.xarray: reference/xarray.md
   - Python installation: prerequisites.md

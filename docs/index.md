@@ -1,10 +1,12 @@
 ISIMIP utils
 ============
 
-[ISIMIP](https://isimip.org) offers a framework for consistently projecting the impacts
-of climate change across affected sectors and spatial scales. An international network
-of climate-impact modellers contribute to a comprehensive and consistent picture of the
-world under different climate-change scenarios.
+**Source code**  
+<https://github.com/ISI-MIP/isimip-utils>
+
+**Documentation**  
+<https://utils.isimip.org>
+
 
 Overview
 --------
@@ -19,31 +21,31 @@ as in different ISIMIP tools:
 The following modules contain high-level method to extract data (e.g. aggregated time series of points, areas, shapes)
 from global ISIMIP data sets and create gridded plots visualizing the data:
 
-* [`isimip_utils.extractions`](api/extractions.md): Create extractions using [Xarray](https://docs.xarray.dev).
-* [`isimip_utils.plot`](api/plot.md): Plotting utilities using [Vega-Altair](https://altair-viz.github.io).
+* [`isimip_utils.extractions`](reference/extractions.md): Create extractions using [Xarray](https://docs.xarray.dev).
+* [`isimip_utils.plot`](reference/plot.md): Plotting utilities using [Vega-Altair](https://altair-viz.github.io).
 
 Lower-level functions are provided to interact with the data sets and customize `xarray`, `pandas`, and `netcdf`
 for ISIMIP conventions.
 
-* [`isimip_utils.xarray`](api/xarray.md): Functions for working with `xarray` datasets.
-* [`isimip_utils.netcdf`](api/netcdf.md): Functions to open and read NetCDF files using netCDF4.
-* [`isimip_utils.pandas`](api/pandas.md): Pandas utilities for ISIMIP data processing.
+* [`isimip_utils.xarray`](reference/xarray.md): Functions for working with `xarray` datasets.
+* [`isimip_utils.netcdf`](reference/netcdf.md): Functions to open and read NetCDF files using netCDF4.
+* [`isimip_utils.pandas`](reference/pandas.md): Pandas utilities for ISIMIP data processing.
 
 Two modules focus on the interface to the [machine-readable ISIMIP protocol](https://protocol.isimip.org):
 
-* [`isimip_utils.patterns`](api/patterns.md): Functions to fetch information from machine-actionable ISIMIP protocols.
-* [`isimip_utils.protocol`](api/patterns.md): Functions to match file names and extract ISIMIP specifiers.
+* [`isimip_utils.patterns`](reference/patterns.md): Functions to fetch information from machine-actionable ISIMIP protocols.
+* [`isimip_utils.protocol`](reference/patterns.md): Functions to match file names and extract ISIMIP specifiers.
 
 The remaining modules contain utility functions which are used by the other modules or by the ISIMIP tools mentioned above:
 
-* [`isimip_utils.checksum`](api/checksum.md): Checksum computation utilities for file integrity verification.
-* [`isimip_utils.cli`](api/cli.md): Command-line interface utilities for argument parsing and configuration.
-* [`isimip_utils.config`](api/config.md): A `Settings` class for command-line interface utilities.
-* [`isimip_utils.exceptions`](api/exceptions.md): Custom exceptions for ISIMIP tools.
-* [`isimip_utils.fetch`](api/fetch.md): Functions to fetch files from urls or local paths.
-* [`isimip_utils.files`](api/files.md): File search utilities with regex pattern matching.
-* [`isimip_utils.parameters`](api/parameters.md): Utility functions for the work with parameters and placeholders.
-* [`isimip_utils.utils`](api/utils.md): Additional utility functions.
+* [`isimip_utils.checksum`](reference/checksum.md): Checksum computation utilities for file integrity verification.
+* [`isimip_utils.cli`](reference/cli.md): Command-line interface utilities for argument parsing and configuration.
+* [`isimip_utils.config`](reference/config.md): A `Settings` class for command-line interface utilities.
+* [`isimip_utils.exceptions`](reference/exceptions.md): Custom exceptions for ISIMIP tools.
+* [`isimip_utils.fetch`](reference/fetch.md): Functions to fetch files from urls or local paths.
+* [`isimip_utils.files`](reference/files.md): File search utilities with regex pattern matching.
+* [`isimip_utils.parameters`](reference/parameters.md): Utility functions for the work with parameters and placeholders.
+* [`isimip_utils.utils`](reference/utils.md): Additional utility functions.
 
 
 Setup
@@ -104,4 +106,4 @@ ds = init_dataset(time=time, var=var, attrs=attrs)
 write_dataset(ds, 'output.nc')
 ```
 
-Please also note our page with additional [examples](examples.md) and the [API reference](api.md).
+Please also note our page with additional [examples](examples.md) and the [API reference](reference/index.md).

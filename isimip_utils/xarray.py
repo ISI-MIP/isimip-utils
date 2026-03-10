@@ -132,8 +132,8 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
         Xarray Dataset object.
 
     Note:
-        Handles non-standard time units like 'growing seasons' by converting
-        them to 'common_years' with a 365_day calendar.
+        Handles non-standard time units like `growing seasons` and `years` by converting
+        them to `common_years` with a `365_day` calendar. `month` are read with the `360_day` calendar.
     """
     path = Path(path)
 
@@ -176,8 +176,8 @@ def load_dataset(path: str | Path, decode_cf: bool = True) -> xr.Dataset:
         Xarray Dataset object.
 
     Note:
-        Handles non-standard time units like 'growing seasons' by converting
-        them to 'common_years' with a 365_day calendar.
+        Handles non-standard time units like `growing seasons` and `years` by converting
+        them to `common_years` with a `365_day` calendar. `month` are read with the `360_day` calendar.
 
         This is a shortcut for `open_dataset(path, decode_cf, load=True)`.
     """
@@ -192,8 +192,8 @@ def write_dataset(ds: xr.Dataset, path: str | Path):
         path (str | Path): Path where the NetCDF file will be written.
 
     Note:
-        Automatically adds fill values, converts NaN to fill values,
-        orders variables, and sets time as unlimited dimension.
+        Automatically adds fill values, orders variables, adds compression
+        and sets time as unlimited dimension.
     """
     path = Path(path)
     path.parent.mkdir(exist_ok=True, parents=True)
@@ -361,7 +361,7 @@ def compute_time(ds: xr.Dataset, timestamp: datetime | None) -> float | None:
         timestamp (datetime | date | None): Timestamp to convert, or None.
 
     Returns:
-        Numeric time value in dataset's units, or None if timestamp is None.
+        Numeric time value in dataset's units, or `None` if `timestamp` is `None`.
     """
     if type(timestamp) is date:
         timestamp = datetime.combine(timestamp, datetime.min.time())
@@ -379,7 +379,7 @@ def compute_offset(ds1: xr.Dataset, ds2: xr.Dataset) -> xr.DataArray | None:
         ds2 (xr.Dataset): Second dataset with time coordinate.
 
     Returns:
-        Time offset to apply to ds2, or None if units/calendars match.
+        Time offset to apply to `ds2`, or `None` if units/calendars match.
     """
 
     units1 = ds1.time.encoding.get('units') or ds1.coords['time'].attrs.get('units')
@@ -403,10 +403,7 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
         layer (int): Index of the layer to use from the GeoDataFrame.
 
     Returns:
-        Xarray dataset with a 'mask' variable clipped to the geometry.
-
-    Note:
-        Requires geopandas and rioxarray to be installed.
+        Xarray dataset with a `mask` variable clipped to the geometry.
     """
     import shapely.geometry
     logger.info('create mask')
@@ -433,11 +430,11 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
 
     Args:
         time (np.ndarray): Time coordinate array.
-        units (str): Units for the time coordinate (default: 'days since 1601-1-1 00:00:00').
-        calendar (str): Calendar type for time coordinate (default: 'proleptic_gregorian').
+        units (str): Units for the time coordinate (default: `days since 1601-1-1 00:00:00`).
+        calendar (str): Calendar type for time coordinate (default: `proleptic_gregorian`).
 
     Returns:
-        time (np.ndarray): Time coordinate array as np.float64.
+        time (np.ndarray): Time coordinate array as `np.float64`.
     """
     if isinstance(time.dtype, pd.StringDtype):
         time = np.array([datetime.fromisoformat(t) for t in time], dtype=object)
@@ -468,8 +465,8 @@ def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
             Attributes are preserved in df.attrs['coords'] and df.attrs['data_vars'].
 
     Note:
-        Time coordinates are converted to datetime64[ns] format.
-        Data variables are converted to float64.
+        Time coordinates are converted to `datetime64[ns]` format.
+        Data variables are converted to `float64`.
     """
     if 'time' in ds.coords:
         ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')

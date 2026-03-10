@@ -21,14 +21,14 @@ as in different ISIMIP tools:
 * [ISIMIP publisher](https://github.com/ISI-MIP/isimip-publisher)
 
 
-The different methods are described are [documented here](docs/index.md).
+The different methods are described are documented at <https://utils.isimip.org>.
 
 
 Setup
 -----
 
 Using the package requires a running Python 3 on your system. The installation for different systems is covered
-[here](docs/releases.md).
+[here](https://utils.isimip.org/prerequisites/).
 
 Unless you already use an environment manager (e.g. `conda` or `uv`), it is highly recommended to use a
 [virtual environment](https://docs.python.org/3/library/venv.html), which can be created using:
@@ -82,4 +82,4 @@ ds = init_dataset(time=time, var=var, attrs=attrs)
 write_dataset(ds, 'output.nc')
 ```
 
-Please also note our [examples page](examples.md) and the [API reference](api.md).
+Please also note our [examples page](https://utils.isimip.org/examples/) and the [API reference](https://utils.isimip.org/reference/).

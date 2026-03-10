@@ -281,7 +281,6 @@ def compute_min(ds: xr.Dataset, dim: str | Iterable | None = None) -> xr.Dataset
     Args:
         ds (xr.Dataset): Dataset to process.
         dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
-        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
 
     Returns:
         Dataset with minimum values over selected dimensions.
@@ -296,7 +295,6 @@ def compute_max(ds: xr.Dataset, dim: str | Iterable | None = None) -> xr.Dataset
     Args:
         ds (xr.Dataset): Dataset to process.
         dim (str|Iterable): Dimensions along which apply mean [default: ('lat', 'lon')]
-        weights (xr.DataArray | None): Weights for averaging over lat/lon. If None, uses latitude-dependent weights.
 
     Returns:
         Dataset with maximum values over selected dimensions.

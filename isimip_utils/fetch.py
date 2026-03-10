@@ -14,7 +14,7 @@ def fetch_json(url: str) -> Any | None:
     """Fetch JSON content from a URL.
 
     Args:
-        location (str | Path): URL to fetch JSON from.
+        url (str): URL to fetch JSON from.
 
     Returns:
         Parsed JSON object, or None if request fails.
@@ -34,7 +34,7 @@ def fetch_file(url: str, target: None | str | Path = None) -> bool:
     """Download file from a URL.
 
     Args:
-        location (str | Path): URL to download file from.
+        url (str): URL to download file from.
         target (str | Path): Target path, or None if the content should be returned.
 
     Returns:
@@ -61,7 +61,7 @@ def load_json(path: str | Path) -> Any | None:
     """Load JSON content from a local path.
 
     Args:
-        location (str | Path): URL to fetch JSON from.
+        path (str | Path): Path to load the JSON from.
 
     Returns:
         Parsed JSON object, or None if request fails.
@@ -77,7 +77,7 @@ def load_file(path: str | Path, target: None | str | Path = None) -> bool:
     """Copy a file from a local path.
 
     Args:
-        location (str | Path): URL to download file from.
+        path (str | Path): Path to copy the file from.
         target (str | Path): Target path, or None if the content should be returned.
 
     Returns:
