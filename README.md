@@ -2,7 +2,7 @@ ISIMIP utils
 ============
 
 [![Python Version](https://img.shields.io/badge/python->=3.11-blue)](https://www.python.org/)
-[![License](https://img.shields.io/github/license/ISI-MIP/isimip-utils?style=flat)](https://github.com/rdmorganiser/isimip-utils/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/ISI-MIP/isimip-utils?style=flat)](https://github.com/ISI-MIP/isimip-utils/blob/main/LICENSE)
 [![CI status](https://github.com/ISI-MIP/isimip-utils/actions/workflows/ci.yaml/badge.svg)](https://github.com/ISI-MIP/isimip-utils/actions/workflows/ci.yaml)
 [![Latest release](https://img.shields.io/pypi/v/isimip-utils.svg?style=flat)](https://pypi.python.org/pypi/isimip-utils/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18937735.svg)](https://doi.org/10.5281/zenodo.18937735)
