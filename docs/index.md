@@ -15,7 +15,7 @@ This package contains various utility methods for use in custom scripts as well
 as in different ISIMIP tools:
 
 * [ISIMIP quality control](https://github.com/ISI-MIP/isimip-qc)
-* [ISIMIP quality assurance](https://github.com/ISI-MIP/isimip-qa)
+* [ISIMIP extraction and analysis](https://github.com/ISI-MIP/isimip-ea)
 * [ISIMIP publisher](https://github.com/ISI-MIP/isimip-publisher)
 
 The following modules contain high-level method to extract data (e.g. aggregated time series of points, areas, shapes)
