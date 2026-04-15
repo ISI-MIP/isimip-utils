@@ -161,7 +161,7 @@ def find_json(protocol_location: str, sub_location: str, path: str | Path) -> Ge
         current_path = Path(os.sep.join(path_components[:i+1])).with_suffix('.json')
 
         if not isinstance(protocol_location, Path) and urlparse(protocol_location).scheme:
-            data = fetch_json(f'{protocol_location}/{sub_location}/{current_path}')
+            data = fetch_json(f'{protocol_location}/{sub_location}/{current_path.as_posix()}')
         else:
             data = load_json(Path(protocol_location) / 'output' / sub_location / current_path)
 
