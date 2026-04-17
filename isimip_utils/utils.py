@@ -28,7 +28,8 @@ class cached_property(_cached_property):
 
     def __get__(self, instance, cls=None):
         warnings.warn(
-            "isimip-utils.utils.cached_property is deprecated, use functools.cached_property instead.",
+            'isimip-utils.utils.cached_property is deprecated and will be removed in 2.1.0, '
+            'use functools.cached_property instead.',
             DeprecationWarning,
             stacklevel=2,
         )
