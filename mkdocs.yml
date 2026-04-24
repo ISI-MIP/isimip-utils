@@ -17,6 +17,8 @@ plugins:
 markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: .
 
 copyright: >
   <a href="https://www.isimip.org">ISIMIP webpage</a> | <a href="https://www.isimip.org/impressum/">Imprint & Privacy</a>
