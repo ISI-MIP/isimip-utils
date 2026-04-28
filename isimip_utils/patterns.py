@@ -162,9 +162,12 @@ def match_string(pattern: re.Pattern, string: str) -> tuple[Path, dict]:
                 sub_match = sub_pattern.search(string)
                 if sub_match:
                     fragment = sub_match.group(0)
-                    raise DidNotMatch(f'No match for "{string}", last matching fragment was "{fragment}"')
+                    raise DidNotMatch(
+                        f'No match for "{string}", last matching fragment was "{fragment}", '
+                        f'pattern is "{pattern.pattern}"'
+                    )
             except re.error:
                 pass
 
         # just raise the exception if no fragment was found
-        raise DidNotMatch(f'No match for {string} ("{pattern.pattern}")')
+        raise DidNotMatch(f'No match for {string}, pattern is "{pattern.pattern}"')
