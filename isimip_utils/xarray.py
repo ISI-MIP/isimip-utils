@@ -139,8 +139,11 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
 
     logger.info(f'load {path.absolute()}' if load else f'open {path.absolute()}')
 
+    # use only ms resolution (instead of ns) to prevent issues with dates before 1678
+    time_coder = xr.coders.CFDatetimeCoder(time_unit='ms')
+
     try:
-        ds = xr.open_dataset(path, decode_cf=decode_cf)
+        ds = xr.open_dataset(path, decode_cf=decode_cf, decode_times=time_coder)
     except ValueError as e:
         # workaround for non standard times (e.g. growing seasons)
         ds = xr.open_dataset(path, decode_cf=decode_cf, decode_times=False)
@@ -469,7 +472,7 @@ def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
         Data variables are converted to `float64`.
     """
     if 'time' in ds.coords:
-        ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
+        ds = ds.assign_coords(time=ds.coords['time'].astype('datetime64[ms]'))
 
     ds = ds.assign({
         data_var: ds[data_var].astype('float64')
