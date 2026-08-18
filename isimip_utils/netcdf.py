@@ -49,8 +49,8 @@ def open_dataset_write(file_path: str | Path) -> Dataset:
 
 
 def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool = False, lon: int = 720, lat: int = 360,
-                 time: None | np.ndarray = None, time_unit: str = 'days since 1601-1-1 00:00:00',
-                 time_calendar: str = 'proleptic_gregorian', attrs: None | dict = None, **variables: Any) -> Dataset:
+                 time: np.ndarray | None = None, time_unit: str = 'days since 1601-1-1 00:00:00',
+                 time_calendar: str = 'proleptic_gregorian', attrs: dict | None = None, **variables: Any) -> Dataset:
     """Initialize a new NetCDF4 dataset with standard dimensions and variables.
 
     Args:

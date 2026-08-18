@@ -33,7 +33,7 @@ def fetch_json(url: str) -> Any | None:
         return response.json()
 
 
-def fetch_file(url: str, target: None | str | Path = None) -> bool:
+def fetch_file(url: str, target: str | Path | None = None) -> bool:
     """Download file from a URL.
 
     Args:
@@ -76,7 +76,7 @@ def load_json(path: str | Path) -> Any | None:
         return json.loads(open(path).read())
 
 
-def load_file(path: str | Path, target: None | str | Path = None) -> bool:
+def load_file(path: str | Path, target: str | Path | None = None) -> bool:
     """Copy a file from a local path.
 
     Args:

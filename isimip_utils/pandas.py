@@ -137,7 +137,7 @@ def get_first_data_var_label(df: pd.DataFrame) -> str:
     return next(iter(get_data_var_labels(df)))
 
 
-def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = True,
+def compute_average(df: pd.DataFrame, data_var: str | None = None, area: bool = True,
                     type: Literal['annual', 'monthly'] = 'annual') -> pd.DataFrame:
     """Compute yearly or monthly average with optional standard deviation bounds.
 
@@ -193,7 +193,7 @@ def compute_average(df: pd.DataFrame, data_var: None | str = None, area: bool = 
     return df
 
 
-def group_by_day(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFrame:
+def group_by_day(df: pd.DataFrame, data_var: str | None = None) -> pd.DataFrame:
     """Group data by day of year and compute mean.
 
     Args:
@@ -212,7 +212,7 @@ def group_by_day(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFrame:
     return df
 
 
-def group_by_month(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFrame:
+def group_by_month(df: pd.DataFrame, data_var: str | None = None) -> pd.DataFrame:
     """Group data by month and compute mean.
 
     Args:
@@ -231,7 +231,7 @@ def group_by_month(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFram
     return df
 
 
-def normalize(df: pd.DataFrame, data_var: None | str = None) -> pd.DataFrame:
+def normalize(df: pd.DataFrame, data_var: str | None = None) -> pd.DataFrame:
     """Normalize data variable using z-score normalization.
 
     Args:

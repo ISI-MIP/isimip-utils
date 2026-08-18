@@ -35,11 +35,11 @@ DEFAULT_ATTRS = {
 
 FILL_VALUE = 1e20
 
-def init_dataset(lon: None | int | np.ndarray = 720,
-                 lat: None | int | np.ndarray = 360,
-                 time: None | int | np.ndarray = None,
-                 dims: None | list = None,
-                 attrs: None | dict = None,
+def init_dataset(lon: int | np.ndarray | None = 720,
+                 lat: int | np.ndarray | None = 360,
+                 time: int | np.ndarray | None = None,
+                 dims: list | None = None,
+                 attrs: dict | None = None,
                  **variables: np.ndarray) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
 
