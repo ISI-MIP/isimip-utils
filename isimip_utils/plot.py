@@ -130,10 +130,13 @@ def format_title(permutation: tuple) -> dict:
     }
 
 
-def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None = None,
-              x_type: str | None = None, y_field: str | None = None, y_label: str | None = None,
-              y_type: str | None = None, y_format: str | None = None, color_field: str | None = None,
-              color_type: str | None = None, color_domain: list | None = None, color_range: list | None = None,
+def plot_line(df: pd.DataFrame,
+              x_field: str | None = None, x_label: str | None = None,
+              x_type: str | None = None, x_format: str | None = None,
+              y_field: str | None = None, y_label: str | None = None,
+              y_type: str | None = None, y_format: str | None = None,
+              color_field: str | None = None, color_type: str | None = None,
+              color_domain: list | None = None, color_range: list | None = None,
               color_scheme: str | None = None, color_title: str | None = 'Legend', legend: bool = True,
               empty: bool = False, **mark_kwargs: Any) -> alt.Chart:
     """Create a line plot from a DataFrame.
@@ -143,6 +146,7 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         x_field (str | None): Column name for x-axis (default: auto-detect from attrs).
         x_label (str | None): Label for x-axis (default: auto-detect from attrs).
         x_type (str | None): Altair type for x-axis (default: 'T' for time, 'Q' for quantitative).
+        x_format (str | None): Format string for x-axis values.
         y_field (str | None): Column name for y-axis (default: auto-detect from attrs).
         y_label (str | None): Label for y-axis (default: auto-detect from attrs).
         y_type (str | None): Altair type for y-axis (default: 'Q').
@@ -160,13 +164,13 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
     Returns:
         Altair Chart object with line plot (and optional area for lower/upper bounds).
     """
-
     x_field = get_first_coord(df) if x_field is None else x_field
     x_label = get_first_coord_label(df) if x_label is None else x_label
     x_type = ('T' if get_first_coord_axis(df) == 'T' else 'Q') if x_type is None else x_type
     x = alt.X(
         f'{x_field}:{x_type}',
-        title=x_label
+        title=x_label,
+        axis=alt.Axis(format=x_format) if x_format else alt.Axis(),
     )
 
     y_field = get_first_data_var(df) if y_field is None else y_field
