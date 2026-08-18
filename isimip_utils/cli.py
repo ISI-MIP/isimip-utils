@@ -8,9 +8,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
+from packaging.version import InvalidVersion, Version
 from rich.logging import RichHandler
 
-from .exceptions import ConfigError
+from .exceptions import ConfigError, FetchError
+from .fetch import fetch_json
 
 
 def setup_env() -> None:
@@ -62,6 +64,25 @@ def setup_logs(log_level: str = 'WARNING', log_file: str | None = None,
         file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 
         root_logger.addHandler(file_handler)
+
+
+def check_version(package, version):
+    logger = logging.getLogger(__name__)
+
+    try:
+        pypi_data = fetch_json(f'https://pypi.org/pypi/{package}/json')
+        latest_version = Version(pypi_data['info']['version'])
+        current_version = Version(version)
+    except (FetchError, KeyError, TypeError, InvalidVersion):
+        return
+
+    if latest_version > current_version and not latest_version.is_prerelease:
+        logger.warning(
+            'A newer version of %s is available (%s). Install using "pip install --upgrade %s".',
+            package,
+            latest_version,
+            package,
+        )
 
 
 def parse_dict(string: str) -> dict[str, list[str]] | None:

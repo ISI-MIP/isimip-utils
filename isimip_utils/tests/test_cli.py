@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -7,6 +8,7 @@ import pytest
 
 from isimip_utils.cli import (
     ArgumentParser,
+    check_version,
     parse_dict,
     parse_filelist,
     parse_list,
@@ -15,6 +17,32 @@ from isimip_utils.cli import (
     parse_path,
     parse_version,
 )
+
+
+@pytest.mark.parametrize(
+    ('latest', 'current', 'result'),
+    [
+        ('2.0.0', '1.9.0', 1),
+        ('2.0.0', '2.0.0', 0),
+        ('2.0.0', '2.0.0.dev1', 1),
+        ('2.0.0', '2.0.0+local.1', 0),
+        ('2.0.0', '2.1.0', 0),
+        ('2.1.0rc1', '1.9.0', 0),
+        ('2.1.0rc1', '2.0.0', 0),
+        ('2.1.0rc1', '2.2.0', 0),
+    ],
+)
+def test_check_version(mocker, caplog, latest, current, result):
+    mocker.patch('isimip_utils.cli.fetch_json', return_value={
+        'info': {
+            'version': latest
+        }
+    })
+
+    with caplog.at_level(logging.WARNING):
+        check_version('isimip_utils', current)
+
+    assert len(caplog.records) == result
 
 
 def test_parse_dict():
