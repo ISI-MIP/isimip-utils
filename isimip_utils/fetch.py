@@ -1,4 +1,5 @@
 """Functions to fetch files from urls or local paths."""
+
 import json
 import logging
 import shutil
@@ -6,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 import requests
+
+from .exceptions import FetchError
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +22,12 @@ def fetch_json(url: str) -> Any | None:
     Returns:
         Parsed JSON object, or None if request fails.
     """
-    logger.debug('url = %s', url)
+    logger.debug("url = %s", url)
 
     try:
         response = requests.get(url)
-    except requests.exceptions.ConnectionError:
-        return None
+    except requests.exceptions.ConnectionError as e:
+        raise FetchError(e.request.url) from e
 
     if response.status_code == 200:
         return response.json()
@@ -40,12 +43,12 @@ def fetch_file(url: str, target: None | str | Path = None) -> bool:
     Returns:
         Target path if it was provided, the content otherwise, or None if the request fails.
     """
-    logger.debug('url = %s', url)
+    logger.debug("url = %s", url)
 
     try:
         response = requests.get(url)
-    except requests.exceptions.ConnectionError:
-        return None
+    except requests.exceptions.ConnectionError as e:
+        raise FetchError(e.request.url) from e
 
     if target is None:
         return response.content.decode()
@@ -66,7 +69,7 @@ def load_json(path: str | Path) -> Any | None:
     Returns:
         Parsed JSON object, or None if request fails.
     """
-    logger.debug('path = %s', path)
+    logger.debug("path = %s", path)
 
     path = Path(path)
     if path.exists():
@@ -83,7 +86,7 @@ def load_file(path: str | Path, target: None | str | Path = None) -> bool:
     Returns:
         Target path if it was provided, the content otherwise, or None if the request fails.
     """
-    logger.debug('path = %s', path)
+    logger.debug("path = %s", path)
 
     path = Path(path)
     if path.is_file():
