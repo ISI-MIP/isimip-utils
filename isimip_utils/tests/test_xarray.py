@@ -544,12 +544,13 @@ def test_convert_time_datetime_str():
 def test_to_dataframe():
     ds = xr.Dataset(
         coords={
-            'time': np.arange(10, dtype=np.float64)
+            'time': np.arange(0, 100_000, 10_000, dtype=np.float64)
         },
         data_vars={
             'var': (['time'], np.ones(10))
         }
     )
     df = to_dataframe(ds)
-    assert np.array_equal(df['time'], ds['time'])
+    assert df['time'].dtype == np.dtype('datetime64[ms]')
+    assert np.array_equal(df['time'], pd.to_datetime(ds['time'].values, unit='ms'))
     assert np.array_equal(df['var'], ds['var'])
