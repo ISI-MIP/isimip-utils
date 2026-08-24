@@ -83,6 +83,8 @@ def check_version(package, version):
             latest_version,
             package,
         )
+    else:
+        logger.info('Running the latest version of %s available at PyPI.', package)
 
 
 def parse_dict(string: str) -> dict[str, list[str]] | None:
