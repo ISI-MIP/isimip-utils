@@ -227,19 +227,30 @@ def plot_line(df: pd.DataFrame,
     return chart
 
 
-def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str | None = None,
-             color_domain: list | None = None, color_range: list | None = None, color_scheme: str | None = None,
-             color_label: str | None = None, color_format: str | None = None, bin_size: int = 1, legend: bool = True,
-             empty: bool = False) -> alt.Chart:
+def plot_map(
+    df: pd.DataFrame,
+    color_field: str | None = None,
+    color_type: str | None = None,
+    color_scale: str | None = None,
+    color_domain: list | None = None,
+    color_range: list | None = None,
+    color_scheme: str | None = None,
+    color_label: str | None = None,
+    color_format: str | None = None,
+    bin_size: int = 1,
+    legend: bool = True,
+    empty: bool = False
+) -> alt.Chart:
     """Create a geographic map plot from a DataFrame with lat/lon coordinates.
 
     Args:
         df (pd.DataFrame): DataFrame with 'lat' and 'lon' columns.
         color_field (str | None): Column name for color encoding (default: auto-detect from attrs).
         color_type (str | None): Altair type for color (default: 'Q').
-        color_domain (list | None): Custom color domain.
-        color_range (list | None): Custom color range for scale.
-        color_scheme (str | None): Custom color scheme for scale.
+        color_scale (list | None): Custom type for the color scale.
+        color_domain (list | None): Custom domain for the color scale.
+        color_range (list | None): Custom range for color scale.
+        color_scheme (str | None): Custom scheme for color scale.
         color_label (str | None): Label for color legend (default: auto-detect from attrs).
         color_format (str | None): Format string for color legend values.
         bin_size (int): Bin size for aggregating grid cells (default: 1).
@@ -285,6 +296,8 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
         color_label = get_first_data_var_label(df) if color_label is None else color_label
 
         color_scale_args = {}
+        if color_scale:
+            color_scale_args['type'] = color_scale
         if color_domain:
             color_scale_args['domain'] = color_domain
         if color_range:
