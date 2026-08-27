@@ -14,19 +14,24 @@ from .xarray import compute_offset, compute_time, get_attrs, set_attrs, set_fill
 logger = logging.getLogger(__name__)
 
 
-def select_time(ds: xr.Dataset, timestamp: datetime) -> xr.Dataset | None:
+def select_time(ds: xr.Dataset, timestamp: int | datetime) -> xr.Dataset | None:
     """Select a single time point from a dataset.
 
     Args:
         ds (xr.Dataset): Dataset with time dimension.
-        timestamp (datetime): Timestamp to select.
+        timestamp (datetime | int): Time to select.
 
     Returns:
         Dataset at the selected time, or None if timestamp is outside range.
     """
     logger.info(f'select time time={timestamp}')
+    if isinstance(timestamp, int):
+        # just select the corresponding time
+        return ds.isel(time=timestamp)
+
+    # convert timestamp to np.datetime64
     if ds.time.encoding.get('units'):
-        time = np.datetime64(timestamp)
+        time = np.datetime64(timestamp, 'ms')
     else:
         time = compute_time(ds, timestamp)
 
