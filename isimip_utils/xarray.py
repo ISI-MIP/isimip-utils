@@ -326,8 +326,9 @@ def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
         Dataset with encoding added for the data_vars.
     """
     for data_var in ds.data_vars:
+        dtype = ds[data_var].dtype
         encoding = ds[data_var].encoding
-        if not encoding:
+        if np.issubdtype(dtype, np.floating) and not encoding:
             ds[data_var].attrs.pop('_FillValue', None)
             ds[data_var].attrs.pop('missing_value', None)
             ds[data_var].encoding.update({
@@ -408,6 +409,7 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
     Returns:
         Xarray dataset with a `mask` variable clipped to the geometry.
     """
+    import rioxarray  # noqa: F401
     import shapely.geometry
     logger.info('create mask')
 
@@ -418,13 +420,19 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
     ds_lon = ds.coords['lon']
     mask_ds = xr.Dataset(
         data_vars={
-            'mask': (('lat', 'lon'), np.ones((ds_lat.size, ds_lon.size), dtype=np.float32))
+            'mask': (('lat', 'lon'), np.ones((ds_lat.size, ds_lon.size), dtype=np.uint8))
         },
         coords={'lat': ds_lat, 'lon': ds_lon}
     )
     mask_ds.rio.write_crs(df.crs, inplace=True)
-    mask_ds = mask_ds.rio.clip([geometry], drop=False)
+    mask_ds['mask'] = mask_ds['mask'].rio.write_nodata(0)
+    mask_ds = mask_ds.rio.clip([geometry], all_touched=True, drop=False)
+
     mask_ds = mask_ds.drop_vars('spatial_ref')
+    for attr in ['grid_mapping', '_FillValue']:
+        mask_ds['mask'].attrs.pop(attr, None)
+        mask_ds['mask'].encoding.pop(attr, None)
+
     return mask_ds
 
 
