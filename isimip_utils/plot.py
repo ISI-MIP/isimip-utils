@@ -137,7 +137,7 @@ def plot_line(df: pd.DataFrame,
               y_type: str | None = None, y_format: str | None = None,
               color_field: str | None = None, color_type: str | None = None,
               color_domain: list | None = None, color_range: list | None = None,
-              color_scheme: str | None = None, color_title: str | None = 'Legend', legend: bool = True,
+              color_scheme: str | None = None, color_title: str | None = None, legend: bool = True,
               empty: bool = False, **mark_kwargs: Any) -> alt.Chart:
     """Create a line plot from a DataFrame.
 
@@ -203,7 +203,7 @@ def plot_line(df: pd.DataFrame,
         color = alt.Color(
             f'{color_field}:{color_type}',
             scale=alt.Scale(**color_scale_args),
-            legend=alt.Legend(padding=10, **color_legend_args) if legend else None
+            legend=alt.Legend(padding=10, title=color_title) if legend else None
         )
 
     if empty:
@@ -375,5 +375,22 @@ def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], pl
         ], title=row_title).resolve_scale(x=x, y=y)
         for row_title, row in rows
     ]).resolve_scale(x=x, y=y)
+
+    legend_kwargs = {
+        'symbolStrokeWidth': 2,
+        'labelFontSize': 14,
+        'titleFontSize': 14,
+        'labelLimit': 0,
+        'symbolLimit': 0,
+    }
+
+    n_columns = len(rows[0][1])
+    if n_columns > 4:
+        legend_kwargs.update({
+            'orient': 'bottom',
+            'columns': 5
+        })
+
+    chart = chart.configure_legend(**legend_kwargs)
 
     return chart
