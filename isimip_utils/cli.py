@@ -244,9 +244,12 @@ class ArgumentParser(argparse.ArgumentParser):
         return {}
 
     def read_local_config(self, config_path) -> dict:
-        if config_path and config_path.is_file():
-            with open(config_path, 'rb') as fp:
-                return tomllib.load(fp)
+        if config_path:
+            if config_path.is_file():
+                with open(config_path, 'rb') as fp:
+                    return tomllib.load(fp)
+            else:
+                raise ConfigError(f'Config file {config_path} not found.')
         return {}
 
     def build_default_args(self, config_path=None) -> argparse.Namespace:
