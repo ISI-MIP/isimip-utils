@@ -315,13 +315,13 @@ def count_values(ds: xr.Dataset, dim: str | Iterable | None = None) -> xr.Datase
         dim (str|Iterable): Dimensions along which to count [default: ('lat', 'lon')]
 
     Returns:
-        Dataset with count of non-NaN values per time step.
+        Dataset with count of non-NaN values, NaN where no data was present.
     """
     dim = dim or ('lat', 'lon')
     logger.info('count values over %s', dim)
 
     ds = set_fill_value_to_nan(ds)
-    ds = ds.count(dim=dim).astype(np.float32)
+    ds = ds.count(dim=dim).where(lambda x: x > 0).astype(np.float32)
 
     return ds
 
