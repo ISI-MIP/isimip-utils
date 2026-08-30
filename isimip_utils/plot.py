@@ -1,6 +1,7 @@
 """Plotting utilities using Altair for ISIMIP data visualization."""
 import json
 import logging
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,28 @@ def custom_theme():
     })
 
 
+def check_plots(plots: dict, path: str | Path):
+    """Check whether a set of plots is small enough for Vega to render.
+
+    The limit is empirical: 1,036,800 rows (4 global 0.5-degree grids) renders, 1,296,000 (5 grids) does not.
+
+    Args:
+        plots (dict): Dictionary mapping permutation tuples to Chart objects.
+        path (str | Path): Output file path, used only for the log message.
+
+    Returns:
+        True if the plots can safely be rendered, False if the file should be skipped.
+    """
+
+    values_count = sum(int(plot.data.notna().all(axis=1).sum()) for plot in plots.values())
+    max_values = 1_036_800
+    if values_count > max_values:
+        logger.error(f'Too many values ({values_count} > {max_values}) in {path}.')
+        return False
+    else:
+        return True
+
+
 def save_plot(chart: alt.Chart, path: str | Path, *args: Any, **kwargs: Any) -> None:
     """Save an Altair chart to a file.
 
@@ -58,87 +81,104 @@ def save_index(index_path: Path) -> None:
     index_json = json.dumps([
         str(p.name) for p in sorted(index_path.parent.iterdir()) if p.suffix in ['.svg', '.png']
     ], indent=2).replace('\n', '\n    ')
+    index_html = files('isimip_utils').joinpath('templates/index.html').read_text(encoding='utf-8')
+    index = index_html.replace(r'{{ index_json }}', index_json).strip()
 
     logger.info(f'save {index_path.absolute()}')
-    index_path.with_suffix('.html').write_text(r'''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body { height: 100%; margin: 0; font-family: sans-serif; font-size: 12px; }
-    div.buttons { display: flex; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid silver; }
-    a { display: block; flex-grow: 1; line-height: 20px; text-decoration: none; color: #0681be }
-    a:hover { text-decoration: underline; }
-    button { background: none; border: none; height: 20px; padding: 0; margin: 0; cursor: pointer; }
-    button:not(:disabled):hover { color: #0681be }
-    div.img { display: flex; justify-content: center; margin-top: 10px; }
-    img { display: block; max-width: calc(100vw - 20px); max-height: calc(100vh - 80px); }
-  </style>
-</head>
-<body>
-  <div class="buttons">
-    <a id="file" target="_blank"></a>
-    <span id="count"></span>
-    <button id="prev">◀ Prev</button>
-    <button id="next">Next ▶</button>
-  </div>
-  <div class="img">
-    <img id="img" />
-  </div>
-  <script>
-    const e = ['img', 'file', 'count', 'prev', 'next'].reduce(
-      (obj, id) => ({...obj, [id]: document.getElementById(id)}), {}
-    )
-
-    const files = {{ index_json }}
-
-    let index = 0
-
-    const update = () => {
-      e.img.src = files[index]
-      e.file.href = files[index]
-      e.file.innerHTML = files[index]
-      e.count.innerHTML = `${index + 1} of ${files.length}`
-      e.prev.disabled = index === 0
-      e.next.disabled = index === files.length - 1
-    }
-
-    e.prev.onclick = () => { if (index > 0) index--; update(); }
-    e.next.onclick = () => { if (index < files.length - 1) index++; update(); }
-
-    update()
-  </script>
-</body>
-</html>'''.replace(r'{{ index_json }}', index_json).strip())
+    index_path.parent.mkdir(exist_ok=True, parents=True)
+    index_path.write_text(index, encoding='utf-8')
 
 
-def format_title(permutation: tuple) -> dict:
-    """Create a plot title from a permutation tuple.
+def format_title(
+    text: str,
+    fontSize: int = 16,
+    dy: int = -10,
+    **kwargs
+) -> dict:
+    """Format the plot title.
 
     Args:
-        permutation (tuple): Tuple of strings to join as title.
+        text (str): Title text. A list of strings can be passed instead to render
+            the title across multiple lines.
+        fontSize (int): Font size of the title, in pixels (default: 16).
+        dy (int): Vertical offset of the title from its anchor, in pixels; negative
+            values move it up (default: -10).
+        **kwargs: Additional Altair title properties.
 
     Returns:
         Dictionary with Altair title configuration.
     """
     return {
-        "text": ' · '.join(permutation),
-        "fontSize": 16,
-        "dy": -10
+        **kwargs,
+        'text': text,
+        'fontSize': fontSize,
+        'dy': dy,
     }
 
 
-def plot_line(df: pd.DataFrame,
-              x_field: str | None = None, x_label: str | None = None,
-              x_type: str | None = None, x_format: str | None = None,
-              y_field: str | None = None, y_label: str | None = None,
-              y_type: str | None = None, y_format: str | None = None,
-              color_field: str | None = None, color_type: str | None = None,
-              color_domain: list | None = None, color_range: list | None = None,
-              color_scheme: str | None = None, color_title: str | None = None, legend: bool = True,
-              empty: bool = False, **mark_kwargs: Any) -> alt.Chart:
+def format_legend(
+    symbolStrokeWidth: int = 2,
+    labelFontSize: int = 14,
+    titleFontSize: int = 14,
+    labelLimit: int = 0,
+    symbolLimit: int = 0,
+    direction: str = 'vertical',
+    orient: str = 'right',
+    columns: int = 1,
+    **kwargs
+) -> dict:
+    """Format the plot legend.
+
+    Args:
+        symbolStrokeWidth (int): Stroke width of the legend symbols, in pixels (default: 2).
+        labelFontSize (int): Font size of the entry labels, in pixels (default: 14).
+        titleFontSize (int): Font size of the legend title, in pixels (default: 14).
+        labelLimit (int): Maximum width of an entry label, in pixels; longer labels are
+            truncated with an ellipsis. 0 means no limit (default: 0).
+        symbolLimit (int): Maximum number of entries to show; 0 means no limit (default: 0).
+        direction (str): Layout direction, either 'vertical' or 'horizontal' (default: 'vertical').
+        orient (str): Position relative to the chart, e.g. 'left', 'right', 'top', 'bottom',
+            'top-left', or 'none' to place it manually (default: 'right').
+        columns (int): Number of columns used to lay out symbol legends; ignored for
+            gradient legends (default: 1).
+        **kwargs: Additional Altair legend properties.
+
+    Returns:
+        Dictionary with Altair legend configuration.
+    """
+    return {
+        **kwargs,
+        'symbolStrokeWidth': symbolStrokeWidth,
+        'labelFontSize': labelFontSize,
+        'titleFontSize': titleFontSize,
+        'labelLimit': labelLimit,
+        'symbolLimit': symbolLimit,
+        'direction': direction,
+        'orient': orient,
+        'columns': columns,
+    }
+
+
+def plot_line(
+    df: pd.DataFrame,
+    x_field: str | None = None,
+    x_label: str | None = None,
+    x_type: str | None = None,
+    x_format: str | None = None,
+    y_field: str | None = None,
+    y_label: str | None = None,
+    y_type: str | None = None,
+    y_format: str | None = None,
+    color_field: str | None = None,
+    color_type: str | None = None,
+    color_domain: list | None = None,
+    color_range: list | None = None,
+    color_scheme: str | None = None,
+    color_title: str | None = None,
+    legend: bool = True,
+    empty: bool = False,
+    **mark_kwargs: Any
+) -> alt.Chart:
     """Create a line plot from a DataFrame.
 
     Args:
@@ -328,8 +368,15 @@ def plot_map(
     )
 
 
-def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], plots: dict, empty_plot: alt.Chart,
-              x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
+def plot_grid(
+    grid_permutations: list[tuple],
+    plot_permutations: list[tuple],
+    plots: dict,
+    empty_plot: alt.Chart,
+    x: str = "shared",
+    y: str = "shared",
+    color: str = "shared",
+) -> alt.Chart:
     """Create a grid of plots organized by parameter permutations.
 
     Args:
@@ -375,22 +422,5 @@ def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], pl
         ], title=row_title).resolve_scale(x=x, y=y)
         for row_title, row in rows
     ]).resolve_scale(x=x, y=y)
-
-    legend_kwargs = {
-        'symbolStrokeWidth': 2,
-        'labelFontSize': 14,
-        'titleFontSize': 14,
-        'labelLimit': 0,
-        'symbolLimit': 0,
-    }
-
-    n_columns = len(rows[0][1])
-    if n_columns > 4:
-        legend_kwargs.update({
-            'orient': 'bottom',
-            'columns': 5
-        })
-
-    chart = chart.configure_legend(**legend_kwargs)
 
     return chart
