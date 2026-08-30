@@ -139,31 +139,73 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
 
     logger.info(f'load {path.absolute()}' if load else f'open {path.absolute()}')
 
-    # use only ms resolution (instead of ns) to prevent issues with dates before 1678
-    time_coder = xr.coders.CFDatetimeCoder(time_unit='ms')
+    # open the dataset without decoding
+    ds = xr.open_dataset(path, decode_cf=False)
 
-    try:
-        ds = xr.open_dataset(path, decode_cf=decode_cf, decode_times=time_coder)
-    except ValueError as e:
-        # workaround for non standard times (e.g. growing seasons)
-        ds = xr.open_dataset(path, decode_cf=decode_cf, decode_times=False)
-
-        units = ds['time'].units
-        calendar = ds['time'].calendar
-
-        if units.startswith('months'):
-            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='360_day')
-        elif units.startswith('years'):
-            units = units.replace('years', 'common_years')
-            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
-        elif units.startswith('growing seasons'):
-            units = units.replace('growing seasons', 'common_years')
-            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
-        else:
-            raise ValueError(f'unable to decode time units "{units}" with calendar "{calendar}"') from e
+    if decode_cf:
+        ds = decode_dataset(ds)
 
     if load:
         ds.load()
+
+    return ds
+
+
+def decode_dataset(ds: xr.Dataset, time_unit: str = 'ms'):
+    """Decode an undecoded dataset, with a fixed time resolution.
+
+    Handles the non standard time units used by some sectors (e.g. growing seasons), which xarray
+    cannot decode on its own, and ensures that all decoded datetimes use the same resolution. The
+    time attributes of the file are restored in the encoding afterwards, so that the dataset can be
+    inspected and written back unchanged.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to decode, opened with `decode_cf=False`.
+        time_unit: The resolution used for `datetime64` values, `ms` by default. Times with a non
+            standard calendar (e.g. `360_day`) cannot be represented as `datetime64` and are decoded
+            to `cftime` objects instead.
+
+    Returns:
+        The decoded dataset. The input dataset is not modified.
+
+    Raises:
+        ValueError: If the time variable has no units or no calendar attribute.
+    """
+    ds = ds.copy()
+
+    # rewrite non standard time units (e.g. growing seasons)
+    if 'time' in ds.variables:
+        time_units = ds['time'].attrs.get('units')
+        if time_units is None:
+            raise ValueError('time variable has no units attribute')
+
+        time_calendar = ds['time'].attrs.get('calendar')
+        if time_calendar is None:
+            raise ValueError('time variable has no calendar attribute')
+
+        if time_units.startswith('months'):
+            ds['time'].attrs['calendar'] = '360_day'
+        elif time_units.startswith('years'):
+            ds['time'].attrs.update(units=time_units.replace('years', 'common_years'), calendar='365_day')
+        elif time_units.startswith('growing seasons'):
+            ds['time'].attrs.update(units=time_units.replace('growing seasons', 'common_years'), calendar='365_day')
+
+    # use only ms resolution (instead of ns) to prevent issues with dates before 1678
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', xr.SerializationWarning)
+        ds = xr.decode_cf(ds, decode_times=xr.coders.CFDatetimeCoder(time_unit=time_unit))
+
+    # xarray falls back to a finer resolution if the units demand it, so cast explicitly
+    for name, var in list(ds.variables.items()):
+        if var.dtype.kind == 'M' and var.dtype != np.dtype(f'datetime64[{time_unit}]'):
+            encoding = var.encoding
+            ds[name] = var.astype(f'datetime64[{time_unit}]')
+            ds[name].encoding = encoding
+
+    # update the encoding with the original attributes, the attrs are emptied by xr.decode_cf
+    if 'time' in ds.variables:
+        ds['time'].encoding['units'] = time_units
+        ds['time'].encoding['calendar'] = time_calendar
 
     return ds
 
