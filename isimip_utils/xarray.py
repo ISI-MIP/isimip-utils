@@ -1,4 +1,5 @@
 """Functions for working with xarray datasets for ISIMIP data."""
+
 import logging
 import warnings
 from datetime import date, datetime
@@ -16,31 +17,34 @@ DEFAULT_ATTRS = {
         'standard_name': 'longitude',
         'long_name': 'Longitude',
         'units': 'degrees_east',
-        'axis': 'X'
+        'axis': 'X',
     },
     'lat': {
         'standard_name': 'latitude',
         'long_name': 'Latitude',
         'units': 'degrees_north',
-        'axis': 'Y'
+        'axis': 'Y',
     },
     'time': {
         'standard_name': 'time',
         'long_name': 'Time',
         'calendar': 'proleptic_gregorian',
         'units': 'days since 1601-01-01 00:00:00',
-        'axis': 'T'
-    }
+        'axis': 'T',
+    },
 }
 
 FILL_VALUE = 1e20
 
-def init_dataset(lon: None | int | np.ndarray = 720,
-                 lat: None | int | np.ndarray = 360,
-                 time: None | int | np.ndarray = None,
-                 dims: None | list = None,
-                 attrs: None | dict = None,
-                 **variables: np.ndarray) -> xr.Dataset:
+
+def init_dataset(
+    lon: int | np.ndarray | None = 720,
+    lat: int | np.ndarray | None = 360,
+    time: int | np.ndarray | None = None,
+    dims: list | None = None,
+    attrs: dict | None = None,
+    **variables: np.ndarray,
+) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
 
     Args:
@@ -89,11 +93,7 @@ def init_dataset(lon: None | int | np.ndarray = 720,
             coords[dim] = variables[dim]
 
     # create data variables
-    data_vars = {
-        var_name: (dims, var)
-        for var_name, var in variables.items()
-        if var_name not in dims
-    }
+    data_vars = {var_name: (dims, var) for var_name, var in variables.items() if var_name not in dims}
 
     # create dataset
     ds = xr.Dataset(coords=coords, data_vars=data_vars)
@@ -139,28 +139,73 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
 
     logger.info(f'load {path.absolute()}' if load else f'open {path.absolute()}')
 
-    try:
-        ds = xr.open_dataset(path, decode_cf=decode_cf)
-    except ValueError as e:
-        # workaround for non standard times (e.g. growing seasons)
-        ds = xr.open_dataset(path, decode_cf=decode_cf, decode_times=False)
+    # open the dataset without decoding
+    ds = xr.open_dataset(path, decode_cf=False)
 
-        units = ds['time'].units
-        calendar = ds['time'].calendar
-
-        if units.startswith('months'):
-            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='360_day')
-        elif units.startswith('years'):
-            units = units.replace('years', 'common_years')
-            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
-        elif units.startswith('growing seasons'):
-            units = units.replace('growing seasons', 'common_years')
-            ds['time'] = cftime.num2date(ds['time'].values, units=units, calendar='365_day')
-        else:
-            raise ValueError(f'unable to decode time units "{units}" with calendar "{calendar}"') from e
+    if decode_cf:
+        ds = decode_dataset(ds)
 
     if load:
         ds.load()
+
+    return ds
+
+
+def decode_dataset(ds: xr.Dataset, time_unit: str = 'ms') -> xr.Dataset:
+    """Decode an undecoded dataset, with a fixed time resolution.
+
+    Handles the non standard time units used by some sectors (e.g. growing seasons), which xarray
+    cannot decode on its own, and ensures that all decoded datetimes use the same resolution. The
+    time attributes of the file are restored in the encoding afterwards, so that the dataset can be
+    inspected and written back unchanged.
+
+    Args:
+        ds (xr.Dataset): Xarray Dataset to decode, opened with `decode_cf=False`.
+        time_unit: The resolution used for `datetime64` values, `ms` by default. Times with a non
+            standard calendar (e.g. `360_day`) cannot be represented as `datetime64` and are decoded
+            to `cftime` objects instead.
+
+    Returns:
+        The decoded dataset. The input dataset is not modified.
+
+    Raises:
+        ValueError: If the time variable has no units or no calendar attribute.
+    """
+    ds = ds.copy()
+
+    # rewrite non standard time units (e.g. growing seasons)
+    if 'time' in ds.variables:
+        time_units = ds['time'].attrs.get('units')
+        if time_units is None:
+            raise ValueError('time variable has no units attribute')
+
+        time_calendar = ds['time'].attrs.get('calendar')
+        if time_calendar is None:
+            raise ValueError('time variable has no calendar attribute')
+
+        if time_units.startswith('months'):
+            ds['time'].attrs['calendar'] = '360_day'
+        elif time_units.startswith('years'):
+            ds['time'].attrs.update(units=time_units.replace('years', 'common_years'), calendar='365_day')
+        elif time_units.startswith('growing seasons'):
+            ds['time'].attrs.update(units=time_units.replace('growing seasons', 'common_years'), calendar='365_day')
+
+    # use only ms resolution (instead of ns) to prevent issues with dates before 1678
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', xr.SerializationWarning)
+        ds = xr.decode_cf(ds, decode_times=xr.coders.CFDatetimeCoder(time_unit=time_unit))
+
+    # xarray falls back to a finer resolution if the units demand it, so cast explicitly
+    for name, var in list(ds.variables.items()):
+        if var.dtype.kind == 'M' and var.dtype != np.dtype(f'datetime64[{time_unit}]'):
+            encoding = var.encoding
+            ds[name] = var.astype(f'datetime64[{time_unit}]')
+            ds[name].encoding = encoding
+
+    # update the encoding with the original attributes, the attrs are emptied by xr.decode_cf
+    if 'time' in ds.variables:
+        ds['time'].encoding['units'] = time_units
+        ds['time'].encoding['calendar'] = time_calendar
 
     return ds
 
@@ -323,14 +368,17 @@ def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
         Dataset with encoding added for the data_vars.
     """
     for data_var in ds.data_vars:
+        dtype = ds[data_var].dtype
         encoding = ds[data_var].encoding
-        if not encoding:
+        if np.issubdtype(dtype, np.floating) and not encoding:
             ds[data_var].attrs.pop('_FillValue', None)
             ds[data_var].attrs.pop('missing_value', None)
-            ds[data_var].encoding.update({
-                '_FillValue': FILL_VALUE,
-                'missing_value': ds[data_var].dtype.type(FILL_VALUE)
-            })
+            ds[data_var].encoding.update(
+                {
+                    '_FillValue': FILL_VALUE,
+                    'missing_value': ds[data_var].dtype.type(FILL_VALUE),
+                }
+            )
 
     return ds
 
@@ -346,10 +394,12 @@ def add_compression_to_data_vars(ds, complevel=5) -> xr.Dataset:
         Dataset with updated encoding.
     """
     for data_var in ds.data_vars:
-        ds[data_var].encoding.update({
-            'zlib': True,
-            'complevel': complevel
-        })
+        ds[data_var].encoding.update(
+            {
+                'zlib': True,
+                'complevel': complevel,
+            }
+        )
     return ds
 
 
@@ -405,7 +455,9 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
     Returns:
         Xarray dataset with a `mask` variable clipped to the geometry.
     """
+    import rioxarray  # noqa: F401
     import shapely.geometry
+
     logger.info('create mask')
 
     df_row = df.iloc[layer]
@@ -415,13 +467,19 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
     ds_lon = ds.coords['lon']
     mask_ds = xr.Dataset(
         data_vars={
-            'mask': (('lat', 'lon'), np.ones((ds_lat.size, ds_lon.size), dtype=np.float32))
+            'mask': (('lat', 'lon'), np.ones((ds_lat.size, ds_lon.size), dtype=np.uint8)),
         },
-        coords={'lat': ds_lat, 'lon': ds_lon}
+        coords={'lat': ds_lat, 'lon': ds_lon},
     )
     mask_ds.rio.write_crs(df.crs, inplace=True)
-    mask_ds = mask_ds.rio.clip([geometry], drop=False)
+    mask_ds['mask'] = mask_ds['mask'].rio.write_nodata(0)
+    mask_ds = mask_ds.rio.clip([geometry], all_touched=True, drop=False)
+
     mask_ds = mask_ds.drop_vars('spatial_ref')
+    for attr in ['grid_mapping', '_FillValue']:
+        mask_ds['mask'].attrs.pop(attr, None)
+        mask_ds['mask'].encoding.pop(attr, None)
+
     return mask_ds
 
 
@@ -440,7 +498,7 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
         time = np.array([datetime.fromisoformat(t) for t in time], dtype=object)
     elif np.issubdtype(time.dtype, np.datetime64):
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
+            warnings.simplefilter('ignore', FutureWarning)
 
             if isinstance(time, pd.DatetimeIndex):
                 time = time.to_pydatetime()
@@ -449,9 +507,7 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
             else:
                 time = pd.to_datetime(time).to_pydatetime()
 
-    return cftime.date2num(
-        time, calendar=calendar, units=units
-    ).astype(np.float64)
+    return cftime.date2num(time, calendar=calendar, units=units).astype(np.float64)
 
 
 def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
@@ -469,19 +525,12 @@ def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
         Data variables are converted to `float64`.
     """
     if 'time' in ds.coords:
-        ds.coords['time'] = ds.coords['time'].astype('datetime64[ns]')
+        ds = ds.assign_coords(time=ds.coords['time'].astype('datetime64[ms]'))
 
-    ds = ds.assign({
-        data_var: ds[data_var].astype('float64')
-        for data_var in ds.data_vars
-    })
+    ds = ds.assign({data_var: ds[data_var].astype('float64') for data_var in ds.data_vars})
 
     df = ds.to_dataframe().reset_index()
-    df.attrs['coords'] = {
-        coord: ds[coord].attrs for coord in ds.coords if (ds[coord].size > 1)
-    }
-    df.attrs['data_vars'] = {
-        data_var: ds[data_var].attrs for data_var in ds.data_vars if (ds[data_var].size > 1)
-    }
+    df.attrs['coords'] = {coord: ds[coord].attrs for coord in ds.coords if (ds[coord].size > 1)}
+    df.attrs['data_vars'] = {data_var: ds[data_var].attrs for data_var in ds.data_vars if (ds[data_var].size > 1)}
 
     return df

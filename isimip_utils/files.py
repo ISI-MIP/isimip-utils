@@ -1,4 +1,5 @@
 """Functions to find files for specific datasets."""
+
 import logging
 import re
 from collections.abc import Iterable
@@ -7,8 +8,10 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def find_files(file_iter: Iterable[Path],
-               pattern: str = r'_(?P<start_year>\d{4})_(?P<end_year>\d{4})?\.nc\d*$') -> tuple[list[tuple], int, int]:
+def find_files(
+    file_iter: Iterable[Path],
+    pattern: str = r'_(?P<start_year>\d{4})_(?P<end_year>\d{4})?\.nc\d*$',
+) -> tuple[list[tuple], int, int]:
     """Find files for a given (dataset) path, matching a regex pattern for start and end year.
 
     Args:

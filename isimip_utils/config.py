@@ -1,4 +1,5 @@
 """Configuration management for ISIMIP tools."""
+
 import logging
 import tomllib
 from pathlib import Path
@@ -16,9 +17,10 @@ class Settings(Singleton):
     argparse, environment variables, and config files. Settings are stored as
     uppercase keys and can be accessed as attributes.
     """
+
     _settings: dict[str, Any] = {}
 
-    ignore_keys = ('config', )
+    ignore_keys = ('config',)
 
     def __repr__(self) -> str:
         return str(self._settings)

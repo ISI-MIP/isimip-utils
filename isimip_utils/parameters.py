@@ -1,4 +1,5 @@
 """Utility functions for the work with parameters and placeholders."""
+
 from itertools import product
 from pathlib import Path
 from typing import Any
@@ -29,8 +30,7 @@ def get_placeholders(parameters: dict[str, list], permutation: tuple) -> dict:
     return dict(zip(parameters.keys(), permutation, strict=True))
 
 
-def join_parameters(parameters: dict[str, list[str]], max_count: int = 5,
-                    max_label: str = 'various') -> dict[str, str]:
+def join_parameters(parameters: dict[str, list[str]], max_count: int = 5, max_label: str = 'various') -> dict[str, str]:
     """Join parameter values into strings, with fallback for large value sets.
 
     Args:
@@ -41,10 +41,7 @@ def join_parameters(parameters: dict[str, list[str]], max_count: int = 5,
     Returns:
         Dictionary mapping parameter names to joined strings or max_label.
     """
-    return {
-        key: (max_label if len(values) > max_count else '+'.join(values))
-        for key, values in parameters.items()
-    }
+    return {key: (max_label if len(values) > max_count else '+'.join(values)) for key, values in parameters.items()}
 
 
 def copy_placeholders(*placeholder_args: dict, **kwargs: Any) -> dict:
@@ -57,11 +54,7 @@ def copy_placeholders(*placeholder_args: dict, **kwargs: Any) -> dict:
     Returns:
         Dictionary containing all merged placeholders.
     """
-    placeholders = {
-        key: value
-        for placeholder_arg in placeholder_args
-        for key, value in placeholder_arg.items()
-    }
+    placeholders = {key: value for placeholder_arg in placeholder_args for key, value in placeholder_arg.items()}
     placeholders.update(**kwargs)
     return placeholders
 

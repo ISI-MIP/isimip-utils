@@ -1,4 +1,5 @@
 """Checksum computation utilities for file integrity verification."""
+
 import hashlib
 import logging
 from pathlib import Path

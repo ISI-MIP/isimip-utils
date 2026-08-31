@@ -1,4 +1,5 @@
 """Functions to fetch files from urls or local paths."""
+
 import json
 import logging
 import shutil
@@ -6,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 import requests
+
+from .exceptions import FetchError
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +26,14 @@ def fetch_json(url: str) -> Any | None:
 
     try:
         response = requests.get(url)
-    except requests.exceptions.ConnectionError:
-        return None
+    except requests.exceptions.ConnectionError as e:
+        raise FetchError(e.request.url) from e
 
     if response.status_code == 200:
         return response.json()
 
 
-def fetch_file(url: str, target: None | str | Path = None) -> bool:
+def fetch_file(url: str, target: str | Path | None = None) -> bool:
     """Download file from a URL.
 
     Args:
@@ -44,15 +47,15 @@ def fetch_file(url: str, target: None | str | Path = None) -> bool:
 
     try:
         response = requests.get(url)
-    except requests.exceptions.ConnectionError:
-        return None
+    except requests.exceptions.ConnectionError as e:
+        raise FetchError(e.request.url) from e
 
     if target is None:
         return response.content.decode()
     else:
         target.parent.mkdir(exist_ok=True, parents=True)
         if response.status_code == 200:
-            with open(target, "wb") as fp:
+            with open(target, 'wb') as fp:
                 fp.write(response.content)
             return target
 
@@ -73,7 +76,7 @@ def load_json(path: str | Path) -> Any | None:
         return json.loads(open(path).read())
 
 
-def load_file(path: str | Path, target: None | str | Path = None) -> bool:
+def load_file(path: str | Path, target: str | Path | None = None) -> bool:
     """Copy a file from a local path.
 
     Args:

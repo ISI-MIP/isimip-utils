@@ -1,9 +1,19 @@
+import pytest
 
 import numpy as np
 import pandas as pd
 
 from isimip_utils.pandas import compute_average, create_label
-from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_index, save_plot
+from isimip_utils.plot import (
+    check_plots,
+    format_legend,
+    format_title,
+    plot_grid,
+    plot_line,
+    plot_map,
+    save_index,
+    save_plot,
+)
 from isimip_utils.tests import constants
 from isimip_utils.xarray import open_dataset, to_dataframe
 
@@ -56,7 +66,7 @@ def test_plot_line_empty():
 
     with open_dataset(extraction_path) as ds:
         df = to_dataframe(ds)
-        df_empty = pd.DataFrame({ 'time': df['time'], 'tas': np.nan })
+        df_empty = pd.DataFrame({'time': df['time'], 'tas': np.nan})
 
         chart = plot_line(df, empty=True)
 
@@ -129,9 +139,8 @@ def test_plot_line_color():
 def test_plot_map():
     date = constants.DATE
     date_specifiers = date.strftime('%Y%m%d')
-    extraction_path = (
-        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
-                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
 
     plot_path = constants.PLOTS_PATH / 'plot_map.png'
@@ -154,9 +163,8 @@ def test_plot_map():
 def test_plot_map_nocf():
     date = constants.DATE
     date_specifiers = date.strftime('%Y%m%d')
-    extraction_path = (
-        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
-                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
 
     plot_path = constants.PLOTS_PATH / 'plot_map_nocf.png'
@@ -179,9 +187,8 @@ def test_plot_map_nocf():
 def test_plot_map_empty():
     date = constants.DATE
     date_specifiers = date.strftime('%Y%m%d')
-    extraction_path = (
-        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
-                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
 
     plot_path = constants.PLOTS_PATH / 'plot_map_empty.png'
@@ -189,10 +196,7 @@ def test_plot_map_empty():
 
     with open_dataset(extraction_path) as ds:
         df = to_dataframe(ds)
-        df_empty  = pd.DataFrame({
-            'lon': [],
-            'lat': []
-        })
+        df_empty = pd.DataFrame({'lon': [], 'lat': []})
 
         chart = plot_map(df, empty=True)
 
@@ -219,7 +223,7 @@ def test_plot_grid():
         with open_dataset(extraction_path) as ds:
             dataframes.append(to_dataframe(ds))
 
-    df_empty = pd.DataFrame({ 'time': dataframes[2]['time'], 'tas': np.nan })
+    df_empty = pd.DataFrame({'time': dataframes[2]['time'], 'tas': np.nan})
 
     grid_permutations = [
         ('a', 'x'),
@@ -256,6 +260,26 @@ def test_plot_grid():
     assert plot_path.is_file
 
 
+@pytest.mark.parametrize('n', range(6))
+def test_check_plots(n):
+    date = constants.DATE
+    date_specifiers = date.strftime('%Y%m%d')
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
+    )
+
+    plot_path = constants.PLOTS_PATH / 'plot_grid.png'
+    plot_path.unlink(missing_ok=True)
+
+    with open_dataset(extraction_path) as ds:
+        df = to_dataframe(ds)
+        plot = plot_map(df)
+
+    plots = dict.fromkeys(range(n), plot)
+
+    assert check_plots(plots, plot_path) == (n < 5)
+
+
 def test_save_index():
     index_path = constants.PLOTS_PATH / 'index.html'
     index_path.unlink(missing_ok=True)
@@ -266,10 +290,23 @@ def test_save_index():
 
 
 def test_format_title():
-    permutation = ('a', 'b', 'c')
+    assert format_title('test', test='test') == {
+        'text': 'test',
+        'fontSize': 16,
+        'dy': -10,
+        'test': 'test',
+    }
 
-    assert format_title(permutation) == {
-        "text": 'a · b · c',
-        "fontSize": 16,
-        "dy": -10
+
+def test_format_legend():
+    assert format_legend(test='test') == {
+        'columns': 1,
+        'direction': 'vertical',
+        'labelFontSize': 14,
+        'labelLimit': 0,
+        'orient': 'right',
+        'symbolLimit': 0,
+        'symbolStrokeWidth': 2,
+        'titleFontSize': 14,
+        'test': 'test',
     }

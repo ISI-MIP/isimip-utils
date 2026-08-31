@@ -1,6 +1,8 @@
 """Plotting utilities using Altair for ISIMIP data visualization."""
+
 import json
 import logging
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
@@ -20,15 +22,40 @@ logger = logging.getLogger(__name__)
 
 alt.data_transformers.enable('vegafusion')
 
+
 @alt.theme.register('isimip_utils', enable=True)
 def custom_theme():
-    return alt.theme.ThemeConfig({
-        "config": {
-            "mark": {
-                "color": "steelblue"
-            }
+    return alt.theme.ThemeConfig(
+        {
+            'config': {
+                'mark': {
+                    'color': 'steelblue',
+                },
+            },
         }
-    })
+    )
+
+
+def check_plots(plots: dict, path: str | Path) -> bool:
+    """Check whether a set of plots is small enough for Vega to render.
+
+    The limit is empirical: 1,036,800 rows (4 global 0.5-degree grids) renders, 1,296,000 (5 grids) does not.
+
+    Args:
+        plots (dict): Dictionary mapping permutation tuples to Chart objects.
+        path (str | Path): Output file path, used only for the log message.
+
+    Returns:
+        True if the plots can safely be rendered, False if the file should be skipped.
+    """
+
+    values_count = sum(int(plot.data.notna().all(axis=1).sum()) for plot in plots.values())
+    max_values = 1_036_800
+    if values_count > max_values:
+        logger.error(f'Too many values ({values_count} > {max_values}) in {path}.')
+        return False
+    else:
+        return True
 
 
 def save_plot(chart: alt.Chart, path: str | Path, *args: Any, **kwargs: Any) -> None:
@@ -55,87 +82,107 @@ def save_index(index_path: Path) -> None:
     Args:
         index_path (Path): Path where the index.html file will be saved.
     """
-    index_json = json.dumps([
-        str(p.name) for p in sorted(index_path.parent.iterdir()) if p.suffix in ['.svg', '.png']
-    ], indent=2).replace('\n', '\n    ')
+    index_json = json.dumps(
+        [str(p.name) for p in sorted(index_path.parent.iterdir()) if p.suffix in ['.svg', '.png']], indent=2
+    ).replace('\n', '\n    ')
+    index_html = files('isimip_utils').joinpath('templates/index.html').read_text(encoding='utf-8')
+    index = index_html.replace(r'{{ index_json }}', index_json).strip()
 
     logger.info(f'save {index_path.absolute()}')
-    index_path.with_suffix('.html').write_text(r'''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body { height: 100%; margin: 0; font-family: sans-serif; font-size: 12px; }
-    div.buttons { display: flex; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid silver; }
-    a { display: block; flex-grow: 1; line-height: 20px; text-decoration: none; color: #0681be }
-    a:hover { text-decoration: underline; }
-    button { background: none; border: none; height: 20px; padding: 0; margin: 0; cursor: pointer; }
-    button:not(:disabled):hover { color: #0681be }
-    div.img { display: flex; justify-content: center; margin-top: 10px; }
-    img { display: block; max-width: calc(100vw - 20px); max-height: calc(100vh - 80px); }
-  </style>
-</head>
-<body>
-  <div class="buttons">
-    <a id="file" target="_blank"></a>
-    <span id="count"></span>
-    <button id="prev">◀ Prev</button>
-    <button id="next">Next ▶</button>
-  </div>
-  <div class="img">
-    <img id="img" />
-  </div>
-  <script>
-    const e = ['img', 'file', 'count', 'prev', 'next'].reduce(
-      (obj, id) => ({...obj, [id]: document.getElementById(id)}), {}
-    )
-
-    const files = {{ index_json }}
-
-    let index = 0
-
-    const update = () => {
-      e.img.src = files[index]
-      e.file.href = files[index]
-      e.file.innerHTML = files[index]
-      e.count.innerHTML = `${index + 1} of ${files.length}`
-      e.prev.disabled = index === 0
-      e.next.disabled = index === files.length - 1
-    }
-
-    e.prev.onclick = () => { if (index > 0) index--; update(); }
-    e.next.onclick = () => { if (index < files.length - 1) index++; update(); }
-
-    update()
-  </script>
-</body>
-</html>'''.replace(r'{{ index_json }}', index_json).strip())
+    index_path.parent.mkdir(exist_ok=True, parents=True)
+    index_path.write_text(index, encoding='utf-8')
 
 
-def format_title(permutation: tuple) -> dict:
-    """Create a plot title from a permutation tuple.
+def format_title(
+    text: str,
+    fontSize: int = 16,
+    dy: int = -10,
+    **kwargs: Any,
+) -> dict:
+    """Format the plot title.
 
     Args:
-        permutation (tuple): Tuple of strings to join as title.
+        text (str): Title text. A list of strings can be passed instead to render
+            the title across multiple lines.
+        fontSize (int): Font size of the title, in pixels (default: 16).
+        dy (int): Vertical offset of the title from its anchor, in pixels; negative
+            values move it up (default: -10).
+        **kwargs (Any): Additional Altair title properties.
 
     Returns:
         Dictionary with Altair title configuration.
     """
     return {
-        "text": ' · '.join(permutation),
-        "fontSize": 16,
-        "dy": -10
+        **kwargs,
+        'text': text,
+        'fontSize': fontSize,
+        'dy': dy,
     }
 
 
-def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None = None,
-              x_type: str | None = None, y_field: str | None = None, y_label: str | None = None,
-              y_type: str | None = None, y_format: str | None = None, color_field: str | None = None,
-              color_type: str | None = None, color_domain: list | None = None, color_range: list | None = None,
-              color_scheme: str | None = None, color_title: str | None = 'Legend', legend: bool = True,
-              empty: bool = False, **mark_kwargs: Any) -> alt.Chart:
+def format_legend(
+    symbolStrokeWidth: int = 2,
+    labelFontSize: int = 14,
+    titleFontSize: int = 14,
+    labelLimit: int = 0,
+    symbolLimit: int = 0,
+    direction: str = 'vertical',
+    orient: str = 'right',
+    columns: int = 1,
+    **kwargs: Any,
+) -> dict:
+    """Format the plot legend.
+
+    Args:
+        symbolStrokeWidth (int): Stroke width of the legend symbols, in pixels (default: 2).
+        labelFontSize (int): Font size of the entry labels, in pixels (default: 14).
+        titleFontSize (int): Font size of the legend title, in pixels (default: 14).
+        labelLimit (int): Maximum width of an entry label, in pixels; longer labels are
+            truncated with an ellipsis. 0 means no limit (default: 0).
+        symbolLimit (int): Maximum number of entries to show; 0 means no limit (default: 0).
+        direction (str): Layout direction, either 'vertical' or 'horizontal' (default: 'vertical').
+        orient (str): Position relative to the chart, e.g. 'left', 'right', 'top', 'bottom',
+            'top-left', or 'none' to place it manually (default: 'right').
+        columns (int): Number of columns used to lay out symbol legends; ignored for
+            gradient legends (default: 1).
+        **kwargs (Any): Additional Altair legend properties.
+
+    Returns:
+        Dictionary with Altair legend configuration.
+    """
+    return {
+        **kwargs,
+        'symbolStrokeWidth': symbolStrokeWidth,
+        'labelFontSize': labelFontSize,
+        'titleFontSize': titleFontSize,
+        'labelLimit': labelLimit,
+        'symbolLimit': symbolLimit,
+        'direction': direction,
+        'orient': orient,
+        'columns': columns,
+    }
+
+
+def plot_line(
+    df: pd.DataFrame,
+    x_field: str | None = None,
+    x_label: str | None = None,
+    x_type: str | None = None,
+    x_format: str | None = None,
+    y_field: str | None = None,
+    y_label: str | None = None,
+    y_type: str | None = None,
+    y_format: str | None = None,
+    color_field: str | None = None,
+    color_type: str | None = None,
+    color_domain: list | None = None,
+    color_range: list | None = None,
+    color_scheme: str | None = None,
+    color_title: str | None = None,
+    legend: bool = True,
+    empty: bool = False,
+    **mark_kwargs: Any,
+) -> alt.Chart:
     """Create a line plot from a DataFrame.
 
     Args:
@@ -143,6 +190,7 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         x_field (str | None): Column name for x-axis (default: auto-detect from attrs).
         x_label (str | None): Label for x-axis (default: auto-detect from attrs).
         x_type (str | None): Altair type for x-axis (default: 'T' for time, 'Q' for quantitative).
+        x_format (str | None): Format string for x-axis values.
         y_field (str | None): Column name for y-axis (default: auto-detect from attrs).
         y_label (str | None): Label for y-axis (default: auto-detect from attrs).
         y_type (str | None): Altair type for y-axis (default: 'Q').
@@ -160,13 +208,13 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
     Returns:
         Altair Chart object with line plot (and optional area for lower/upper bounds).
     """
-
     x_field = get_first_coord(df) if x_field is None else x_field
     x_label = get_first_coord_label(df) if x_label is None else x_label
     x_type = ('T' if get_first_coord_axis(df) == 'T' else 'Q') if x_type is None else x_type
     x = alt.X(
         f'{x_field}:{x_type}',
-        title=x_label
+        title=x_label,
+        axis=alt.Axis(format=x_format) if x_format else alt.Axis(),
     )
 
     y_field = get_first_data_var(df) if y_field is None else y_field
@@ -176,10 +224,10 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         f'{y_field}:{y_type}',
         title=y_label,
         axis=alt.Axis(format=y_format) if y_format else alt.Axis(),
-        scale=alt.Scale(zero=False, nice=False)
+        scale=alt.Scale(zero=False, nice=False),
     )
 
-    color_field =  'label' if color_field is None else color_field
+    color_field = 'label' if color_field is None else color_field
     if empty or color_field not in df:
         color = alt.Color()
     else:
@@ -199,14 +247,16 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         color = alt.Color(
             f'{color_field}:{color_type}',
             scale=alt.Scale(**color_scale_args),
-            legend=alt.Legend(padding=10, **color_legend_args) if legend else None
+            legend=alt.Legend(padding=10, title=color_title) if legend else None,
         )
 
     if empty:
-        df = pd.DataFrame({
-            x_field: df[x_field],
-            y_field: np.full_like(df[y_field], np.nan, dtype=float)
-        })
+        df = pd.DataFrame(
+            {
+                x_field: df[x_field],
+                y_field: np.full_like(df[y_field], np.nan, dtype=float),
+            }
+        )
 
     # the base chart contains only the x axis
     base = alt.Chart(df).mark_line(**mark_kwargs).encode(x=x)
@@ -217,25 +267,36 @@ def plot_line(df: pd.DataFrame, x_field: str | None = None, x_label: str | None 
         chart += base.mark_area(**mark_kwargs, opacity=0.5).encode(
             y='lower:Q',
             y2='upper:Q',
-            color=color
+            color=color,
         )
 
     return chart
 
 
-def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str | None = None,
-             color_domain: list | None = None, color_range: list | None = None, color_scheme: str | None = None,
-             color_label: str | None = None, color_format: str | None = None, bin_size: int = 1, legend: bool = True,
-             empty: bool = False) -> alt.Chart:
+def plot_map(
+    df: pd.DataFrame,
+    color_field: str | None = None,
+    color_type: str | None = None,
+    color_scale: str | None = None,
+    color_domain: list | None = None,
+    color_range: list | None = None,
+    color_scheme: str | None = None,
+    color_label: str | None = None,
+    color_format: str | None = None,
+    bin_size: int = 1,
+    legend: bool = True,
+    empty: bool = False,
+) -> alt.Chart:
     """Create a geographic map plot from a DataFrame with lat/lon coordinates.
 
     Args:
         df (pd.DataFrame): DataFrame with 'lat' and 'lon' columns.
         color_field (str | None): Column name for color encoding (default: auto-detect from attrs).
         color_type (str | None): Altair type for color (default: 'Q').
-        color_domain (list | None): Custom color domain.
-        color_range (list | None): Custom color range for scale.
-        color_scheme (str | None): Custom color scheme for scale.
+        color_scale (list | None): Custom type for the color scale.
+        color_domain (list | None): Custom domain for the color scale.
+        color_range (list | None): Custom range for color scale.
+        color_scheme (str | None): Custom scheme for color scale.
         color_label (str | None): Label for color legend (default: auto-detect from attrs).
         color_format (str | None): Format string for color legend values.
         bin_size (int): Bin size for aggregating grid cells (default: 1).
@@ -256,7 +317,7 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
         title='lon',
         bin=alt.Bin(step=lon_bin),
         axis=alt.Axis(values=lon_ticks),
-        scale=alt.Scale(domain=lon_domain, padding=0, round=True)
+        scale=alt.Scale(domain=lon_domain, padding=0, round=True),
     )
 
     lat = np.sort(df['lat'].unique())
@@ -270,7 +331,7 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
         title='lat',
         bin=alt.Bin(step=lat_bin),
         axis=alt.Axis(values=lat_ticks),
-        scale=alt.Scale(domain=lat_domain, padding=0, round=True)
+        scale=alt.Scale(domain=lat_domain, padding=0, round=True),
     )
 
     if empty:
@@ -281,6 +342,8 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
         color_label = get_first_data_var_label(df) if color_label is None else color_label
 
         color_scale_args = {}
+        if color_scale:
+            color_scale_args['type'] = color_scale
         if color_domain:
             color_scale_args['domain'] = color_domain
         if color_range:
@@ -296,23 +359,24 @@ def plot_map(df: pd.DataFrame, color_field: str | None = None, color_type: str |
             f'{color_field}:{color_type}',
             title=color_label,
             scale=alt.Scale(**color_scale_args),
-            legend=alt.Legend(padding=10, **color_legend_args) if legend else None
+            legend=alt.Legend(padding=10, **color_legend_args) if legend else None,
         )
 
     if empty:
-        df = pd.DataFrame({
-            'lon': [],
-            'lat': []
-        })
+        df = pd.DataFrame({'lon': [], 'lat': []})
 
-    return alt.Chart(df).mark_rect().encode(x=x, y=y, color=color).properties(
-        width=lon_size,
-        height=lat_size
-    )
+    return alt.Chart(df).mark_rect().encode(x=x, y=y, color=color).properties(width=lon_size, height=lat_size)
 
 
-def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], plots: dict, empty_plot: alt.Chart,
-              x: str = 'shared', y: str = 'shared', color: str = 'shared') -> alt.Chart:
+def plot_grid(
+    grid_permutations: list[tuple],
+    plot_permutations: list[tuple],
+    plots: dict,
+    empty_plot: alt.Chart,
+    x: str = 'shared',
+    y: str = 'shared',
+    color: str = 'shared',
+) -> alt.Chart:
     """Create a grid of plots organized by parameter permutations.
 
     Args:
@@ -351,12 +415,14 @@ def plot_grid(grid_permutations: list[tuple], plot_permutations: list[tuple], pl
 
         prev = grid_permutation
 
-    chart = alt.vconcat(*[
-        alt.hconcat(*[
-            alt.layer(*column, title=column_title) if column else empty_plot
-            for column_title, column in row
-        ], title=row_title).resolve_scale(x=x, y=y)
-        for row_title, row in rows
-    ]).resolve_scale(x=x, y=y)
+    chart = alt.vconcat(
+        *[
+            alt.hconcat(
+                *[alt.layer(*column, title=column_title) if column else empty_plot for column_title, column in row],
+                title=row_title,
+            ).resolve_scale(x=x, y=y)
+            for row_title, row in rows
+        ]
+    ).resolve_scale(x=x, y=y)
 
     return chart

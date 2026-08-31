@@ -14,7 +14,7 @@ from isimip_utils.tests import helper
 paths = [
     'ISIMIP3a/OutputData/agriculture/ACEA/gswp3-w5e5.json',
     'ISIMIP3a/OutputData/agriculture/ACEA.json',
-    'ISIMIP3a/OutputData/agriculture.json'
+    'ISIMIP3a/OutputData/agriculture.json',
 ]
 
 

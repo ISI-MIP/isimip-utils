@@ -22,15 +22,15 @@ var = np.ones((100, 360, 720), dtype=np.float32)
 
 # create global and variable attributes
 # lon, lat and time attributes will be set automatically
-attrs={
+attrs = {
     'global': {
-        'contact': 'mail@example.com'
+        'contact': 'mail@example.com',
     },
     'var': {
         'standard_name': 'var',
         'long_name': 'Variable',
         'units': '1',
-    }
+    },
 }
 
 # create and write xarray dataset
