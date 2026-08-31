@@ -3,7 +3,6 @@ import pytest
 from isimip_utils.exceptions import ValidationError
 from isimip_utils.utils import (
     Singleton,
-    cached_property,
     exclude_path,
     get_max_value,
     get_min_value,
@@ -19,24 +18,6 @@ def test_singleton():
 
     b = Singleton()
     assert b.egg == 'spam'
-
-
-def test_cached_property():
-
-    class Test:
-
-        def __init__(self):
-            self.counter = 0
-
-        @cached_property
-        def egg(self):
-            self.counter += 1
-            return 'spam'
-
-    t = Test()
-    assert t.egg == 'spam'
-    assert t.egg == 'spam'
-    assert t.counter == 1
 
 
 @pytest.mark.parametrize('lat', (-90.0, -45.5, 0, 45, 90))

@@ -1,6 +1,4 @@
 """Additional utility functions for ISIMIP tools."""
-import warnings
-from functools import cached_property as _cached_property
 from pathlib import Path
 from typing import Any, Literal
 
@@ -20,20 +18,6 @@ class Singleton:
             cls._instance = super().__new__(cls)
             cls._instance.data = {}
         return cls._instance
-
-
-class cached_property(_cached_property):
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-
-    def __get__(self, instance, cls=None):
-        warnings.warn(
-            'isimip-utils.utils.cached_property is deprecated and will be removed in 2.1.0, '
-            'use functools.cached_property instead.',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return super().__get__(instance, cls)
 
 
 def exclude_path(exclude: list[str] | None, path: Path | str, match: Literal['any', 'all'] = 'any') -> bool:
