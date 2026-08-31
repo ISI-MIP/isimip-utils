@@ -1,4 +1,5 @@
 """Command-line interface utilities for ISIMIP tools."""
+
 import argparse
 import logging
 import os
@@ -20,9 +21,14 @@ def setup_env() -> None:
     load_dotenv(Path().cwd() / '.env')
 
 
-def setup_logs(log_level: str = 'WARNING', log_file: str | None = None,
-               log_console: bool = True, log_rich: bool = True,
-               show_time: bool = False, show_path: bool = False) -> None:
+def setup_logs(
+    log_level: str = 'WARNING',
+    log_file: str | None = None,
+    log_console: bool = True,
+    log_rich: bool = True,
+    show_time: bool = False,
+    show_path: bool = False,
+) -> None:
     """Configure logging with console and/or file handlers.
 
     Args:
@@ -98,9 +104,7 @@ def parse_dict(string: str) -> dict[str, list[str]] | None:
     """
     if string:
         key, values = string.split('=')
-        return {
-            key.strip(): [value.strip() for value in values.split(',')]
-        }
+        return {key.strip(): [value.strip() for value in values.split(',')]}
 
 
 def parse_list(string: str) -> list[str]:

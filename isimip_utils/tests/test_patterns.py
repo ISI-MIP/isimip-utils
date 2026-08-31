@@ -22,7 +22,7 @@ path_specifiers = {
     'simulation_round': 'ISIMIP3a',
     'product': 'OutputData',
     'sector': 'agriculture',
-    'period': 'historical'
+    'period': 'historical',
 }
 
 dataset_specifiers = {
@@ -35,7 +35,7 @@ dataset_specifiers = {
     'crop': 'mai',
     'irrigation': 'noirr',
     'region': 'global',
-    'time_step': 'annual-gs'
+    'time_step': 'annual-gs',
 }
 
 file_specifiers = {
@@ -117,9 +117,7 @@ def test_match_path_specifiers_map():
     file_path = Path(constants.YIELD_PATH)
 
     pattern = fetch_pattern(pattern_path, protocol_locations)
-    pattern['specifiers_map'] = {
-        'global': 'spam'
-    }
+    pattern['specifiers_map'] = {'global': 'spam'}
     path, specifiers = match_path(pattern, constants.DATASETS_PATH / file_path)
 
     assert str(path) == str(file_path)

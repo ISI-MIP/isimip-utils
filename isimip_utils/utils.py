@@ -1,4 +1,5 @@
 """Additional utility functions for ISIMIP tools."""
+
 from pathlib import Path
 from typing import Any, Literal
 
@@ -11,6 +12,7 @@ class Singleton:
     Ensures only one instance of a class exists. Subclasses will share
     a single instance with a 'data' attribute initialized as an empty dict.
     """
+
     _instance: Any = None
 
     def __new__(cls) -> 'Singleton':

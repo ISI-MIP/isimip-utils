@@ -14,7 +14,7 @@ def download_datasets():
         file_path = constants.DATASETS_PATH / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        url = f"https://files.isimip.org/{path}"
+        url = f'https://files.isimip.org/{path}'
 
         helper.call(f'wget -c {url} -O {file_path}')
 
@@ -26,10 +26,10 @@ def download_protocol():
         file_path = constants.PROTOCOL_PATH / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        url = f"https://protocol.isimip.org/{path}"
+        url = f'https://protocol.isimip.org/{path}'
 
         helper.call(f'wget -c {url} -O {file_path}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

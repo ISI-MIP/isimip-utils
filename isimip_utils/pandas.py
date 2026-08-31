@@ -1,4 +1,5 @@
 """Pandas DataFrame utilities for ISIMIP data."""
+
 from typing import Literal
 
 import pandas as pd
@@ -137,8 +138,9 @@ def get_first_data_var_label(df: pd.DataFrame) -> str:
     return next(iter(get_data_var_labels(df)))
 
 
-def compute_average(df: pd.DataFrame, data_var: str | None = None, area: bool = True,
-                    type: Literal['annual', 'monthly'] = 'annual') -> pd.DataFrame:
+def compute_average(
+    df: pd.DataFrame, data_var: str | None = None, area: bool = True, type: Literal['annual', 'monthly'] = 'annual'
+) -> pd.DataFrame:
     """Compute yearly or monthly average with optional standard deviation bounds.
 
     Args:
@@ -179,10 +181,15 @@ def compute_average(df: pd.DataFrame, data_var: str | None = None, area: bool = 
 
     # update attrs
     df.attrs = attrs
-    df.attrs['coords'] = {column_name: {'long_name': column_name.capitalize(), 'axis': 'T'}}
+    df.attrs['coords'] = {
+        column_name: {
+            'long_name': column_name.capitalize(),
+            'axis': 'T',
+        },
+    }
     df.attrs['data_vars'] = {
         'mean': {
-            'name': f'avg {type} {data_var}'
+            'name': f'avg {type} {data_var}',
         }
     }
     if data_var_long_name:
@@ -207,7 +214,7 @@ def group_by_day(df: pd.DataFrame, data_var: str | None = None) -> pd.DataFrame:
 
     df['day'] = df['time'].dt.dayofyear
     df = df.groupby('day')[data_var].mean().reset_index()
-    df.attrs['coords'] = {'day': { 'long_name': 'Day of the year'}}
+    df.attrs['coords'] = {'day': {'long_name': 'Day of the year'}}
 
     return df
 
@@ -244,7 +251,7 @@ def normalize(df: pd.DataFrame, data_var: str | None = None) -> pd.DataFrame:
     data_var = data_var or get_first_data_var(df)
     data_var_long_name = df.attrs['data_vars'][data_var].get('long_name')
 
-    mean, std =  df[data_var].mean(), df[data_var].std()
+    mean, std = df[data_var].mean(), df[data_var].std()
     df[data_var] = (df[data_var] - mean) / (std if std > 0 else 1.0)
     if data_var_long_name:
         df.attrs['data_vars'][data_var]['long_name'] = f'Normalized {data_var_long_name.lower()}'

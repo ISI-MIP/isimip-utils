@@ -1,4 +1,5 @@
 """Functions for working with xarray datasets for ISIMIP data."""
+
 import logging
 import warnings
 from datetime import date, datetime
@@ -16,31 +17,34 @@ DEFAULT_ATTRS = {
         'standard_name': 'longitude',
         'long_name': 'Longitude',
         'units': 'degrees_east',
-        'axis': 'X'
+        'axis': 'X',
     },
     'lat': {
         'standard_name': 'latitude',
         'long_name': 'Latitude',
         'units': 'degrees_north',
-        'axis': 'Y'
+        'axis': 'Y',
     },
     'time': {
         'standard_name': 'time',
         'long_name': 'Time',
         'calendar': 'proleptic_gregorian',
         'units': 'days since 1601-01-01 00:00:00',
-        'axis': 'T'
-    }
+        'axis': 'T',
+    },
 }
 
 FILL_VALUE = 1e20
 
-def init_dataset(lon: int | np.ndarray | None = 720,
-                 lat: int | np.ndarray | None = 360,
-                 time: int | np.ndarray | None = None,
-                 dims: list | None = None,
-                 attrs: dict | None = None,
-                 **variables: np.ndarray) -> xr.Dataset:
+
+def init_dataset(
+    lon: int | np.ndarray | None = 720,
+    lat: int | np.ndarray | None = 360,
+    time: int | np.ndarray | None = None,
+    dims: list | None = None,
+    attrs: dict | None = None,
+    **variables: np.ndarray,
+) -> xr.Dataset:
     """Initialize a new xarray dataset with standard ISIMIP dimensions.
 
     Args:
@@ -89,11 +93,7 @@ def init_dataset(lon: int | np.ndarray | None = 720,
             coords[dim] = variables[dim]
 
     # create data variables
-    data_vars = {
-        var_name: (dims, var)
-        for var_name, var in variables.items()
-        if var_name not in dims
-    }
+    data_vars = {var_name: (dims, var) for var_name, var in variables.items() if var_name not in dims}
 
     # create dataset
     ds = xr.Dataset(coords=coords, data_vars=data_vars)
@@ -373,10 +373,12 @@ def add_fill_value_to_data_vars(ds: xr.Dataset) -> xr.Dataset:
         if np.issubdtype(dtype, np.floating) and not encoding:
             ds[data_var].attrs.pop('_FillValue', None)
             ds[data_var].attrs.pop('missing_value', None)
-            ds[data_var].encoding.update({
-                '_FillValue': FILL_VALUE,
-                'missing_value': ds[data_var].dtype.type(FILL_VALUE)
-            })
+            ds[data_var].encoding.update(
+                {
+                    '_FillValue': FILL_VALUE,
+                    'missing_value': ds[data_var].dtype.type(FILL_VALUE),
+                }
+            )
 
     return ds
 
@@ -392,10 +394,12 @@ def add_compression_to_data_vars(ds, complevel=5) -> xr.Dataset:
         Dataset with updated encoding.
     """
     for data_var in ds.data_vars:
-        ds[data_var].encoding.update({
-            'zlib': True,
-            'complevel': complevel
-        })
+        ds[data_var].encoding.update(
+            {
+                'zlib': True,
+                'complevel': complevel,
+            }
+        )
     return ds
 
 
@@ -453,6 +457,7 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
     """
     import rioxarray  # noqa: F401
     import shapely.geometry
+
     logger.info('create mask')
 
     df_row = df.iloc[layer]
@@ -462,9 +467,9 @@ def create_mask(ds: xr.Dataset, df: pd.DataFrame, layer: int) -> xr.Dataset:
     ds_lon = ds.coords['lon']
     mask_ds = xr.Dataset(
         data_vars={
-            'mask': (('lat', 'lon'), np.ones((ds_lat.size, ds_lon.size), dtype=np.uint8))
+            'mask': (('lat', 'lon'), np.ones((ds_lat.size, ds_lon.size), dtype=np.uint8)),
         },
-        coords={'lat': ds_lat, 'lon': ds_lon}
+        coords={'lat': ds_lat, 'lon': ds_lon},
     )
     mask_ds.rio.write_crs(df.crs, inplace=True)
     mask_ds['mask'] = mask_ds['mask'].rio.write_nodata(0)
@@ -493,7 +498,7 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
         time = np.array([datetime.fromisoformat(t) for t in time], dtype=object)
     elif np.issubdtype(time.dtype, np.datetime64):
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
+            warnings.simplefilter('ignore', FutureWarning)
 
             if isinstance(time, pd.DatetimeIndex):
                 time = time.to_pydatetime()
@@ -502,9 +507,7 @@ def convert_time(time: np.ndarray, units='days since 1601-1-1 00:00:00', calenda
             else:
                 time = pd.to_datetime(time).to_pydatetime()
 
-    return cftime.date2num(
-        time, calendar=calendar, units=units
-    ).astype(np.float64)
+    return cftime.date2num(time, calendar=calendar, units=units).astype(np.float64)
 
 
 def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
@@ -524,17 +527,10 @@ def to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
     if 'time' in ds.coords:
         ds = ds.assign_coords(time=ds.coords['time'].astype('datetime64[ms]'))
 
-    ds = ds.assign({
-        data_var: ds[data_var].astype('float64')
-        for data_var in ds.data_vars
-    })
+    ds = ds.assign({data_var: ds[data_var].astype('float64') for data_var in ds.data_vars})
 
     df = ds.to_dataframe().reset_index()
-    df.attrs['coords'] = {
-        coord: ds[coord].attrs for coord in ds.coords if (ds[coord].size > 1)
-    }
-    df.attrs['data_vars'] = {
-        data_var: ds[data_var].attrs for data_var in ds.data_vars if (ds[data_var].size > 1)
-    }
+    df.attrs['coords'] = {coord: ds[coord].attrs for coord in ds.coords if (ds[coord].size > 1)}
+    df.attrs['data_vars'] = {data_var: ds[data_var].attrs for data_var in ds.data_vars if (ds[data_var].size > 1)}
 
     return df

@@ -1,4 +1,5 @@
 """Plotting utilities using Altair for ISIMIP data visualization."""
+
 import json
 import logging
 from importlib.resources import files
@@ -21,15 +22,18 @@ logger = logging.getLogger(__name__)
 
 alt.data_transformers.enable('vegafusion')
 
+
 @alt.theme.register('isimip_utils', enable=True)
 def custom_theme():
-    return alt.theme.ThemeConfig({
-        "config": {
-            "mark": {
-                "color": "steelblue"
-            }
+    return alt.theme.ThemeConfig(
+        {
+            'config': {
+                'mark': {
+                    'color': 'steelblue',
+                },
+            },
         }
-    })
+    )
 
 
 def check_plots(plots: dict, path: str | Path):
@@ -78,9 +82,9 @@ def save_index(index_path: Path) -> None:
     Args:
         index_path (Path): Path where the index.html file will be saved.
     """
-    index_json = json.dumps([
-        str(p.name) for p in sorted(index_path.parent.iterdir()) if p.suffix in ['.svg', '.png']
-    ], indent=2).replace('\n', '\n    ')
+    index_json = json.dumps(
+        [str(p.name) for p in sorted(index_path.parent.iterdir()) if p.suffix in ['.svg', '.png']], indent=2
+    ).replace('\n', '\n    ')
     index_html = files('isimip_utils').joinpath('templates/index.html').read_text(encoding='utf-8')
     index = index_html.replace(r'{{ index_json }}', index_json).strip()
 
@@ -93,7 +97,7 @@ def format_title(
     text: str,
     fontSize: int = 16,
     dy: int = -10,
-    **kwargs
+    **kwargs,
 ) -> dict:
     """Format the plot title.
 
@@ -125,7 +129,7 @@ def format_legend(
     direction: str = 'vertical',
     orient: str = 'right',
     columns: int = 1,
-    **kwargs
+    **kwargs,
 ) -> dict:
     """Format the plot legend.
 
@@ -177,7 +181,7 @@ def plot_line(
     color_title: str | None = None,
     legend: bool = True,
     empty: bool = False,
-    **mark_kwargs: Any
+    **mark_kwargs: Any,
 ) -> alt.Chart:
     """Create a line plot from a DataFrame.
 
@@ -220,10 +224,10 @@ def plot_line(
         f'{y_field}:{y_type}',
         title=y_label,
         axis=alt.Axis(format=y_format) if y_format else alt.Axis(),
-        scale=alt.Scale(zero=False, nice=False)
+        scale=alt.Scale(zero=False, nice=False),
     )
 
-    color_field =  'label' if color_field is None else color_field
+    color_field = 'label' if color_field is None else color_field
     if empty or color_field not in df:
         color = alt.Color()
     else:
@@ -243,14 +247,16 @@ def plot_line(
         color = alt.Color(
             f'{color_field}:{color_type}',
             scale=alt.Scale(**color_scale_args),
-            legend=alt.Legend(padding=10, title=color_title) if legend else None
+            legend=alt.Legend(padding=10, title=color_title) if legend else None,
         )
 
     if empty:
-        df = pd.DataFrame({
-            x_field: df[x_field],
-            y_field: np.full_like(df[y_field], np.nan, dtype=float)
-        })
+        df = pd.DataFrame(
+            {
+                x_field: df[x_field],
+                y_field: np.full_like(df[y_field], np.nan, dtype=float),
+            }
+        )
 
     # the base chart contains only the x axis
     base = alt.Chart(df).mark_line(**mark_kwargs).encode(x=x)
@@ -261,7 +267,7 @@ def plot_line(
         chart += base.mark_area(**mark_kwargs, opacity=0.5).encode(
             y='lower:Q',
             y2='upper:Q',
-            color=color
+            color=color,
         )
 
     return chart
@@ -279,7 +285,7 @@ def plot_map(
     color_format: str | None = None,
     bin_size: int = 1,
     legend: bool = True,
-    empty: bool = False
+    empty: bool = False,
 ) -> alt.Chart:
     """Create a geographic map plot from a DataFrame with lat/lon coordinates.
 
@@ -311,7 +317,7 @@ def plot_map(
         title='lon',
         bin=alt.Bin(step=lon_bin),
         axis=alt.Axis(values=lon_ticks),
-        scale=alt.Scale(domain=lon_domain, padding=0, round=True)
+        scale=alt.Scale(domain=lon_domain, padding=0, round=True),
     )
 
     lat = np.sort(df['lat'].unique())
@@ -325,7 +331,7 @@ def plot_map(
         title='lat',
         bin=alt.Bin(step=lat_bin),
         axis=alt.Axis(values=lat_ticks),
-        scale=alt.Scale(domain=lat_domain, padding=0, round=True)
+        scale=alt.Scale(domain=lat_domain, padding=0, round=True),
     )
 
     if empty:
@@ -353,19 +359,13 @@ def plot_map(
             f'{color_field}:{color_type}',
             title=color_label,
             scale=alt.Scale(**color_scale_args),
-            legend=alt.Legend(padding=10, **color_legend_args) if legend else None
+            legend=alt.Legend(padding=10, **color_legend_args) if legend else None,
         )
 
     if empty:
-        df = pd.DataFrame({
-            'lon': [],
-            'lat': []
-        })
+        df = pd.DataFrame({'lon': [], 'lat': []})
 
-    return alt.Chart(df).mark_rect().encode(x=x, y=y, color=color).properties(
-        width=lon_size,
-        height=lat_size
-    )
+    return alt.Chart(df).mark_rect().encode(x=x, y=y, color=color).properties(width=lon_size, height=lat_size)
 
 
 def plot_grid(
@@ -373,9 +373,9 @@ def plot_grid(
     plot_permutations: list[tuple],
     plots: dict,
     empty_plot: alt.Chart,
-    x: str = "shared",
-    y: str = "shared",
-    color: str = "shared",
+    x: str = 'shared',
+    y: str = 'shared',
+    color: str = 'shared',
 ) -> alt.Chart:
     """Create a grid of plots organized by parameter permutations.
 
@@ -415,12 +415,14 @@ def plot_grid(
 
         prev = grid_permutation
 
-    chart = alt.vconcat(*[
-        alt.hconcat(*[
-            alt.layer(*column, title=column_title) if column else empty_plot
-            for column_title, column in row
-        ], title=row_title).resolve_scale(x=x, y=y)
-        for row_title, row in rows
-    ]).resolve_scale(x=x, y=y)
+    chart = alt.vconcat(
+        *[
+            alt.hconcat(
+                *[alt.layer(*column, title=column_title) if column else empty_plot for column_title, column in row],
+                title=row_title,
+            ).resolve_scale(x=x, y=y)
+            for row_title, row in rows
+        ]
+    ).resolve_scale(x=x, y=y)
 
     return chart

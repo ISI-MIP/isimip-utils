@@ -1,4 +1,5 @@
 """Data extraction and manipulation utilities for xarray datasets."""
+
 import logging
 from collections.abc import Iterable
 from datetime import datetime
@@ -167,8 +168,7 @@ def mask_bbox(ds: xr.Dataset, west: float, east: float, south: float, north: flo
     return ds
 
 
-def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask',
-              inverse: bool = False) -> xr.Dataset:
+def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask', inverse: bool = False) -> xr.Dataset:
     """Apply a mask dataset to another dataset.
 
     Args:
@@ -184,8 +184,12 @@ def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask',
     return ds.where(np.isclose(mask_ds[mask_var], 0 if inverse else 1))
 
 
-def compute_aggregation(ds: xr.Dataset, type: Literal['mean', 'min', 'max', 'sum', 'std'],
-                        dim: str | Iterable | None = None, weights: xr.DataArray | None = None) -> xr.Dataset:
+def compute_aggregation(
+    ds: xr.Dataset,
+    type: Literal['mean', 'min', 'max', 'sum', 'std'],
+    dim: str | Iterable | None = None,
+    weights: xr.DataArray | None = None,
+) -> xr.Dataset:
     """Compute aggregated values over selected dimensions and add dummy dimensions like CDO.
 
     Args:

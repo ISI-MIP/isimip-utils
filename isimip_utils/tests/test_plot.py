@@ -66,7 +66,7 @@ def test_plot_line_empty():
 
     with open_dataset(extraction_path) as ds:
         df = to_dataframe(ds)
-        df_empty = pd.DataFrame({ 'time': df['time'], 'tas': np.nan })
+        df_empty = pd.DataFrame({'time': df['time'], 'tas': np.nan})
 
         chart = plot_line(df, empty=True)
 
@@ -139,9 +139,8 @@ def test_plot_line_color():
 def test_plot_map():
     date = constants.DATE
     date_specifiers = date.strftime('%Y%m%d')
-    extraction_path = (
-        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
-                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
 
     plot_path = constants.PLOTS_PATH / 'plot_map.png'
@@ -164,9 +163,8 @@ def test_plot_map():
 def test_plot_map_nocf():
     date = constants.DATE
     date_specifiers = date.strftime('%Y%m%d')
-    extraction_path = (
-        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
-                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
 
     plot_path = constants.PLOTS_PATH / 'plot_map_nocf.png'
@@ -189,9 +187,8 @@ def test_plot_map_nocf():
 def test_plot_map_empty():
     date = constants.DATE
     date_specifiers = date.strftime('%Y%m%d')
-    extraction_path = (
-        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
-                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
 
     plot_path = constants.PLOTS_PATH / 'plot_map_empty.png'
@@ -199,10 +196,7 @@ def test_plot_map_empty():
 
     with open_dataset(extraction_path) as ds:
         df = to_dataframe(ds)
-        df_empty  = pd.DataFrame({
-            'lon': [],
-            'lat': []
-        })
+        df_empty = pd.DataFrame({'lon': [], 'lat': []})
 
         chart = plot_map(df, empty=True)
 
@@ -229,7 +223,7 @@ def test_plot_grid():
         with open_dataset(extraction_path) as ds:
             dataframes.append(to_dataframe(ds))
 
-    df_empty = pd.DataFrame({ 'time': dataframes[2]['time'], 'tas': np.nan })
+    df_empty = pd.DataFrame({'time': dataframes[2]['time'], 'tas': np.nan})
 
     grid_permutations = [
         ('a', 'x'),
@@ -270,9 +264,8 @@ def test_plot_grid():
 def test_check_plots(n):
     date = constants.DATE
     date_specifiers = date.strftime('%Y%m%d')
-    extraction_path = (
-        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
-                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    extraction_path = constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
 
     plot_path = constants.PLOTS_PATH / 'plot_grid.png'
@@ -301,7 +294,7 @@ def test_format_title():
         'text': 'test',
         'fontSize': 16,
         'dy': -10,
-       'test': 'test',
+        'test': 'test',
     }
 
 

@@ -22,7 +22,7 @@ def fetch_json(url: str) -> Any | None:
     Returns:
         Parsed JSON object, or None if request fails.
     """
-    logger.debug("url = %s", url)
+    logger.debug('url = %s', url)
 
     try:
         response = requests.get(url)
@@ -43,7 +43,7 @@ def fetch_file(url: str, target: str | Path | None = None) -> bool:
     Returns:
         Target path if it was provided, the content otherwise, or None if the request fails.
     """
-    logger.debug("url = %s", url)
+    logger.debug('url = %s', url)
 
     try:
         response = requests.get(url)
@@ -55,7 +55,7 @@ def fetch_file(url: str, target: str | Path | None = None) -> bool:
     else:
         target.parent.mkdir(exist_ok=True, parents=True)
         if response.status_code == 200:
-            with open(target, "wb") as fp:
+            with open(target, 'wb') as fp:
                 fp.write(response.content)
             return target
 
@@ -69,7 +69,7 @@ def load_json(path: str | Path) -> Any | None:
     Returns:
         Parsed JSON object, or None if request fails.
     """
-    logger.debug("path = %s", path)
+    logger.debug('path = %s', path)
 
     path = Path(path)
     if path.exists():
@@ -86,7 +86,7 @@ def load_file(path: str | Path, target: str | Path | None = None) -> bool:
     Returns:
         Target path if it was provided, the content otherwise, or None if the request fails.
     """
-    logger.debug("path = %s", path)
+    logger.debug('path = %s', path)
 
     path = Path(path)
     if path.is_file():
