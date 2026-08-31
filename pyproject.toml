@@ -119,6 +119,10 @@ section-order = [
 [tool.ruff.lint.isort.sections]
 pytest = ["pytest"]
 
+[tool.ty.environment]
+python = 'env'
+python-version = '3.11'
+
 [tool.typos.default.extend-words]
 iy = "iy"
 arange = "arange"
