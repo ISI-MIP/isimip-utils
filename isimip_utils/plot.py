@@ -36,7 +36,7 @@ def custom_theme():
     )
 
 
-def check_plots(plots: dict, path: str | Path):
+def check_plots(plots: dict, path: str | Path) -> bool:
     """Check whether a set of plots is small enough for Vega to render.
 
     The limit is empirical: 1,036,800 rows (4 global 0.5-degree grids) renders, 1,296,000 (5 grids) does not.
@@ -97,7 +97,7 @@ def format_title(
     text: str,
     fontSize: int = 16,
     dy: int = -10,
-    **kwargs,
+    **kwargs: Any,
 ) -> dict:
     """Format the plot title.
 
@@ -107,7 +107,7 @@ def format_title(
         fontSize (int): Font size of the title, in pixels (default: 16).
         dy (int): Vertical offset of the title from its anchor, in pixels; negative
             values move it up (default: -10).
-        **kwargs: Additional Altair title properties.
+        **kwargs (Any): Additional Altair title properties.
 
     Returns:
         Dictionary with Altair title configuration.
@@ -129,7 +129,7 @@ def format_legend(
     direction: str = 'vertical',
     orient: str = 'right',
     columns: int = 1,
-    **kwargs,
+    **kwargs: Any,
 ) -> dict:
     """Format the plot legend.
 
@@ -145,7 +145,7 @@ def format_legend(
             'top-left', or 'none' to place it manually (default: 'right').
         columns (int): Number of columns used to lay out symbol legends; ignored for
             gradient legends (default: 1).
-        **kwargs: Additional Altair legend properties.
+        **kwargs (Any): Additional Altair legend properties.
 
     Returns:
         Dictionary with Altair legend configuration.

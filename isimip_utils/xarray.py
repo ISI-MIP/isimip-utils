@@ -151,7 +151,7 @@ def open_dataset(path: str | Path, decode_cf: bool = True, load: bool = False) -
     return ds
 
 
-def decode_dataset(ds: xr.Dataset, time_unit: str = 'ms'):
+def decode_dataset(ds: xr.Dataset, time_unit: str = 'ms') -> xr.Dataset:
     """Decode an undecoded dataset, with a fixed time resolution.
 
     Handles the non standard time units used by some sectors (e.g. growing seasons), which xarray
