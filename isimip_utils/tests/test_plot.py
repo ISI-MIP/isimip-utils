@@ -1,9 +1,19 @@
+import pytest
 
 import numpy as np
 import pandas as pd
 
 from isimip_utils.pandas import compute_average, create_label
-from isimip_utils.plot import format_legend, format_title, plot_grid, plot_line, plot_map, save_index, save_plot
+from isimip_utils.plot import (
+    check_plots,
+    format_legend,
+    format_title,
+    plot_grid,
+    plot_line,
+    plot_map,
+    save_index,
+    save_plot,
+)
 from isimip_utils.tests import constants
 from isimip_utils.xarray import open_dataset, to_dataframe
 
@@ -254,6 +264,27 @@ def test_plot_grid():
     save_plot(chart, plot_path)
 
     assert plot_path.is_file
+
+
+@pytest.mark.parametrize('n', range(6))
+def test_check_plots(n):
+    date = constants.DATE
+    date_specifiers = date.strftime('%Y%m%d')
+    extraction_path = (
+        constants.EXTRACTIONS_PATH / constants.TAS_PATH.replace('_global_', '_select-time-cdo_')
+                                                       .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    )
+
+    plot_path = constants.PLOTS_PATH / 'plot_grid.png'
+    plot_path.unlink(missing_ok=True)
+
+    with open_dataset(extraction_path) as ds:
+        df = to_dataframe(ds)
+        plot = plot_map(df)
+
+    plots = dict.fromkeys(range(n), plot)
+
+    assert check_plots(plots, plot_path) == (n < 5)
 
 
 def test_save_index():

@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+import pytest
+
 import cftime
 import geopandas as gpd
 import numpy as np
@@ -368,6 +370,55 @@ def test_open_dataset_growing_seasons():
         assert isinstance(ds, xr.Dataset)
         assert isinstance(ds['time'].dtype, object)
         assert ds['time'].values[0].isoformat() == '1901-01-01T00:00:00'
+
+
+@pytest.mark.parametrize('units', ['months', 'years', 'growing seasons'])
+def test_open_dataset_decode_dataset(units):
+    lon_size, lat_size, time_size = 180, 90, 10
+
+    time = np.arange(time_size, dtype=np.float64)
+    var = np.random.rand(time_size, lat_size, lon_size).astype(np.float32)
+
+    attrs = {
+        'var': {
+            'long_name': 'Variable'
+        },
+        'time': {
+            'calendar': 'proleptic_gregorian',
+            'units': f'{units} since 2000-01-01 00:00:00'
+        }
+    }
+
+    test_path = constants.OUTPUT_PATH / 'test.nc'
+    test_path.unlink(missing_ok=True)
+
+    with init_dataset(lon=lon_size, lat=lat_size, time=time, attrs=attrs, var=var) as ds:
+        write_dataset(ds, test_path)
+
+    with open_dataset(test_path) as ds:
+        assert isinstance(ds['time'].dtype, object)
+        assert ds['time'].values[0].isoformat() == '2000-01-01T00:00:00'
+        assert ds['time'].values[1].isoformat() == '2000-02-01T00:00:00' if units == 'months' else '2001-01-01T00:00:00'
+        assert ds['time'].encoding['calendar'] == attrs['time']['calendar']
+        assert ds['time'].encoding['units'] == attrs['time']['units']
+
+
+@pytest.mark.parametrize('missing', ['calendar', 'units'])
+def test_open_dataset_decode_dataset_missing(missing):
+    lon_size, lat_size, time_size = 180, 90, 10
+
+    time = np.arange(time_size, dtype=np.float64)
+    var = np.random.rand(time_size, lat_size, lon_size).astype(np.float32)
+
+    test_path = constants.OUTPUT_PATH / 'test.nc'
+    test_path.unlink(missing_ok=True)
+
+    with init_dataset(lon=lon_size, lat=lat_size, time=time, var=var) as ds:
+        del ds['time'].attrs[missing]
+        write_dataset(ds, test_path)
+
+    with pytest.raises(ValueError, match=f'no {missing} attribute'):
+        open_dataset(test_path)
 
 
 def test_load_dataset():
