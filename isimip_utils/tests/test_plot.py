@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from isimip_utils.pandas import compute_average, create_label
-from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_index, save_plot
+from isimip_utils.plot import format_legend, format_title, plot_grid, plot_line, plot_map, save_index, save_plot
 from isimip_utils.tests import constants
 from isimip_utils.xarray import open_dataset, to_dataframe
 
@@ -266,10 +266,23 @@ def test_save_index():
 
 
 def test_format_title():
-    permutation = ('a', 'b', 'c')
+    assert format_title('test', test='test') == {
+        'text': 'test',
+        'fontSize': 16,
+        'dy': -10,
+       'test': 'test',
+    }
 
-    assert format_title(permutation) == {
-        "text": 'a · b · c',
-        "fontSize": 16,
-        "dy": -10
+
+def test_format_legend():
+    assert format_legend(test='test') == {
+        'columns': 1,
+        'direction': 'vertical',
+        'labelFontSize': 14,
+        'labelLimit': 0,
+        'orient': 'right',
+        'symbolLimit': 0,
+        'symbolStrokeWidth': 2,
+        'titleFontSize': 14,
+        'test': 'test',
     }

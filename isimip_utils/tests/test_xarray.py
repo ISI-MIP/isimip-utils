@@ -483,7 +483,7 @@ def test_create_mask():
     assert mask_ds['mask'].shape == (360, 720)
 
     inside_region = mask_ds.sel(lat=slice(5, -5), lon=slice(-10, 10))
-    assert np.all(inside_region['mask'].values == 1.0)
+    assert np.all(inside_region['mask'].values == 1)
 
     outside_regions = [
         mask_ds.sel(lon=slice(90, 5)),
@@ -492,7 +492,7 @@ def test_create_mask():
         mask_ds.sel(lon=slice(-180, -10))
     ]
     for outside_region in outside_regions:
-        assert np.all(np.isnan(outside_region['mask'].values))
+        assert np.all(outside_region['mask'].values == 0)
 
 
 def test_convert_time_datetime():
