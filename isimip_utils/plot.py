@@ -74,7 +74,7 @@ def save_plot(chart: alt.Chart, path: str | Path, *args: Any, **kwargs: Any) -> 
     chart.save(path, *args, **kwargs)
 
 
-def save_index(index_path: Path) -> None:
+def save_index(parent_path: Path, paths: list[Path]) -> None:
     """Save an HTML index file for browsing plot images.
 
     Creates an interactive HTML page for viewing SVG/PNG files in a directory.
@@ -82,9 +82,8 @@ def save_index(index_path: Path) -> None:
     Args:
         index_path (Path): Path where the index.html file will be saved.
     """
-    index_json = json.dumps(
-        [str(p.name) for p in sorted(index_path.parent.iterdir()) if p.suffix in ['.svg', '.png']], indent=2
-    ).replace('\n', '\n    ')
+    index_path = parent_path / 'index.html'
+    index_json = json.dumps([str(path.name) for path in paths], indent=2).replace('\n', '\n    ')
     index_html = files('isimip_utils').joinpath('templates/index.html').read_text(encoding='utf-8')
     index = index_html.replace(r'{{ index_json }}', index_json).strip()
 
