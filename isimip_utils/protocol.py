@@ -1,4 +1,5 @@
 """Functions to fetch information from machine-actionable ISIMIP protocols."""
+
 import logging
 import os
 import re
@@ -41,9 +42,7 @@ def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PR
             for definition_name, definition in definitions_json.items():
                 # convert the definitions to dicts if they are lists
                 if isinstance(definition, list):
-                    definitions[definition_name] = {
-                        row['specifier']: row for row in definition
-                    }
+                    definitions[definition_name] = {row['specifier']: row for row in definition}
                 else:
                     definitions[definition_name] = definition
 
@@ -73,12 +72,14 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
     for protocol_location in protocol_locations:
         pattern_json = find_json(protocol_location, 'pattern', path)
         if pattern_json:
-            if not all([
-                isinstance(pattern_json['path'], str),
-                isinstance(pattern_json['file'], str),
-                isinstance(pattern_json['dataset'], str),
-                isinstance(pattern_json['suffix'], list)
-            ]):
+            if not all(
+                [
+                    isinstance(pattern_json['path'], str),
+                    isinstance(pattern_json['file'], str),
+                    isinstance(pattern_json['dataset'], str),
+                    isinstance(pattern_json['suffix'], list),
+                ]
+            ):
                 break
 
             pattern = {
@@ -87,7 +88,7 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
                 'dataset': re.compile(pattern_json['dataset']),
                 'suffix': pattern_json['suffix'],
                 'specifiers': pattern_json.get('specifiers', []),
-                'specifiers_map': pattern_json.get('specifiers_map', {})
+                'specifiers_map': pattern_json.get('specifiers_map', {}),
             }
 
             logger.debug('pattern = %s', pattern)
@@ -158,7 +159,7 @@ def find_json(protocol_location: str, sub_location: str, path: str | Path) -> Ge
     """
     path_components = Path(path).parts
     for i in range(len(path_components), 0, -1):
-        current_path = Path(os.sep.join(path_components[:i+1])).with_suffix('.json')
+        current_path = Path(os.sep.join(path_components[: i + 1])).with_suffix('.json')
 
         if not isinstance(protocol_location, Path) and urlparse(protocol_location).scheme:
             data = fetch_json(f'{protocol_location}/{sub_location}/{current_path.as_posix()}')

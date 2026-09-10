@@ -1,4 +1,5 @@
 """Functions to open and read NetCDF files using netCDF4."""
+
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -6,7 +7,7 @@ from typing import Any
 import numpy as np
 from netCDF4 import Dataset
 
-FILL_VALUE = 1e+20
+FILL_VALUE = 1e20
 LIST_TYPES = [np.ndarray]
 FLOAT_TYPES = [np.float32, np.float64]
 INT_TYPES = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64]
@@ -48,9 +49,18 @@ def open_dataset_write(file_path: str | Path) -> Dataset:
     return Dataset(file_path, 'r+')
 
 
-def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool = False, lon: int = 720, lat: int = 360,
-                 time: None | np.ndarray = None, time_unit: str = 'days since 1601-1-1 00:00:00',
-                 time_calendar: str = 'proleptic_gregorian', attrs: None | dict = None, **variables: Any) -> Dataset:
+def init_dataset(
+    file_path: str | Path,
+    diskless: bool = False,
+    overwrite: bool = False,
+    lon: int = 720,
+    lat: int = 360,
+    time: np.ndarray | None = None,
+    time_unit: str = 'days since 1601-1-1 00:00:00',
+    time_calendar: str = 'proleptic_gregorian',
+    attrs: dict | None = None,
+    **variables: Any,
+) -> Dataset:
     """Initialize a new NetCDF4 dataset with standard dimensions and variables.
 
     Args:
@@ -117,10 +127,8 @@ def init_dataset(file_path: str | Path, diskless: bool = False, overwrite: bool 
 
     # create a data variable for each provided variable
     for variable_name, variable in variables.items():
-
         dimensions = ('time', 'lat', 'lon') if time is not None else ('lat', 'lon')
-        var = ds.createVariable(variable_name, variable.dtype, dimensions,
-                                fill_value=FILL_VALUE, compression='zlib')
+        var = ds.createVariable(variable_name, variable.dtype, dimensions, fill_value=FILL_VALUE, compression='zlib')
 
         # set variable attributes
         if attrs:
@@ -181,7 +189,6 @@ def get_variables(dataset: Dataset, convert: bool = False) -> dict[str, Any]:
     """
     variables = {}
     for variable_name, variable in dataset.variables.items():
-
         if convert:
             variables[variable_name] = {}
             for key, value in variable.__dict__.items():
@@ -242,8 +249,9 @@ def convert_attribute(value: Any) -> Any:
     return value
 
 
-def update_global_attributes(dataset: Dataset, set_attributes: dict | None = None,
-                             delete_attributes: list | None = None) -> None:
+def update_global_attributes(
+    dataset: Dataset, set_attributes: dict | None = None, delete_attributes: list | None = None
+) -> None:
     """Update global attributes of a NetCDF dataset.
 
     Args:

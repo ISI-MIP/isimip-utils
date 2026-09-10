@@ -88,15 +88,15 @@ from isimip_utils.xarray import init_dataset, write_dataset
 time = np.arange(0, 365, dtype=np.float64)
 var = np.ones((365, 360, 720), dtype=np.float32)
 
-attrs={
+attrs = {
     'global': {
-        'contact': 'mail@example.com'
+        'contact': 'mail@example.com',
     },
     'var': {
         'standard_name': 'var',
         'long_name': 'Variable',
         'units': '1',
-    }
+    },
 }
 
 # create an xarray.Dataset

@@ -6,19 +6,19 @@ from isimip_utils.tests import constants, helper
 paths = [
     'ISIMIP3a/OutputData/agriculture/ACEA/gswp3-w5e5.json',
     'ISIMIP3a/OutputData/agriculture/ACEA.json',
-    'ISIMIP3a/OutputData/agriculture.json'
+    'ISIMIP3a/OutputData/agriculture.json',
 ]
 
 
 def test_fetch_json():
     with patch('isimip_utils.fetch.requests.get', side_effect=helper.mock_json):
-        data = fetch_json("https://protocol.isimip.org/definitions/ISIMIP3a/OutputData/agriculture.json")
+        data = fetch_json('https://protocol.isimip.org/definitions/ISIMIP3a/OutputData/agriculture.json')
         assert data is not None
 
 
 def test_fetch_json_not_found():
     with patch('isimip_utils.fetch.requests.get', side_effect=helper.mock_json):
-        data = fetch_json("https://protocol.isimip.org/definitions/ISIMIP3a/OutputData/agriculture/ACEA.json")
+        data = fetch_json('https://protocol.isimip.org/definitions/ISIMIP3a/OutputData/agriculture/ACEA.json')
         assert data is None
 
 
@@ -28,12 +28,12 @@ def test_fetch_file():
         output_path.parent.mkdir(exist_ok=True, parents=True)
         output_path.unlink(missing_ok=True)
 
-        fetch_file("https://protocol.isimip.org/definitions/ISIMIP3a/OutputData/agriculture.json", output_path)
+        fetch_file('https://protocol.isimip.org/definitions/ISIMIP3a/OutputData/agriculture.json', output_path)
         assert output_path.is_file()
 
 
 def test_load_json():
-    data =  load_json('testing/protocol/output/definitions/ISIMIP3a/OutputData/agriculture.json')
+    data = load_json('testing/protocol/output/definitions/ISIMIP3a/OutputData/agriculture.json')
     assert data is not None
 
 

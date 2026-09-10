@@ -22,7 +22,7 @@ def download_datasets():
         file_path = constants.DATASETS_PATH / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        url = f"https://files.isimip.org/{path}"
+        url = f'https://files.isimip.org/{path}'
 
         helper.call(f'wget -c {url} -O {file_path}')
 
@@ -34,7 +34,7 @@ def download_protocol():
         file_path = constants.PROTOCOL_PATH / path
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        url = f"https://protocol.isimip.org/{path}"
+        url = f'https://protocol.isimip.org/{path}'
 
         helper.call(f'wget -c {url} -O {file_path}')
 
@@ -68,27 +68,25 @@ def run_select_time():
 
     input_path = constants.DATASETS_PATH / path
 
-    output_path = (
-        constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-time-cdo_')
-                                         .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-time-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not output_path.exists():
-        helper.call(f"cdo -f nc4c -z zip_5 -L seldate,{date.strftime('%Y-%m-%d')} {input_path} {output_path}")
+        helper.call(f'cdo -f nc4c -z zip_5 -L seldate,{date.strftime("%Y-%m-%d")} {input_path} {output_path}')
 
 
 def run_select_period():
     start_date, end_date = constants.PERIOD
-    date_specifiers = f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}"
+    date_specifiers = f'{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}'
 
     path = constants.TAS_PATH
 
     input_path = constants.DATASETS_PATH / path
 
-    output_path = (
-        constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-period-cdo_') \
-                                         .replace(constants.TAS_DATE_SPECIFIERS, date_specifiers)
+    output_path = constants.EXTRACTIONS_PATH / path.replace('_global_', '_select-period-cdo_').replace(
+        constants.TAS_DATE_SPECIFIERS, date_specifiers
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -122,8 +120,9 @@ def run_select_bbox():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not output_path.exists():
-            helper.call(f'cdo -f nc4c -z zip_5 -L ' \
-                        f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+            helper.call(
+                f'cdo -f nc4c -z zip_5 -L -sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}'
+            )
 
 
 def run_select_bbox_aggregations():
@@ -140,12 +139,16 @@ def run_select_bbox_aggregations():
 
             if not output_path.exists():
                 if aggregation == 'sum':
-                    helper.call(f'cdo -f nc4c -z zip_5 -L -fld{aggregation} '
-                                f'-sellonlatbox,{west},{east},{south},{north} '
-                                f'-mul {input_path} {gridarea_path} {output_path}')
+                    helper.call(
+                        f'cdo -f nc4c -z zip_5 -L -fld{aggregation} '
+                        f'-sellonlatbox,{west},{east},{south},{north} '
+                        f'-mul {input_path} {gridarea_path} {output_path}'
+                    )
                 else:
-                    helper.call(f'cdo -f nc4c -z zip_5 -L -fld{aggregation} '
-                                f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+                    helper.call(
+                        f'cdo -f nc4c -z zip_5 -L -fld{aggregation} '
+                        f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}'
+                    )
 
 
 def run_select_bbox_map():
@@ -158,8 +161,10 @@ def run_select_bbox_map():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not output_path.exists():
-            helper.call('cdo -f nc4c -z zip_5 -L timmean '
-                        f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+            helper.call(
+                'cdo -f nc4c -z zip_5 -L timmean '
+                f'-sellonlatbox,{west},{east},{south},{north} {input_path} {output_path}'
+            )
 
 
 def run_mask_bbox():
@@ -172,8 +177,9 @@ def run_mask_bbox():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not output_path.exists():
-            helper.call(f'cdo -f nc4c -z zip_5 -L '
-                        f'-masklonlatbox,{west},{east},{south},{north} {input_path} {output_path}')
+            helper.call(
+                f'cdo -f nc4c -z zip_5 -L -masklonlatbox,{west},{east},{south},{north} {input_path} {output_path}'
+            )
 
 
 def run_mask_mask():
@@ -189,5 +195,5 @@ def run_mask_mask():
             helper.call(f'cdo -f nc4c -z zip_5 -L -ifthen -selname,mask {mask_path} {input_path} {output_path}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
