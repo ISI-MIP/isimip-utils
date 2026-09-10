@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 import numpy as np
@@ -284,9 +286,19 @@ def test_save_index():
     index_path = constants.PLOTS_PATH / 'index.html'
     index_path.unlink(missing_ok=True)
 
-    save_index(index_path)
+    paths = [
+        Path('test/a.svg'),
+        Path('test/b.svg'),
+        Path('test/c.svg'),
+    ]
+
+    save_index(index_path.parent, paths)
 
     assert index_path.is_file
+
+    index_html = index_path.read_text()
+    for path in paths:
+        assert path.name in index_html
 
 
 def test_format_title():
