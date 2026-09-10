@@ -80,7 +80,8 @@ def save_index(parent_path: Path, paths: list[Path]) -> None:
     Creates an interactive HTML page for viewing SVG/PNG files in a directory.
 
     Args:
-        index_path (Path): Path where the index.html file will be saved.
+        parent_path (Path): Directory where the index.html file will be saved.
+        paths (list): Paths which are included in the index.html.
     """
     index_path = parent_path / 'index.html'
     index_json = json.dumps([str(path.name) for path in paths], indent=2).replace('\n', '\n    ')
