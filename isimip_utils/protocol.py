@@ -3,7 +3,7 @@
 import logging
 import os
 import re
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -20,7 +20,7 @@ PROTOCOL_LOCATIONS = (
 )
 
 
-def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
+def fetch_definitions(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
     """Fetch definitions from ISIMIP protocol locations.
 
     Args:
@@ -53,7 +53,7 @@ def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PR
     raise NotFound(f'No definitions found for {path}.')
 
 
-def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
+def fetch_pattern(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
     """Fetch pattern definitions from ISIMIP protocol locations.
 
     Args:
@@ -99,7 +99,7 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
     raise NotFound(f'No pattern found for {path}.')
 
 
-def fetch_schema(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> Any:
+def fetch_schema(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> Any:
     """Fetch schema from ISIMIP protocol locations.
 
     Args:
@@ -123,7 +123,7 @@ def fetch_schema(path: str | Path, protocol_locations: str | list[str] = PROTOCO
     raise NotFound(f'No schema found for {path}.')
 
 
-def fetch_tree(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> Any:
+def fetch_tree(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> Any:
     """Fetch tree structure from ISIMIP protocol locations.
 
     Args:
