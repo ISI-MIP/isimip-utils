@@ -13,10 +13,11 @@ from .fetch import fetch_json, load_json
 
 logger = logging.getLogger(__name__)
 
-PROTOCOL_LOCATIONS = [
+PROTOCOL_LOCATIONS = (
+    'https://protocol4.isimip.org',
     'https://protocol.isimip.org',
     'https://protocol2.isimip.org',
-]
+)
 
 
 def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
