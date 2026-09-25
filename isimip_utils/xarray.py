@@ -93,7 +93,10 @@ def init_dataset(
             coords[dim] = variables[dim]
 
     # create data variables
-    data_vars = {var_name: (dims, var) for var_name, var in variables.items() if var_name not in dims}
+    data_vars = {}
+    for var_name, var in variables.items():
+        if var_name not in dims:
+            data_vars[var_name] = var if isinstance(var, tuple) else (dims, var)
 
     # create dataset
     ds = xr.Dataset(coords=coords, data_vars=data_vars)
