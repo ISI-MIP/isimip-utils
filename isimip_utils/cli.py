@@ -1,4 +1,5 @@
 """Command-line interface utilities for ISIMIP tools."""
+
 import argparse
 import logging
 import os
@@ -8,9 +9,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
+from packaging.version import InvalidVersion, Version
 from rich.logging import RichHandler
 
-from .exceptions import ConfigError
+from .exceptions import ConfigError, FetchError
+from .fetch import fetch_json
 
 
 def setup_env() -> None:
@@ -18,9 +21,14 @@ def setup_env() -> None:
     load_dotenv(Path().cwd() / '.env')
 
 
-def setup_logs(log_level: str = 'WARNING', log_file: str | None = None,
-               log_console: bool = True, log_rich: bool = True,
-               show_time: bool = False, show_path: bool = False) -> None:
+def setup_logs(
+    log_level: str = 'WARNING',
+    log_file: str | None = None,
+    log_console: bool = True,
+    log_rich: bool = True,
+    show_time: bool = False,
+    show_path: bool = False,
+) -> None:
     """Configure logging with console and/or file handlers.
 
     Args:
@@ -64,6 +72,27 @@ def setup_logs(log_level: str = 'WARNING', log_file: str | None = None,
         root_logger.addHandler(file_handler)
 
 
+def check_version(package, version):
+    logger = logging.getLogger(__name__)
+
+    try:
+        pypi_data = fetch_json(f'https://pypi.org/pypi/{package}/json')
+        latest_version = Version(pypi_data['info']['version'])
+        current_version = Version(version)
+    except (FetchError, KeyError, TypeError, InvalidVersion):
+        return
+
+    if latest_version > current_version and not latest_version.is_prerelease:
+        logger.warning(
+            'A newer version of %s is available (%s). Install using "pip install --upgrade %s".',
+            package,
+            latest_version,
+            package,
+        )
+    else:
+        logger.info('Running the latest version of %s available at PyPI.', package)
+
+
 def parse_dict(string: str) -> dict[str, list[str]] | None:
     """Parse a string in format 'key=value1,value2' into a dictionary.
 
@@ -75,9 +104,7 @@ def parse_dict(string: str) -> dict[str, list[str]] | None:
     """
     if string:
         key, values = string.split('=')
-        return {
-            key.strip(): [value.strip() for value in values.split(',')]
-        }
+        return {key.strip(): [value.strip() for value in values.split(',')]}
 
 
 def parse_list(string: str) -> list[str]:
@@ -221,9 +248,12 @@ class ArgumentParser(argparse.ArgumentParser):
         return {}
 
     def read_local_config(self, config_path) -> dict:
-        if config_path and config_path.is_file():
-            with open(config_path, 'rb') as fp:
-                return tomllib.load(fp)
+        if config_path:
+            if config_path.is_file():
+                with open(config_path, 'rb') as fp:
+                    return tomllib.load(fp)
+            else:
+                raise ConfigError(f'Config file {config_path} not found.')
         return {}
 
     def build_default_args(self, config_path=None) -> argparse.Namespace:

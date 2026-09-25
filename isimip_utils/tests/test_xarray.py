@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+import pytest
+
 import cftime
 import geopandas as gpd
 import numpy as np
@@ -40,7 +42,9 @@ def test_init_dataset():
 
     output = helper.call(f'ncdump -h {test_path}')
 
-    helper.assert_multiline_strings_equal(output, '''
+    helper.assert_multiline_strings_equal(
+        output,
+        """
 netcdf test {
 dimensions:
     lon = 720 ;
@@ -57,7 +61,8 @@ variables:
         lat:units = "degrees_north" ;
         lat:axis = "Y" ;
 }
-''')
+""",
+    )
 
 
 def test_init_dataset_float():
@@ -66,9 +71,7 @@ def test_init_dataset_float():
     var = np.random.rand(lat_size, lon_size).astype(np.float32)
 
     attrs = {
-        'var': {
-            'long_name': 'Variable'
-        }
+        'var': {'long_name': 'Variable'},
     }
 
     ds = init_dataset(lon=lon_size, lat=lat_size, var=var, attrs=attrs)
@@ -84,7 +87,9 @@ def test_init_dataset_float():
 
     output = helper.call(f'ncdump -h {test_path}')
 
-    helper.assert_multiline_strings_equal(output, '''
+    helper.assert_multiline_strings_equal(
+        output,
+        """
 netcdf test {
 dimensions:
     lon = 18 ;
@@ -105,7 +110,9 @@ variables:
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20f ;
 }
-''')
+""",
+    )
+
 
 def test_init_dataset_double():
     lon_size, lat_size = 18, 9
@@ -113,9 +120,7 @@ def test_init_dataset_double():
     var = np.random.rand(lat_size, lon_size).astype(np.float64)
 
     attrs = {
-        'var': {
-            'long_name': 'Variable'
-        }
+        'var': {'long_name': 'Variable'},
     }
 
     ds = init_dataset(lon=lon_size, lat=lat_size, var=var, attrs=attrs)
@@ -131,7 +136,9 @@ def test_init_dataset_double():
 
     output = helper.call(f'ncdump -h {test_path}')
 
-    helper.assert_multiline_strings_equal(output, '''
+    helper.assert_multiline_strings_equal(
+        output,
+        """
 netcdf test {
 dimensions:
     lon = 18 ;
@@ -152,7 +159,9 @@ variables:
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20 ;
 }
-''')
+""",
+    )
+
 
 def test_init_dataset_args():
     lon_size, lat_size, time_size = 180, 90, 10
@@ -162,12 +171,12 @@ def test_init_dataset_args():
 
     attrs = {
         'var': {
-            'long_name': 'Variable'
+            'long_name': 'Variable',
         },
         'time': {
             'calendar': '365_day',
-            'units': 'days since 2000-01-01 00:00:00'
-        }
+            'units': 'days since 2000-01-01 00:00:00',
+        },
     }
 
     ds = init_dataset(lon=lon_size, lat=lat_size, time=time, attrs=attrs, var=var)
@@ -189,7 +198,9 @@ def test_init_dataset_args():
 
     output = helper.call(f'ncdump -h {test_path}')
 
-    helper.assert_multiline_strings_equal(output, '''
+    helper.assert_multiline_strings_equal(
+        output,
+        """
 netcdf test {
 dimensions:
     time = UNLIMITED ; // (10 currently)
@@ -217,7 +228,8 @@ variables:
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20f ;
 }
-''')
+""",
+    )
 
 
 def test_init_dataset_latlon():
@@ -225,14 +237,16 @@ def test_init_dataset_latlon():
 
     attrs = {
         'var': {
-            'long_name': 'Variable'
-        }
+            'long_name': 'Variable',
+        },
     }
 
     ds = init_dataset(
         lon=np.array([10], dtype=np.float64),
         lat=np.array([20], dtype=np.float64),
-        time=10, attrs=attrs, var=var
+        time=10,
+        attrs=attrs,
+        var=var,
     )
 
     assert isinstance(ds, xr.Dataset)
@@ -252,7 +266,9 @@ def test_init_dataset_latlon():
 
     output = helper.call(f'ncdump -h {test_path}')
 
-    helper.assert_multiline_strings_equal(output, '''
+    helper.assert_multiline_strings_equal(
+        output,
+        """
 netcdf test {
 dimensions:
     time = UNLIMITED ; // (10 currently)
@@ -280,7 +296,8 @@ variables:
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20f ;
 }
-''')
+""",
+    )
 
 
 def test_init_dataset_dims():
@@ -290,16 +307,16 @@ def test_init_dataset_dims():
 
     attrs = {
         'var': {
-            'long_name': 'Variable'
+            'long_name': 'Variable',
         },
         'a': {
             'long_name': 'A Axis',
-            'axis': 'A'
+            'axis': 'A',
         },
         'b': {
             'long_name': 'B Axis',
-            'axis': 'B'
-        }
+            'axis': 'B',
+        },
     }
 
     ds = init_dataset(dims=('b', 'a', 'lat', 'lon'), attrs=attrs, a=a, b=b, var=var)
@@ -319,7 +336,9 @@ def test_init_dataset_dims():
 
     output = helper.call(f'ncdump -h {test_path}')
 
-    helper.assert_multiline_strings_equal(output, '''
+    helper.assert_multiline_strings_equal(
+        output,
+        """
 netcdf test {
 dimensions:
     lon = 720 ;
@@ -348,7 +367,8 @@ variables:
         var:long_name = "Variable" ;
         var:missing_value = 1.e+20f ;
 }
-''')
+""",
+    )
 
 
 def test_open_dataset():
@@ -370,6 +390,55 @@ def test_open_dataset_growing_seasons():
         assert ds['time'].values[0].isoformat() == '1901-01-01T00:00:00'
 
 
+@pytest.mark.parametrize('units', ['months', 'years', 'growing seasons'])
+def test_open_dataset_decode_dataset(units):
+    lon_size, lat_size, time_size = 180, 90, 10
+
+    time = np.arange(time_size, dtype=np.float64)
+    var = np.random.rand(time_size, lat_size, lon_size).astype(np.float32)
+
+    attrs = {
+        'var': {
+            'long_name': 'Variable',
+        },
+        'time': {
+            'calendar': 'proleptic_gregorian',
+            'units': f'{units} since 2000-01-01 00:00:00',
+        },
+    }
+
+    test_path = constants.OUTPUT_PATH / 'test.nc'
+    test_path.unlink(missing_ok=True)
+
+    with init_dataset(lon=lon_size, lat=lat_size, time=time, attrs=attrs, var=var) as ds:
+        write_dataset(ds, test_path)
+
+    with open_dataset(test_path) as ds:
+        assert isinstance(ds['time'].dtype, object)
+        assert ds['time'].values[0].isoformat() == '2000-01-01T00:00:00'
+        assert ds['time'].values[1].isoformat() == '2000-02-01T00:00:00' if units == 'months' else '2001-01-01T00:00:00'
+        assert ds['time'].encoding['calendar'] == attrs['time']['calendar']
+        assert ds['time'].encoding['units'] == attrs['time']['units']
+
+
+@pytest.mark.parametrize('missing', ['calendar', 'units'])
+def test_open_dataset_decode_dataset_missing(missing):
+    lon_size, lat_size, time_size = 180, 90, 10
+
+    time = np.arange(time_size, dtype=np.float64)
+    var = np.random.rand(time_size, lat_size, lon_size).astype(np.float32)
+
+    test_path = constants.OUTPUT_PATH / 'test.nc'
+    test_path.unlink(missing_ok=True)
+
+    with init_dataset(lon=lon_size, lat=lat_size, time=time, var=var) as ds:
+        del ds['time'].attrs[missing]
+        write_dataset(ds, test_path)
+
+    with pytest.raises(ValueError, match=f'no {missing} attribute'):
+        open_dataset(test_path)
+
+
 def test_load_dataset():
     with load_dataset(constants.DATASETS_PATH / constants.LANDSEAMASK_PATH) as ds:
         assert isinstance(ds, xr.Dataset)
@@ -379,9 +448,7 @@ def test_order_variables():
     test_path = constants.OUTPUT_PATH / 'test.nc'
     test_path.unlink(missing_ok=True)
 
-    ds = init_dataset(
-        var=np.random.rand(360, 720).astype(np.float64)
-    )
+    ds = init_dataset(var=np.random.rand(360, 720).astype(np.float64))
     ds = ds[[*ds.data_vars, *ds.coords]]
     ds.to_netcdf(test_path)
 
@@ -416,11 +483,11 @@ def test_set_attrs():
 def test_remove_fill_value_from_coords():
     ds = xr.Dataset(
         coords={
-            'time': np.arange(10, dtype=np.float64)
+            'time': np.arange(10, dtype=np.float64),
         },
         data_vars={
-            'var': (['time'], np.ones(10))
-        }
+            'var': (['time'], np.ones(10)),
+        },
     )
     remove_fill_value_from_coords(ds)
     assert '_FillValue' not in ds['time']
@@ -429,11 +496,11 @@ def test_remove_fill_value_from_coords():
 def test_add_fill_value_to_data_vars():
     ds = xr.Dataset(
         coords={
-            'time': np.arange(10, dtype=np.float64)
+            'time': np.arange(10, dtype=np.float64),
         },
         data_vars={
-            'var': (['time'], np.ones(10))
-        }
+            'var': (['time'], np.ones(10)),
+        },
     )
 
     assert not ds['var'].encoding
@@ -447,11 +514,11 @@ def test_add_fill_value_to_data_vars():
 def test_add_compression_to_data_vars():
     ds = xr.Dataset(
         coords={
-            'time': np.arange(10, dtype=np.float64)
+            'time': np.arange(10, dtype=np.float64),
         },
         data_vars={
-            'var': (['time'], np.ones(10))
-        }
+            'var': (['time'], np.ones(10)),
+        },
     )
 
     assert not ds['var'].encoding
@@ -463,36 +530,34 @@ def test_add_compression_to_data_vars():
 
 
 def test_create_mask():
-    ds = init_dataset(
-        var=np.ones((360, 720))
-    )
+    ds = init_dataset(var=np.ones((360, 720)))
 
     geometry = box(-10, -5, 10, 5)
 
     df = gpd.GeoDataFrame(
         [{'geometry': geometry}],
-        crs='EPSG:4326'  # WGS84 coordinate system
+        crs='EPSG:4326',  # WGS84 coordinate system
     )
 
     mask_ds = create_mask(ds, df, layer=0)
 
-    assert mask_ds['lon'].shape == (720, )
-    assert mask_ds['lat'].shape == (360, )
+    assert mask_ds['lon'].shape == (720,)
+    assert mask_ds['lat'].shape == (360,)
 
     assert mask_ds['mask'].dims == ('lat', 'lon')
     assert mask_ds['mask'].shape == (360, 720)
 
     inside_region = mask_ds.sel(lat=slice(5, -5), lon=slice(-10, 10))
-    assert np.all(inside_region['mask'].values == 1.0)
+    assert np.all(inside_region['mask'].values == 1)
 
     outside_regions = [
         mask_ds.sel(lon=slice(90, 5)),
         mask_ds.sel(lon=slice(-5, -90)),
         mask_ds.sel(lon=slice(10, 180)),
-        mask_ds.sel(lon=slice(-180, -10))
+        mask_ds.sel(lon=slice(-180, -10)),
     ]
     for outside_region in outside_regions:
-        assert np.all(np.isnan(outside_region['mask'].values))
+        assert np.all(outside_region['mask'].values == 0)
 
 
 def test_convert_time_datetime():
@@ -544,12 +609,13 @@ def test_convert_time_datetime_str():
 def test_to_dataframe():
     ds = xr.Dataset(
         coords={
-            'time': np.arange(10, dtype=np.float64)
+            'time': np.arange(0, 100_000, 10_000, dtype=np.float64),
         },
         data_vars={
-            'var': (['time'], np.ones(10))
-        }
+            'var': (['time'], np.ones(10)),
+        },
     )
     df = to_dataframe(ds)
-    assert np.array_equal(df['time'], ds['time'])
+    assert df['time'].dtype == np.dtype('datetime64[ms]')
+    assert np.array_equal(df['time'], pd.to_datetime(ds['time'].values, unit='ms'))
     assert np.array_equal(df['var'], ds['var'])

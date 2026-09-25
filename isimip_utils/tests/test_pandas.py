@@ -22,106 +22,122 @@ from isimip_utils.xarray import open_dataset, to_dataframe
 
 extractions = {
     'bbox': constants.TAS_PATH.replace('_global_', '_select-bbox-cdo_'),
-    'point': constants.TAS_PATH.replace('_global_', '_select-point-cdo_')
+    'point': constants.TAS_PATH.replace('_global_', '_select-point-cdo_'),
 }
 
-@pytest.mark.parametrize('extraction,result', [
-    ('bbox', ('lon', 'lat', 'time')),
-    ('point', ('time', ))
-])
+
+@pytest.mark.parametrize(
+    'extraction,result',
+    [
+        ('bbox', ('lon', 'lat', 'time')),
+        ('point', ('time',)),
+    ],
+)
 def test_get_coords(extraction, result):
     with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_coords(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('point', 'time')
-])
+@pytest.mark.parametrize('extraction,result', [('point', 'time')])
 def test_get_first_coord(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_coord(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('bbox', ('Longitude [degrees_east]', 'Latitude [degrees_north]', 'Time')),
-    ('point', ('Time', ))
-])
+@pytest.mark.parametrize(
+    'extraction,result',
+    [
+        ('bbox', ('Longitude [degrees_east]', 'Latitude [degrees_north]', 'Time')),
+        ('point', ('Time',)),
+    ],
+)
 def test_get_coord_labels(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_coord_labels(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('point', 'Time')
-])
+@pytest.mark.parametrize('extraction,result', [('point', 'Time')])
 def test_get_first_coord_label(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_coord_label(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('bbox', ('X', 'Y', 'T')),
-    ('point', ('T', ))
-])
+@pytest.mark.parametrize(
+    'extraction,result',
+    [
+        ('bbox', ('X', 'Y', 'T')),
+        ('point', ('T',)),
+    ],
+)
 def test_get_coord_axes(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_coord_axes(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('point', 'T')
-])
+@pytest.mark.parametrize('extraction,result', [('point', 'T')])
 def test_get_first_coord_axis(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_coord_axis(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('bbox', ('tas', )),
-    ('point', ('tas', ))
-])
+@pytest.mark.parametrize(
+    'extraction,result',
+    [
+        ('bbox', ('tas',)),
+        ('point', ('tas',)),
+    ],
+)
 def test_get_data_vars(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_data_vars(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('point', 'tas')
-])
+@pytest.mark.parametrize(
+    'extraction,result',
+    [
+        ('point', 'tas'),
+    ],
+)
 def test_get_first_data_var(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_data_var(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('bbox', ('tas [K]', )),
-    ('point', ('tas [K]', ))
-])
+@pytest.mark.parametrize(
+    'extraction,result',
+    [
+        ('bbox', ('tas [K]',)),
+        ('point', ('tas [K]',)),
+    ],
+)
 def test_get_data_var_labels(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_data_var_labels(df) == result
 
 
-@pytest.mark.parametrize('extraction,result', [
-    ('point', 'tas [K]')
-])
+@pytest.mark.parametrize(
+    'extraction,result',
+    [
+        ('point', 'tas [K]'),
+    ],
+)
 def test_get_first_data_var_label(extraction, result):
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions[extraction]) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions[extraction]) as ds:
         df = to_dataframe(ds)
         assert get_first_data_var_label(df) == result
 
 
 def test_compute_average():
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = compute_average(df, 'tas')
 
@@ -131,7 +147,7 @@ def test_compute_average():
 
 
 def test_compute_average_monthly():
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = compute_average(df, 'tas', type='monthly')
 
@@ -141,7 +157,7 @@ def test_compute_average_monthly():
 
 
 def test_group_by_day():
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = group_by_day(df, 'tas')
 
@@ -150,7 +166,7 @@ def test_group_by_day():
 
 
 def test_group_by_month():
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = group_by_month(df, 'tas')
 
@@ -159,7 +175,7 @@ def test_group_by_month():
 
 
 def test_normalize():
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = normalize(df, 'tas')
 
@@ -167,7 +183,7 @@ def test_normalize():
 
 
 def test_create_label():
-    with open_dataset(constants.EXTRACTIONS_PATH  / extractions['point']) as ds:
+    with open_dataset(constants.EXTRACTIONS_PATH / extractions['point']) as ds:
         df = to_dataframe(ds)
         df = create_label(df, ['x', 'y', 'z'])
 

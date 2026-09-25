@@ -1,8 +1,9 @@
 """Functions to fetch information from machine-actionable ISIMIP protocols."""
+
 import logging
 import os
 import re
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -12,13 +13,14 @@ from .fetch import fetch_json, load_json
 
 logger = logging.getLogger(__name__)
 
-PROTOCOL_LOCATIONS = [
+PROTOCOL_LOCATIONS = (
+    'https://protocol4.isimip.org',
     'https://protocol.isimip.org',
     'https://protocol2.isimip.org',
-]
+)
 
 
-def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
+def fetch_definitions(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
     """Fetch definitions from ISIMIP protocol locations.
 
     Args:
@@ -41,9 +43,7 @@ def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PR
             for definition_name, definition in definitions_json.items():
                 # convert the definitions to dicts if they are lists
                 if isinstance(definition, list):
-                    definitions[definition_name] = {
-                        row['specifier']: row for row in definition
-                    }
+                    definitions[definition_name] = {row['specifier']: row for row in definition}
                 else:
                     definitions[definition_name] = definition
 
@@ -53,7 +53,7 @@ def fetch_definitions(path: str | Path, protocol_locations: str | list[str] = PR
     raise NotFound(f'No definitions found for {path}.')
 
 
-def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
+def fetch_pattern(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> dict[str, Any]:
     """Fetch pattern definitions from ISIMIP protocol locations.
 
     Args:
@@ -73,12 +73,14 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
     for protocol_location in protocol_locations:
         pattern_json = find_json(protocol_location, 'pattern', path)
         if pattern_json:
-            if not all([
-                isinstance(pattern_json['path'], str),
-                isinstance(pattern_json['file'], str),
-                isinstance(pattern_json['dataset'], str),
-                isinstance(pattern_json['suffix'], list)
-            ]):
+            if not all(
+                [
+                    isinstance(pattern_json['path'], str),
+                    isinstance(pattern_json['file'], str),
+                    isinstance(pattern_json['dataset'], str),
+                    isinstance(pattern_json['suffix'], list),
+                ]
+            ):
                 break
 
             pattern = {
@@ -87,7 +89,7 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
                 'dataset': re.compile(pattern_json['dataset']),
                 'suffix': pattern_json['suffix'],
                 'specifiers': pattern_json.get('specifiers', []),
-                'specifiers_map': pattern_json.get('specifiers_map', {})
+                'specifiers_map': pattern_json.get('specifiers_map', {}),
             }
 
             logger.debug('pattern = %s', pattern)
@@ -97,7 +99,7 @@ def fetch_pattern(path: str | Path, protocol_locations: str | list[str] = PROTOC
     raise NotFound(f'No pattern found for {path}.')
 
 
-def fetch_schema(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> Any:
+def fetch_schema(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> Any:
     """Fetch schema from ISIMIP protocol locations.
 
     Args:
@@ -121,7 +123,7 @@ def fetch_schema(path: str | Path, protocol_locations: str | list[str] = PROTOCO
     raise NotFound(f'No schema found for {path}.')
 
 
-def fetch_tree(path: str | Path, protocol_locations: str | list[str] = PROTOCOL_LOCATIONS) -> Any:
+def fetch_tree(path: str | Path, protocol_locations: str | Sequence[str] = PROTOCOL_LOCATIONS) -> Any:
     """Fetch tree structure from ISIMIP protocol locations.
 
     Args:
@@ -158,7 +160,7 @@ def find_json(protocol_location: str, sub_location: str, path: str | Path) -> Ge
     """
     path_components = Path(path).parts
     for i in range(len(path_components), 0, -1):
-        current_path = Path(os.sep.join(path_components[:i+1])).with_suffix('.json')
+        current_path = Path(os.sep.join(path_components[: i + 1])).with_suffix('.json')
 
         if not isinstance(protocol_location, Path) and urlparse(protocol_location).scheme:
             data = fetch_json(f'{protocol_location}/{sub_location}/{current_path.as_posix()}')

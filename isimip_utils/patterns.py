@@ -1,4 +1,5 @@
 """Functions to match file names and extract ISIMIP specifiers."""
+
 import logging
 import re
 from pathlib import Path
@@ -42,8 +43,12 @@ def match_file_path(pattern: dict, file_path: Path) -> tuple[Path, dict]:
     return match_path(pattern, file_path)
 
 
-def match_path(pattern: dict, path: Path, dirname_pattern_key: str = 'path',
-               filename_pattern_key: str = 'file') -> tuple[Path, dict]:
+def match_path(
+    pattern: dict,
+    path: Path,
+    dirname_pattern_key: str = 'path',
+    filename_pattern_key: str = 'file',
+) -> tuple[Path, dict]:
     """Match both directory and filename components of a path against patterns.
 
     Args:

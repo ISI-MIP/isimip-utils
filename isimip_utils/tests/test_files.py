@@ -7,16 +7,11 @@ from isimip_utils.tests import constants
 def test_find_files():
     file_path = Path(constants.YIELD_PATH)
     fake_path = file_path.with_stem(file_path.stem + '_a')
-    files = [
-        file_path.name,
-        fake_path.name
-    ]
+    files = [file_path.name, fake_path.name]
 
     result = find_files(files)
     assert len(result)
-    assert result == [
-        (file_path.name, 1901, 2016)
-    ]
+    assert result == [(file_path.name, 1901, 2016)]
 
 
 def test_find_files_with_pattern():

@@ -39,9 +39,7 @@ for file_name in files:
         # loop over points, select time series and concat to extraction ds
         for lat, lon, specifier in points:
             ds = select_point(file_ds, lat, lon)
-            extractions[specifier] = (
-                concat_extraction(extractions.get(specifier), ds)
-            )
+            extractions[specifier] = concat_extraction(extractions.get(specifier), ds)
 
 # write extraction ds for every region
 for _, _, specifier in points:

@@ -50,7 +50,7 @@ def mock_content(url, *args, **kwargs):
     else:
         mock_response.status_code = 404
         mock_response.raw = BytesIO()
-        mock_response.content = b""
+        mock_response.content = b''
         mock_response.iter_content.return_value = []
 
     return mock_response

@@ -1,4 +1,5 @@
 """Data extraction and manipulation utilities for xarray datasets."""
+
 import logging
 from collections.abc import Iterable
 from datetime import datetime
@@ -14,19 +15,24 @@ from .xarray import compute_offset, compute_time, get_attrs, set_attrs, set_fill
 logger = logging.getLogger(__name__)
 
 
-def select_time(ds: xr.Dataset, timestamp: datetime) -> xr.Dataset | None:
+def select_time(ds: xr.Dataset, timestamp: int | datetime) -> xr.Dataset | None:
     """Select a single time point from a dataset.
 
     Args:
         ds (xr.Dataset): Dataset with time dimension.
-        timestamp (datetime): Timestamp to select.
+        timestamp (datetime | int): Time to select.
 
     Returns:
         Dataset at the selected time, or None if timestamp is outside range.
     """
     logger.info(f'select time time={timestamp}')
+    if isinstance(timestamp, int):
+        # just select the corresponding time
+        return ds.isel(time=timestamp)
+
+    # convert timestamp to np.datetime64
     if ds.time.encoding.get('units'):
-        time = np.datetime64(timestamp)
+        time = np.datetime64(timestamp, 'ms')
     else:
         time = compute_time(ds, timestamp)
 
@@ -162,8 +168,7 @@ def mask_bbox(ds: xr.Dataset, west: float, east: float, south: float, north: flo
     return ds
 
 
-def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask',
-              inverse: bool = False) -> xr.Dataset:
+def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask', inverse: bool = False) -> xr.Dataset:
     """Apply a mask dataset to another dataset.
 
     Args:
@@ -179,8 +184,12 @@ def mask_mask(ds: xr.Dataset, mask_ds: xr.Dataset, mask_var: str = 'mask',
     return ds.where(np.isclose(mask_ds[mask_var], 0 if inverse else 1))
 
 
-def compute_aggregation(ds: xr.Dataset, type: Literal['mean', 'min', 'max', 'sum', 'std'],
-                        dim: str | Iterable | None = None, weights: xr.DataArray | None = None) -> xr.Dataset:
+def compute_aggregation(
+    ds: xr.Dataset,
+    type: Literal['mean', 'min', 'max', 'sum', 'std'],
+    dim: str | Iterable | None = None,
+    weights: xr.DataArray | None = None,
+) -> xr.Dataset:
     """Compute aggregated values over selected dimensions and add dummy dimensions like CDO.
 
     Args:
@@ -310,13 +319,13 @@ def count_values(ds: xr.Dataset, dim: str | Iterable | None = None) -> xr.Datase
         dim (str|Iterable): Dimensions along which to count [default: ('lat', 'lon')]
 
     Returns:
-        Dataset with count of non-NaN values per time step.
+        Dataset with count of non-NaN values, NaN where no data was present.
     """
     dim = dim or ('lat', 'lon')
     logger.info('count values over %s', dim)
 
     ds = set_fill_value_to_nan(ds)
-    ds = ds.count(dim=dim).astype(np.float32)
+    ds = ds.count(dim=dim).where(lambda x: x > 0).astype(np.float32)
 
     return ds
 

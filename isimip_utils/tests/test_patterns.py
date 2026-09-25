@@ -1,6 +1,16 @@
 from pathlib import Path
 
-from isimip_utils.patterns import match_dataset, match_dataset_path, match_file, match_file_path, match_path
+import pytest
+
+from isimip_utils.exceptions import DidNotMatch
+from isimip_utils.patterns import (
+    match_dataset,
+    match_dataset_path,
+    match_file,
+    match_file_path,
+    match_path,
+    match_string,
+)
 from isimip_utils.protocol import fetch_pattern
 from isimip_utils.tests import constants
 
@@ -12,7 +22,7 @@ path_specifiers = {
     'simulation_round': 'ISIMIP3a',
     'product': 'OutputData',
     'sector': 'agriculture',
-    'period': 'historical'
+    'period': 'historical',
 }
 
 dataset_specifiers = {
@@ -25,7 +35,7 @@ dataset_specifiers = {
     'crop': 'mai',
     'irrigation': 'noirr',
     'region': 'global',
-    'time_step': 'annual-gs'
+    'time_step': 'annual-gs',
 }
 
 file_specifiers = {
@@ -33,6 +43,24 @@ file_specifiers = {
     'start_year': 1901,
     'end_year': 2016,
 }
+
+
+def test_match_string():
+    file_path = Path(constants.YIELD_PATH)
+
+    pattern = fetch_pattern(pattern_path, protocol_locations)
+    match, specifiers = match_string(pattern['file'], file_path.name)
+
+    assert match == Path(file_path.name)
+    assert specifiers == {**specifiers, **file_specifiers}
+
+
+def test_match_string_error():
+    file_path = Path(constants.YIELD_PATH.replace('_global_', '_x_'))
+
+    pattern = fetch_pattern(pattern_path, protocol_locations)
+    with pytest.raises(DidNotMatch, match='No match'):
+        match_string(pattern['file'], file_path.name)
 
 
 def test_match_dataset_path():
@@ -89,9 +117,7 @@ def test_match_path_specifiers_map():
     file_path = Path(constants.YIELD_PATH)
 
     pattern = fetch_pattern(pattern_path, protocol_locations)
-    pattern['specifiers_map'] = {
-        'global': 'spam'
-    }
+    pattern['specifiers_map'] = {'global': 'spam'}
     path, specifiers = match_path(pattern, constants.DATASETS_PATH / file_path)
 
     assert str(path) == str(file_path)
